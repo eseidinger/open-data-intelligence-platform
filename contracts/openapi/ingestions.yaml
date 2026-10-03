@@ -1,0 +1,69 @@
+openapi: 3.1.1
+info:
+  title: ODIP Platform API — Raw Ingestion
+  version: 0.1.0
+paths:
+  /api/data-sources/{sourceId}/ingestions:
+    post:
+      summary: Queue raw ingestion for a source
+      parameters:
+        - $ref: '#/components/parameters/SourceId'
+      responses:
+        '202':
+          description: Run queued for a worker.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineRun'
+  /api/pipeline-runs/{runId}/job:
+    get:
+      summary: Get a queued run's worker job specification
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses:
+        '200':
+          description: Public HTTP retrieval job.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestionJob'
+  /api/pipeline-runs/{runId}/started:
+    post:
+      summary: Mark a queued run as running
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses: { '200': { description: Run state updated. } }
+  /api/pipeline-runs/{runId}/completed:
+    post:
+      summary: Record a successfully stored raw artifact
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses: { '200': { description: Run completed. } }
+  /api/pipeline-runs/{runId}/failed:
+    post:
+      summary: Record worker failure
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses: { '200': { description: Run failed. } }
+components:
+  parameters:
+    SourceId: { name: sourceId, in: path, required: true, schema: { type: string, format: uuid } }
+    RunId: { name: runId, in: path, required: true, schema: { type: string, format: uuid } }
+  schemas:
+    PipelineRun:
+      type: object
+      required: [id, sourceId, status, requestedAt]
+      properties:
+        id: { type: string, format: uuid }
+        sourceId: { type: string, format: uuid }
+        status: { type: string, enum: [QUEUED, RUNNING, SUCCEEDED, FAILED] }
+        requestedAt: { type: string, format: date-time }
+        startedAt: { type: [string, 'null'], format: date-time }
+        completedAt: { type: [string, 'null'], format: date-time }
+    IngestionJob:
+      type: object
+      required: [runId, sourceId, location]
+      properties:
+        runId: { type: string, format: uuid }
+        sourceId: { type: string, format: uuid }
+        location: { type: string, format: uri }

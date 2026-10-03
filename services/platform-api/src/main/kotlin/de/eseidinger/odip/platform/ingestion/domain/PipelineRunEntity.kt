@@ -18,7 +18,7 @@ import java.util.UUID
 class PipelineRunEntity(
     @Id var id: UUID = UUID.randomUUID(),
     @Column(name = "pipeline_name", nullable = false) var pipelineName: String = "raw-ingestion",
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "source_id") var source: DataSourceEntity? = null,
+    @ManyToOne(fetch = FetchType.EAGER) @JoinColumn(name = "source_id") var source: DataSourceEntity? = null,
     @Enumerated(EnumType.STRING) @Column(nullable = false) var status: PipelineRunStatus = PipelineRunStatus.QUEUED,
     @Column(name = "requested_at", nullable = false) var requestedAt: Instant = Instant.now(),
     @Column(name = "started_at") var startedAt: Instant? = null,

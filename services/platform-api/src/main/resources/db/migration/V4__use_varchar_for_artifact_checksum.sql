@@ -1,0 +1,1 @@
+ALTER TABLE raw_artifact ALTER COLUMN checksum_sha256 TYPE VARCHAR(64);
