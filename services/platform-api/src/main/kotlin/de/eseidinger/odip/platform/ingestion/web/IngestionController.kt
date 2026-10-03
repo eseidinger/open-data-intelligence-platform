@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api")
 class IngestionController(private val ingestionService: IngestionService) {
+    @GetMapping("/pipeline-runs") fun list() = ingestionService.list().map { it.toResponse() }
     @PostMapping("/data-sources/{sourceId}/ingestions")
     fun queue(@PathVariable sourceId: UUID): ResponseEntity<PipelineRunResponse> = ResponseEntity.status(HttpStatus.ACCEPTED).body(ingestionService.queue(sourceId).toResponse())
     @GetMapping("/pipeline-runs/{runId}/job") fun job(@PathVariable runId: UUID) = ingestionService.job(runId)
