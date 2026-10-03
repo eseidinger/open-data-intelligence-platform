@@ -1,6 +1,7 @@
 package de.eseidinger.odip.platform.curation.domain
 
 import de.eseidinger.odip.platform.catalog.domain.DatasetEntity
+import de.eseidinger.odip.platform.catalog.domain.DatasetVersionEntity
 import de.eseidinger.odip.platform.ingestion.domain.RawArtifactEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -19,6 +20,7 @@ class EnergyObservationEntity(
     @Id var id: UUID = UUID.randomUUID(),
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "raw_artifact_id", nullable = false) var rawArtifact: RawArtifactEntity? = null,
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "dataset_id", nullable = false) var dataset: DatasetEntity? = null,
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "dataset_version_id") var datasetVersion: DatasetVersionEntity? = null,
     @Column(name = "indicator_code", nullable = false) var indicatorCode: String = "",
     @Column(name = "geo_code", nullable = false) var geoCode: String = "",
     @Column(name = "observation_year", nullable = false) var observationYear: Int = 0,

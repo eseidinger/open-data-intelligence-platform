@@ -35,6 +35,20 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/EnergyObservation'
+  /api/datasets/{datasetId}/versions:
+    get:
+      summary: List published dataset versions
+      parameters:
+        - $ref: '#/components/parameters/DatasetId'
+      responses:
+        '200':
+          description: Versions ordered newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DatasetVersion'
   /api/pipeline-runs/{runId}/artifacts:
     get:
       summary: List raw artifacts produced by a pipeline run
@@ -192,3 +206,14 @@ components:
             datasetId: { type: string, format: uuid }
             rawArtifactId: { type: string, format: uuid }
             createdAt: { type: string, format: date-time }
+    DatasetVersion:
+      type: object
+      required: [id, versionNumber, status, schemaDefinition, qualitySummary, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        versionNumber: { type: integer, format: int64, minimum: 1 }
+        status: { type: string, enum: [PUBLISHED] }
+        rawArtifactId: { type: [string, 'null'], format: uuid }
+        schemaDefinition: { type: object }
+        qualitySummary: { type: object }
+        createdAt: { type: string, format: date-time }

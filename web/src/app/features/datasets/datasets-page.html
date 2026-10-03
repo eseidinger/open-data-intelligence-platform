@@ -136,9 +136,10 @@
             <ng-container matColumnDef="geo"><th mat-header-cell *matHeaderCellDef>Geography</th><td mat-cell *matCellDef="let observation">{{ observation.geoCode }}</td></ng-container>
             <ng-container matColumnDef="year"><th mat-header-cell *matHeaderCellDef>Year</th><td mat-cell *matCellDef="let observation">{{ observation.observationYear }}</td></ng-container>
             <ng-container matColumnDef="value"><th mat-header-cell *matHeaderCellDef>Value</th><td mat-cell *matCellDef="let observation">{{ observation.observationValue }} {{ observation.unitCode }}</td></ng-container>
+            <ng-container matColumnDef="version"><th mat-header-cell *matHeaderCellDef>Version</th><td mat-cell *matCellDef="let observation">{{ observation.datasetVersionNumber === null ? 'Legacy' : 'v' + observation.datasetVersionNumber }}</td></ng-container>
             <ng-container matColumnDef="artifact"><th mat-header-cell *matHeaderCellDef>Raw artifact</th><td mat-cell *matCellDef="let observation" class="artifact-id">{{ observation.rawArtifactId }}</td></ng-container>
-            <tr mat-header-row *matHeaderRowDef="['indicator', 'geo', 'year', 'value', 'artifact']"></tr>
-            <tr mat-row *matRowDef="let row; columns: ['indicator', 'geo', 'year', 'value', 'artifact']"></tr>
+            <tr mat-header-row *matHeaderRowDef="['indicator', 'geo', 'year', 'value', 'version', 'artifact']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['indicator', 'geo', 'year', 'value', 'version', 'artifact']"></tr>
           </table>
         </div>
       }

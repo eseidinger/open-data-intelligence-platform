@@ -52,5 +52,13 @@ class IngestionControllerIntegrationTests(@Autowired private val mockMvc: MockMv
             .andExpect(jsonPath("$[0].observationYear").value(2024))
             .andExpect(jsonPath("$[0].unitCode").value("PC"))
             .andExpect(jsonPath("$[0].observationValue").value(22.474))
+            .andExpect(jsonPath("$[0].datasetVersionNumber").value(1))
+            .andExpect(jsonPath("$[0].datasetVersionId").isNotEmpty())
+        mockMvc.perform(get("/api/datasets/${dataset.id}/versions"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].versionNumber").value(1))
+            .andExpect(jsonPath("$[0].status").value("PUBLISHED"))
+            .andExpect(jsonPath("$[0].rawArtifactId").isNotEmpty())
+            .andExpect(jsonPath("$[0].qualitySummary.validationStatus").value("VALID"))
     }
 }

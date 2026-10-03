@@ -34,6 +34,8 @@ export interface CreateDatasetRequest {
 export interface EnergyObservation {
   id: string;
   datasetId: string;
+  datasetVersionId: string | null;
+  datasetVersionNumber: number | null;
   rawArtifactId: string;
   indicatorCode: string;
   geoCode: string;

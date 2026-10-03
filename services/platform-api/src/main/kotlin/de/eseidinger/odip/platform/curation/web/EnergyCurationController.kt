@@ -38,5 +38,5 @@ data class CreateEnergyObservationRequest(
     val observationValue: BigDecimal,
 )
 
-data class EnergyObservationResponse(val id: UUID, val datasetId: UUID, val rawArtifactId: UUID, val indicatorCode: String, val geoCode: String, val observationYear: Int, val unitCode: String, val observationValue: BigDecimal, val createdAt: Instant)
-private fun EnergyObservationEntity.toResponse() = EnergyObservationResponse(id, requireNotNull(dataset).id, requireNotNull(rawArtifact).id, indicatorCode, geoCode, observationYear, unitCode, observationValue, createdAt)
+data class EnergyObservationResponse(val id: UUID, val datasetId: UUID, val datasetVersionId: UUID?, val datasetVersionNumber: Long?, val rawArtifactId: UUID, val indicatorCode: String, val geoCode: String, val observationYear: Int, val unitCode: String, val observationValue: BigDecimal, val createdAt: Instant)
+private fun EnergyObservationEntity.toResponse() = EnergyObservationResponse(id, requireNotNull(dataset).id, datasetVersion?.id, datasetVersion?.versionNumber, requireNotNull(rawArtifact).id, indicatorCode, geoCode, observationYear, unitCode, observationValue, createdAt)
