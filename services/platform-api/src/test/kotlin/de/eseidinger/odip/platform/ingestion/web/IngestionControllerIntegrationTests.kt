@@ -28,7 +28,14 @@ class IngestionControllerIntegrationTests(@Autowired private val mockMvc: MockMv
 
         mockMvc.perform(get("/api/pipeline-runs/$runId/job")).andExpect(status().isOk).andExpect(jsonPath("$.location").value(source.location))
         mockMvc.perform(post("/api/pipeline-runs/$runId/started")).andExpect(status().isOk).andExpect(jsonPath("$.status").value("RUNNING"))
-        mockMvc.perform(post("/api/pipeline-runs/$runId/completed").contentType(MediaType.APPLICATION_JSON).content("""{"storageUri":"s3://odip-raw/raw/test","contentLength":2,"checksumSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}"""))
+        mockMvc.perform(post("/api/pipeline-runs/$runId/completed").contentType(MediaType.APPLICATION_JSON).content("""{"storageUri":"s3://odip-raw/raw/test","contentType":"application/json","contentLength":2,"checksumSha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","sourceVersion":"fixture-v1"}"""))
             .andExpect(status().isOk).andExpect(jsonPath("$.status").value("SUCCEEDED"))
+        mockMvc.perform(get("/api/pipeline-runs/$runId/artifacts"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].storageUri").value("s3://odip-raw/raw/test"))
+            .andExpect(jsonPath("$[0].contentType").value("application/json"))
+            .andExpect(jsonPath("$[0].contentLength").value(2))
+            .andExpect(jsonPath("$[0].checksumSha256").value("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+            .andExpect(jsonPath("$[0].sourceVersion").value("fixture-v1"))
     }
 }

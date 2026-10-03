@@ -11,8 +11,19 @@ export interface PipelineRun {
   completedAt: string | null;
 }
 
+export interface RawArtifact {
+  id: string;
+  storageUri: string;
+  contentType: string | null;
+  contentLength: number;
+  checksumSha256: string;
+  sourceVersion: string | null;
+  retrievedAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PipelineRunApiService {
   private readonly http = inject(HttpClient);
   list() { return this.http.get<readonly PipelineRun[]>('/api/pipeline-runs'); }
+  listArtifacts(runId: string) { return this.http.get<readonly RawArtifact[]>(`/api/pipeline-runs/${runId}/artifacts`); }
 }

@@ -23,6 +23,12 @@ class IngestionService(
     @Transactional(readOnly = true)
     fun list(): List<PipelineRunEntity> = pipelineRunRepository.findAll().sortedByDescending { it.requestedAt }
 
+    @Transactional(readOnly = true)
+    fun artifacts(runId: UUID): List<RawArtifactEntity> {
+        run(runId)
+        return rawArtifactRepository.findAllByPipelineRun_IdOrderByRetrievedAtDesc(runId)
+    }
+
     @Transactional
     fun queue(sourceId: UUID): PipelineRunEntity {
         val source = dataSourceRepository.findById(sourceId).orElseThrow { notFound("Data source", sourceId) }

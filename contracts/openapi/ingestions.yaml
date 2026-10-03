@@ -3,6 +3,20 @@ info:
   title: ODIP Platform API — Raw Ingestion
   version: 0.1.0
 paths:
+  /api/pipeline-runs/{runId}/artifacts:
+    get:
+      summary: List raw artifacts produced by a pipeline run
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses:
+        '200':
+          description: Raw artifacts ordered by retrieval time, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RawArtifact'
   /api/data-sources/{sourceId}/ingestions:
     post:
       summary: Queue raw ingestion for a source
@@ -67,3 +81,14 @@ components:
         runId: { type: string, format: uuid }
         sourceId: { type: string, format: uuid }
         location: { type: string, format: uri }
+    RawArtifact:
+      type: object
+      required: [id, storageUri, contentLength, checksumSha256, retrievedAt]
+      properties:
+        id: { type: string, format: uuid }
+        storageUri: { type: string, format: uri }
+        contentType: { type: [string, 'null'] }
+        contentLength: { type: integer, format: int64, minimum: 0 }
+        checksumSha256: { type: string, pattern: '^[a-fA-F0-9]{64}$' }
+        sourceVersion: { type: [string, 'null'] }
+        retrievedAt: { type: string, format: date-time }

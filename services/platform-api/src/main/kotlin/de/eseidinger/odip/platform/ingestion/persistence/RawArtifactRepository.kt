@@ -4,4 +4,6 @@ import de.eseidinger.odip.platform.ingestion.domain.RawArtifactEntity
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface RawArtifactRepository : JpaRepository<RawArtifactEntity, UUID>
+interface RawArtifactRepository : JpaRepository<RawArtifactEntity, UUID> {
+    fun findAllByPipelineRun_IdOrderByRetrievedAtDesc(pipelineRunId: UUID): List<RawArtifactEntity>
+}
