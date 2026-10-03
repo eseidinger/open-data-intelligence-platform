@@ -15,18 +15,18 @@ services:
       timeout: 3s
       retries: 10
 
-  minio:
-    image: quay.io/minio/aistor/minio:RELEASE.2026-09-19T17-05-25Z
-    command: server /data --console-address ":9001"
+  object-store:
+    # SeaweedFS provides a license-free, S3-compatible object store for local development.
+    image: chrislusf/seaweedfs:latest
     environment:
-      MINIO_ROOT_USER: odip
-      MINIO_ROOT_PASSWORD: odip-local-development
+      AWS_ACCESS_KEY_ID: odip
+      AWS_SECRET_ACCESS_KEY: odip-local-development
+      S3_BUCKET: odip-raw
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9000:8333"
     volumes:
-      - minio-data:/data
+      - object-store-data:/data
 
 volumes:
   postgres-data:
-  minio-data:
+  object-store-data:

@@ -6,6 +6,8 @@ import sys
 import boto3
 import requests
 
+from botocore.exceptions import ClientError
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -13,7 +15,9 @@ def main() -> None:
     parser.add_argument("--api-url", default=os.getenv("ODIP_API_URL", "http://localhost:8080"))
     args = parser.parse_args()
     base_url = args.api_url.rstrip("/")
-    job = requests.get(f"{base_url}/api/pipeline-runs/{args.run_id}/job", timeout=15).json()
+    job_response = requests.get(f"{base_url}/api/pipeline-runs/{args.run_id}/job", timeout=15)
+    job_response.raise_for_status()
+    job = job_response.json()
     requests.post(f"{base_url}/api/pipeline-runs/{args.run_id}/started", timeout=15).raise_for_status()
     try:
         response = requests.get(job["location"], timeout=60)
@@ -25,8 +29,9 @@ def main() -> None:
         bucket = os.getenv("ODIP_S3_BUCKET", "odip-raw")
         try:
             s3.create_bucket(Bucket=bucket)
-        except s3.exceptions.BucketAlreadyOwnedByYou:
-            pass
+        except ClientError as error:
+            if error.response["Error"].get("Code") not in {"BucketAlreadyOwnedByYou", "BucketAlreadyExists"}:
+                raise
         s3.put_object(Bucket=bucket, Key=key, Body=payload, ContentType=response.headers.get("Content-Type", "application/octet-stream"))
         requests.post(f"{base_url}/api/pipeline-runs/{args.run_id}/completed", json={"storageUri": f"s3://{bucket}/{key}", "contentType": response.headers.get("Content-Type"), "contentLength": len(payload), "checksumSha256": checksum, "sourceVersion": response.headers.get("ETag")}, timeout=15).raise_for_status()
     except Exception as error:

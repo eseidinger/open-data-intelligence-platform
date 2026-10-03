@@ -16,4 +16,4 @@ Build files, component configuration, and executable code should be added as eac
 
 ## Local foundation
 
-Start PostgreSQL and MinIO with the instructions in [infrastructure/compose/README.md](infrastructure/compose/README.md). Run the API with `./gradlew bootRun` from `services/platform-api`, then start the UI with `npm start` from `web`. The Angular development server proxies `/api` and `/actuator` to the API at `localhost:8080`.
+Start PostgreSQL and the local S3-compatible object store with the instructions in [infrastructure/compose/README.md](infrastructure/compose/README.md). Run the API with `./gradlew bootRun` from `services/platform-api`, then start the UI with `npm start` from `web`. The Angular development server proxies `/api` and `/actuator` to the API at `localhost:8080`.

@@ -8,4 +8,4 @@ uv sync
 uv run odip-ingest --run-id <pipeline-run-id>
 ```
 
-For local development, the defaults target the API at `http://localhost:8080`, MinIO at `http://localhost:9000`, and the `odip-raw` bucket. Override them with `ODIP_API_URL`, `ODIP_S3_ENDPOINT`, `ODIP_S3_ACCESS_KEY`, `ODIP_S3_SECRET_KEY`, and `ODIP_S3_BUCKET` when required.
+For local development, the defaults target the API at `http://localhost:8080`, the S3-compatible object store at `http://localhost:9000`, and the `odip-raw` bucket. Override them with `ODIP_API_URL`, `ODIP_S3_ENDPOINT`, `ODIP_S3_ACCESS_KEY`, `ODIP_S3_SECRET_KEY`, and `ODIP_S3_BUCKET` when required.
