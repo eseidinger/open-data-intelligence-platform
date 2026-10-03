@@ -1,0 +1,101 @@
+openapi: 3.1.1
+info:
+  title: ODIP Platform API — Datasets
+  version: 0.1.0
+paths:
+  /api/datasets:
+    get:
+      summary: List registered datasets
+      operationId: listDatasets
+      responses:
+        '200':
+          description: Registered datasets ordered by name.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dataset'
+    post:
+      summary: Register a dataset and link it to its contributing sources
+      operationId: createDataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDatasetRequest'
+      responses:
+        '201':
+          description: Dataset registered.
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '400':
+          description: Invalid request or unknown source ID.
+        '409':
+          description: A dataset with this name already exists.
+components:
+  schemas:
+    DatasetClassification:
+      type: string
+      enum: [PUBLIC, INTERNAL, RESTRICTED]
+    SourceSummary:
+      type: object
+      required: [id, name, sourceType]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        sourceType:
+          type: string
+          enum: [API, FILE, DATABASE, STREAM, DOCUMENT]
+    CreateDatasetRequest:
+      type: object
+      required: [name, classification, sourceIds]
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 10000
+        owner:
+          type: string
+          maxLength: 255
+        classification:
+          $ref: '#/components/schemas/DatasetClassification'
+        sourceIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+    Dataset:
+      allOf:
+        - $ref: '#/components/schemas/CreateDatasetRequest'
+        - type: object
+          required: [id, createdAt, updatedAt, sources]
+          properties:
+            id:
+              type: string
+              format: uuid
+            sources:
+              type: array
+              items:
+                $ref: '#/components/schemas/SourceSummary'
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time

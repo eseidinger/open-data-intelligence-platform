@@ -5,6 +5,10 @@ export const routes: Routes = [
     path: 'sources',
     loadComponent: () => import('./features/sources/sources-page').then((module) => module.SourcesPageComponent),
   },
+  {
+    path: 'datasets',
+    loadComponent: () => import('./features/datasets/datasets-page').then((module) => module.DatasetsPageComponent),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'sources' },
   { path: '**', redirectTo: 'sources' },
 ];
