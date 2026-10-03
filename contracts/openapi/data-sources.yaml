@@ -1,0 +1,88 @@
+openapi: 3.1.1
+info:
+  title: ODIP Platform API
+  version: 0.1.0
+  description: Catalog operations for the Open Data Intelligence Platform.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/data-sources:
+    get:
+      summary: List registered data sources
+      operationId: listDataSources
+      responses:
+        '200':
+          description: Registered sources ordered by name.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataSource'
+    post:
+      summary: Register a data source
+      operationId: createDataSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDataSourceRequest'
+      responses:
+        '201':
+          description: Source registered.
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+        '400':
+          description: Invalid request.
+        '409':
+          description: A source with this name already exists.
+components:
+  schemas:
+    DataSourceType:
+      type: string
+      enum: [API, FILE, DATABASE, STREAM, DOCUMENT]
+    CreateDataSourceRequest:
+      type: object
+      required: [name, sourceType, location]
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        sourceType:
+          $ref: '#/components/schemas/DataSourceType'
+        location:
+          type: string
+          format: uri
+          maxLength: 2048
+        owner:
+          type: string
+          maxLength: 255
+        license:
+          type: string
+          maxLength: 2048
+        refreshCadence:
+          type: string
+          maxLength: 255
+    DataSource:
+      allOf:
+        - $ref: '#/components/schemas/CreateDataSourceRequest'
+        - type: object
+          required: [id, createdAt, updatedAt]
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time

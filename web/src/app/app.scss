@@ -1,0 +1,26 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+mat-toolbar {
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.brand {
+  color: inherit;
+  font: var(--mat-sys-title-large);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+}
+
+.toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+main {
+  margin: 0 auto;
+  max-width: 80rem;
+  padding: 2rem 1.5rem;
+}
