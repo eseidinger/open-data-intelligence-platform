@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: platform-api
+  profiles:
+    default: dev
+  jpa:
+    open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

@@ -13,3 +13,7 @@ The repository is a monorepo organized around the ODIP baseline architecture. Co
 | `scripts` | Repository-level developer and automation scripts. |
 
 Build files, component configuration, and executable code should be added as each vertical slice is implemented. Generated artifacts, credentials, local datasets, and experiment measurements belong outside version control unless explicitly selected as safe fixtures or published evidence.
+
+## Local foundation
+
+Start PostgreSQL and MinIO with the instructions in [infrastructure/compose/README.md](infrastructure/compose/README.md). Run the API with `./gradlew bootRun` from `services/platform-api`, then start the UI with `npm start` from `web`. The Angular development server proxies `/api` and `/actuator` to the API at `localhost:8080`.

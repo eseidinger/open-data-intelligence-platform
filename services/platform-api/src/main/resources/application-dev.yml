@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: ${ODIP_DATABASE_URL:jdbc:postgresql://localhost:5432/odip}
+    username: ${ODIP_DATABASE_USERNAME:odip}
+    password: ${ODIP_DATABASE_PASSWORD:odip}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+odip:
+  object-storage:
+    health-url: ${ODIP_OBJECT_STORAGE_HEALTH_URL:http://localhost:9000/minio/health/live}
+
+management:
+  endpoint:
+    health:
+      show-details: always
