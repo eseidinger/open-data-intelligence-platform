@@ -26,6 +26,11 @@ export interface CreateDataSourceRequest {
   refreshCadence: string;
 }
 
+export interface QueuedPipelineRun {
+  id: string;
+  status: 'QUEUED';
+}
+
 @Injectable({ providedIn: 'root' })
 export class DataSourceApiService {
   private readonly http = inject(HttpClient);
@@ -36,5 +41,9 @@ export class DataSourceApiService {
 
   create(request: CreateDataSourceRequest) {
     return this.http.post<DataSource>('/api/data-sources', request);
+  }
+
+  queueIngestion(sourceId: string) {
+    return this.http.post<QueuedPipelineRun>(`/api/data-sources/${sourceId}/ingestions`, {});
   }
 }

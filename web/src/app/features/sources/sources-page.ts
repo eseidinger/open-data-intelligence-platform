@@ -35,10 +35,11 @@ export class SourcesPageComponent {
   private readonly dataSourceApi = inject(DataSourceApiService);
 
   readonly sourceTypes = dataSourceTypes;
-  readonly displayedColumns = ['name', 'sourceType', 'owner', 'refreshCadence'];
+  readonly displayedColumns = ['name', 'sourceType', 'owner', 'refreshCadence', 'actions'];
   readonly sources = signal<readonly DataSource[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
+  readonly queueingSourceId = signal<string | null>(null);
   readonly error = signal<string | null>(null);
 
   readonly form = this.formBuilder.group({
@@ -93,6 +94,18 @@ export class SourcesPageComponent {
       error: () => {
         this.error.set('Source could not be saved. Names must be unique and locations must be valid URIs.');
         this.saving.set(false);
+      },
+    });
+  }
+
+  queueIngestion(source: DataSource): void {
+    this.queueingSourceId.set(source.id);
+    this.error.set(null);
+    this.dataSourceApi.queueIngestion(source.id).subscribe({
+      next: () => this.queueingSourceId.set(null),
+      error: () => {
+        this.error.set('Ingestion could not be queued.');
+        this.queueingSourceId.set(null);
       },
     });
   }
