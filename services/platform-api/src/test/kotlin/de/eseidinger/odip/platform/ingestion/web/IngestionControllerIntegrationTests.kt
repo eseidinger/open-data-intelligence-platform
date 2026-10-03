@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional
 class IngestionControllerIntegrationTests(@Autowired private val mockMvc: MockMvc, @Autowired private val sources: DataSourceRepository, @Autowired private val datasets: DatasetRepository) {
     @Test
     fun `queues and completes a raw ingestion run`() {
-        val source = sources.save(DataSourceEntity(name = "Fixture ${java.util.UUID.randomUUID()}", sourceType = DataSourceType.API, location = "https://example.test/data.json"))
+        val source = sources.save(DataSourceEntity(name = "Fixture ${java.util.UUID.randomUUID()}", sourceType = DataSourceType.API, location = "https://example.test/data.json", refreshCadence = "annual"))
         val dataset = datasets.save(DatasetEntity(name = "Fixture dataset ${java.util.UUID.randomUUID()}", classification = DatasetClassification.PUBLIC, sources = mutableSetOf(source)))
         val queued = mockMvc.perform(post("/api/data-sources/${source.id}/ingestions"))
             .andExpect(status().isAccepted).andExpect(jsonPath("$.status").value("QUEUED")).andReturn()
@@ -60,5 +60,11 @@ class IngestionControllerIntegrationTests(@Autowired private val mockMvc: MockMv
             .andExpect(jsonPath("$[0].status").value("PUBLISHED"))
             .andExpect(jsonPath("$[0].rawArtifactId").isNotEmpty())
             .andExpect(jsonPath("$[0].qualitySummary.validationStatus").value("VALID"))
+        mockMvc.perform(get("/api/datasets/${dataset.id}/summary"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.latestVersionNumber").value(1))
+            .andExpect(jsonPath("$.freshnessStatus").value("FRESH"))
+            .andExpect(jsonPath("$.validationStatus").value("VALID"))
+            .andExpect(jsonPath("$.recordCount").value(1))
     }
 }

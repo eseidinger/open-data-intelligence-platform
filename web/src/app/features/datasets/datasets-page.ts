@@ -13,6 +13,7 @@ import {
   Dataset,
   DatasetApiService,
   DatasetClassification,
+  DatasetSummary,
   EnergyObservation,
   datasetClassifications,
 } from '../../core/api/dataset-api.service';
@@ -49,6 +50,7 @@ export class DatasetsPageComponent {
   readonly observations = signal<readonly EnergyObservation[]>([]);
   readonly observationsLoading = signal(false);
   readonly observationsError = signal<string | null>(null);
+  readonly summary = signal<DatasetSummary | null>(null);
 
   readonly form = this.formBuilder.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
@@ -86,6 +88,7 @@ export class DatasetsPageComponent {
     this.selectedDataset.set(dataset);
     this.observations.set([]);
     this.observationsError.set(null);
+    this.summary.set(null);
     this.observationsLoading.set(true);
     this.datasetApi.listEnergyObservations(dataset.id).subscribe({
       next: (observations) => {
@@ -96,6 +99,10 @@ export class DatasetsPageComponent {
         this.observationsError.set('Curated energy observations could not be loaded.');
         this.observationsLoading.set(false);
       },
+    });
+    this.datasetApi.getSummary(dataset.id).subscribe({
+      next: (summary) => this.summary.set(summary),
+      error: () => this.observationsError.set('Dataset quality and freshness could not be loaded.'),
     });
   }
 

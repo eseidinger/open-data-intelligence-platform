@@ -45,6 +45,16 @@ export interface EnergyObservation {
   createdAt: string;
 }
 
+export interface DatasetSummary {
+  datasetId: string;
+  latestVersionNumber: number | null;
+  retrievedAt: string | null;
+  freshnessStatus: 'FRESH' | 'STALE' | 'UNKNOWN';
+  freshnessDueAt: string | null;
+  validationStatus: 'VALID' | 'INVALID' | 'UNSUPPORTED' | 'NOT_RECORDED';
+  recordCount: number | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DatasetApiService {
   private readonly http = inject(HttpClient);
@@ -59,5 +69,9 @@ export class DatasetApiService {
 
   listEnergyObservations(datasetId: string) {
     return this.http.get<readonly EnergyObservation[]>(`/api/datasets/${datasetId}/energy-observations`);
+  }
+
+  getSummary(datasetId: string) {
+    return this.http.get<DatasetSummary>(`/api/datasets/${datasetId}/summary`);
   }
 }

@@ -49,6 +49,18 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/DatasetVersion'
+  /api/datasets/{datasetId}/summary:
+    get:
+      summary: Get freshness and quality summary for a dataset
+      parameters:
+        - $ref: '#/components/parameters/DatasetId'
+      responses:
+        '200':
+          description: Latest curated version's freshness and quality status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetSummary'
   /api/pipeline-runs/{runId}/artifacts:
     get:
       summary: List raw artifacts produced by a pipeline run
@@ -217,3 +229,14 @@ components:
         schemaDefinition: { type: object }
         qualitySummary: { type: object }
         createdAt: { type: string, format: date-time }
+    DatasetSummary:
+      type: object
+      required: [datasetId, freshnessStatus, validationStatus]
+      properties:
+        datasetId: { type: string, format: uuid }
+        latestVersionNumber: { type: [integer, 'null'], format: int64 }
+        retrievedAt: { type: [string, 'null'], format: date-time }
+        freshnessStatus: { type: string, enum: [FRESH, STALE, UNKNOWN] }
+        freshnessDueAt: { type: [string, 'null'], format: date-time }
+        validationStatus: { type: string, enum: [VALID, INVALID, UNSUPPORTED, NOT_RECORDED] }
+        recordCount: { type: [integer, 'null'], format: int64, minimum: 0 }

@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RestController
 class DatasetVersionController(private val versions: DatasetVersionService) {
     @GetMapping("/{datasetId}/versions")
     fun list(@PathVariable datasetId: UUID): List<DatasetVersionResponse> = versions.list(datasetId).map { it.toResponse() }
+
+    @GetMapping("/{datasetId}/summary")
+    fun summary(@PathVariable datasetId: UUID) = versions.summary(datasetId)
 }
 
 data class DatasetVersionResponse(val id: UUID, val versionNumber: Long, val status: String, val rawArtifactId: UUID?, val schemaDefinition: Map<String, Any?>, val qualitySummary: Map<String, Any?>, val createdAt: Instant)

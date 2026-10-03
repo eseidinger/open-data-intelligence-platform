@@ -123,6 +123,15 @@
       <mat-card-subtitle>Each observation links back to the raw artifact used to create it.</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
+      @if (summary(); as datasetSummary) {
+        <dl class="summary-grid">
+          <div><dt>Latest version</dt><dd>{{ datasetSummary.latestVersionNumber === null ? 'Not published' : 'v' + datasetSummary.latestVersionNumber }}</dd></div>
+          <div><dt>Freshness</dt><dd>{{ datasetSummary.freshnessStatus }}</dd></div>
+          <div><dt>Validation</dt><dd>{{ datasetSummary.validationStatus }}</dd></div>
+          <div><dt>Records</dt><dd>{{ datasetSummary.recordCount ?? 'Not available' }}</dd></div>
+          <div><dt>Retrieved</dt><dd>{{ datasetSummary.retrievedAt || 'Not available' }}</dd></div>
+        </dl>
+      }
       @if (observationsLoading()) {
         <div class="loading-state"><mat-spinner diameter="28" aria-label="Loading curated energy observations"></mat-spinner><span>Loading observations…</span></div>
       } @else if (observationsError(); as message) {

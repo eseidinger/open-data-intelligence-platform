@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface DatasetVersionRepository : JpaRepository<DatasetVersionEntity, UUID> {
     fun findByDataset_IdAndRawArtifact_Id(datasetId: UUID, rawArtifactId: UUID): DatasetVersionEntity?
-    fun findFirstByDataset_IdOrderByVersionNumberDesc(datasetId: UUID): DatasetVersionEntity?
-    @EntityGraph(attributePaths = ["rawArtifact"])
+    @EntityGraph(attributePaths = ["rawArtifact", "rawArtifact.source"])
     fun findAllByDataset_IdOrderByVersionNumberDesc(datasetId: UUID): List<DatasetVersionEntity>
+
+    @EntityGraph(attributePaths = ["rawArtifact", "rawArtifact.source"])
+    fun findFirstByDataset_IdOrderByVersionNumberDesc(datasetId: UUID): DatasetVersionEntity?
 }
