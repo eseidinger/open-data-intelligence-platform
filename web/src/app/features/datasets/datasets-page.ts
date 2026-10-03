@@ -13,6 +13,7 @@ import {
   Dataset,
   DatasetApiService,
   DatasetClassification,
+  EnergyObservation,
   datasetClassifications,
 } from '../../core/api/dataset-api.service';
 
@@ -38,12 +39,16 @@ export class DatasetsPageComponent {
   private readonly dataSourceApi = inject(DataSourceApiService);
 
   readonly classifications = datasetClassifications;
-  readonly displayedColumns = ['name', 'classification', 'sources', 'owner'];
+  readonly displayedColumns = ['name', 'classification', 'sources', 'owner', 'observations'];
   readonly datasets = signal<readonly Dataset[]>([]);
   readonly sourceOptions = signal<readonly DataSource[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
+  readonly selectedDataset = signal<Dataset | null>(null);
+  readonly observations = signal<readonly EnergyObservation[]>([]);
+  readonly observationsLoading = signal(false);
+  readonly observationsError = signal<string | null>(null);
 
   readonly form = this.formBuilder.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
@@ -75,6 +80,23 @@ export class DatasetsPageComponent {
 
   sourceNames(dataset: Dataset): string {
     return dataset.sources.map((source) => source.name).join(', ');
+  }
+
+  showObservations(dataset: Dataset): void {
+    this.selectedDataset.set(dataset);
+    this.observations.set([]);
+    this.observationsError.set(null);
+    this.observationsLoading.set(true);
+    this.datasetApi.listEnergyObservations(dataset.id).subscribe({
+      next: (observations) => {
+        this.observations.set(observations);
+        this.observationsLoading.set(false);
+      },
+      error: () => {
+        this.observationsError.set('Curated energy observations could not be loaded.');
+        this.observationsLoading.set(false);
+      },
+    });
   }
 
   submit(): void {

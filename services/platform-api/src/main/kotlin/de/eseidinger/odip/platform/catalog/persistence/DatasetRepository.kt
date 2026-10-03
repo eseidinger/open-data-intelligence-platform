@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface DatasetRepository : JpaRepository<DatasetEntity, UUID> {
     fun existsByName(name: String): Boolean
+    fun findAllBySources_Id(sourceId: UUID): List<DatasetEntity>
 
     @EntityGraph(attributePaths = ["sources"])
     fun findAllByOrderByNameAsc(): List<DatasetEntity>

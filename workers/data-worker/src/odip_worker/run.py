@@ -8,6 +8,9 @@ import requests
 
 from botocore.exceptions import ClientError
 
+from odip_worker.normalization import normalize
+from odip_worker.validation import validate_payload
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -23,6 +26,8 @@ def main() -> None:
         response = requests.get(job["location"], timeout=60)
         response.raise_for_status()
         payload = response.content
+        validation = validate_payload(payload, response.headers.get("Content-Type"))
+        energy_observation = normalize(payload, job.get("normalizer"))
         checksum = hashlib.sha256(payload).hexdigest()
         key = f"raw/{job['sourceId']}/{args.run_id}/source"
         s3 = boto3.client("s3", endpoint_url=os.getenv("ODIP_S3_ENDPOINT", "http://localhost:9000"), aws_access_key_id=os.getenv("ODIP_S3_ACCESS_KEY", "odip"), aws_secret_access_key=os.getenv("ODIP_S3_SECRET_KEY", "odip-local-development"))
@@ -33,7 +38,7 @@ def main() -> None:
             if error.response["Error"].get("Code") not in {"BucketAlreadyOwnedByYou", "BucketAlreadyExists"}:
                 raise
         s3.put_object(Bucket=bucket, Key=key, Body=payload, ContentType=response.headers.get("Content-Type", "application/octet-stream"))
-        requests.post(f"{base_url}/api/pipeline-runs/{args.run_id}/completed", json={"storageUri": f"s3://{bucket}/{key}", "contentType": response.headers.get("Content-Type"), "contentLength": len(payload), "checksumSha256": checksum, "sourceVersion": response.headers.get("ETag")}, timeout=15).raise_for_status()
+        requests.post(f"{base_url}/api/pipeline-runs/{args.run_id}/completed", json={"storageUri": f"s3://{bucket}/{key}", "contentType": response.headers.get("Content-Type"), "contentLength": len(payload), "checksumSha256": checksum, "sourceVersion": response.headers.get("ETag"), "validation": validation, "energyObservation": energy_observation}, timeout=15).raise_for_status()
     except Exception as error:
         requests.post(f"{base_url}/api/pipeline-runs/{args.run_id}/failed", json={"reason": str(error)[:4000]}, timeout=15)
         raise

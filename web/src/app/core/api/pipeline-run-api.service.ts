@@ -19,6 +19,16 @@ export interface RawArtifact {
   checksumSha256: string;
   sourceVersion: string | null;
   retrievedAt: string;
+  validation: RawArtifactValidation | null;
+}
+
+export interface RawArtifactValidation {
+  status: 'VALID' | 'INVALID' | 'UNSUPPORTED';
+  detectedFormat: string | null;
+  recordCount: number | null;
+  schemaFingerprint: string | null;
+  failureReason: string | null;
+  validatedAt: string;
 }
 
 @Injectable({ providedIn: 'root' })

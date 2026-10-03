@@ -26,6 +26,7 @@ class DataSourceService(
                 owner = request.owner?.ifBlank { null },
                 license = request.license?.ifBlank { null },
                 refreshCadence = request.refreshCadence?.ifBlank { null },
+                normalizer = request.normalizer,
             ),
         )
     }

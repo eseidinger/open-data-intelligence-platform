@@ -3,6 +3,38 @@ info:
   title: ODIP Platform API — Raw Ingestion
   version: 0.1.0
 paths:
+  /api/raw-artifacts/{artifactId}/energy-observations:
+    post:
+      summary: Create a curated energy observation from a raw artifact
+      parameters:
+        - $ref: '#/components/parameters/ArtifactId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnergyObservationInput'
+      responses:
+        '201':
+          description: Curated observation created or returned idempotently.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnergyObservation'
+  /api/datasets/{datasetId}/energy-observations:
+    get:
+      summary: List curated energy observations for a dataset
+      parameters:
+        - $ref: '#/components/parameters/DatasetId'
+      responses:
+        '200':
+          description: Observations ordered by year, newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnergyObservation'
   /api/pipeline-runs/{runId}/artifacts:
     get:
       summary: List raw artifacts produced by a pipeline run
@@ -52,6 +84,12 @@ paths:
       summary: Record a successfully stored raw artifact
       parameters:
         - $ref: '#/components/parameters/RunId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteRun'
       responses: { '200': { description: Run completed. } }
   /api/pipeline-runs/{runId}/failed:
     post:
@@ -63,6 +101,8 @@ components:
   parameters:
     SourceId: { name: sourceId, in: path, required: true, schema: { type: string, format: uuid } }
     RunId: { name: runId, in: path, required: true, schema: { type: string, format: uuid } }
+    ArtifactId: { name: artifactId, in: path, required: true, schema: { type: string, format: uuid } }
+    DatasetId: { name: datasetId, in: path, required: true, schema: { type: string, format: uuid } }
   schemas:
     PipelineRun:
       type: object
@@ -81,6 +121,7 @@ components:
         runId: { type: string, format: uuid }
         sourceId: { type: string, format: uuid }
         location: { type: string, format: uri }
+        normalizer: { type: [string, 'null'], enum: [EUROSTAT_RENEWABLE_SHARE] }
     RawArtifact:
       type: object
       required: [id, storageUri, contentLength, checksumSha256, retrievedAt]
@@ -92,3 +133,62 @@ components:
         checksumSha256: { type: string, pattern: '^[a-fA-F0-9]{64}$' }
         sourceVersion: { type: [string, 'null'] }
         retrievedAt: { type: string, format: date-time }
+        validation:
+          oneOf:
+            - $ref: '#/components/schemas/RawArtifactValidation'
+            - type: 'null'
+    CompleteRun:
+      type: object
+      required: [storageUri, contentLength, checksumSha256]
+      properties:
+        storageUri: { type: string, format: uri }
+        contentType: { type: [string, 'null'] }
+        contentLength: { type: integer, format: int64, minimum: 0 }
+        checksumSha256: { type: string, pattern: '^[a-fA-F0-9]{64}$' }
+        sourceVersion: { type: [string, 'null'] }
+        validation:
+          oneOf:
+            - $ref: '#/components/schemas/ArtifactValidationInput'
+            - type: 'null'
+        energyObservation:
+          oneOf:
+            - $ref: '#/components/schemas/EnergyObservationInput'
+            - type: 'null'
+    ArtifactValidationInput:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [VALID, INVALID, UNSUPPORTED] }
+        detectedFormat: { type: [string, 'null'] }
+        recordCount: { type: [integer, 'null'], format: int64, minimum: 0 }
+        schemaFingerprint: { type: [string, 'null'], pattern: '^[a-fA-F0-9]{64}$' }
+        failureReason: { type: [string, 'null'] }
+    RawArtifactValidation:
+      type: object
+      required: [status, validatedAt]
+      properties:
+        status: { type: string, enum: [VALID, INVALID, UNSUPPORTED] }
+        detectedFormat: { type: [string, 'null'] }
+        recordCount: { type: [integer, 'null'], format: int64, minimum: 0 }
+        schemaFingerprint: { type: [string, 'null'], pattern: '^[a-fA-F0-9]{64}$' }
+        failureReason: { type: [string, 'null'] }
+        validatedAt: { type: string, format: date-time }
+    EnergyObservationInput:
+      type: object
+      required: [indicatorCode, geoCode, observationYear, unitCode, observationValue]
+      properties:
+        indicatorCode: { type: string, pattern: '^[A-Z0-9_]+$' }
+        geoCode: { type: string, pattern: '^[A-Z]{2,32}$' }
+        observationYear: { type: integer, minimum: 1900, maximum: 2200 }
+        unitCode: { type: string, pattern: '^[A-Z0-9_]+$' }
+        observationValue: { type: number }
+    EnergyObservation:
+      allOf:
+        - $ref: '#/components/schemas/EnergyObservationInput'
+        - type: object
+          required: [id, datasetId, rawArtifactId, createdAt]
+          properties:
+            id: { type: string, format: uuid }
+            datasetId: { type: string, format: uuid }
+            rawArtifactId: { type: string, format: uuid }
+            createdAt: { type: string, format: date-time }

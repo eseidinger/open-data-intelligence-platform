@@ -31,6 +31,18 @@ export interface CreateDatasetRequest {
   sourceIds: readonly string[];
 }
 
+export interface EnergyObservation {
+  id: string;
+  datasetId: string;
+  rawArtifactId: string;
+  indicatorCode: string;
+  geoCode: string;
+  observationYear: number;
+  unitCode: string;
+  observationValue: number;
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DatasetApiService {
   private readonly http = inject(HttpClient);
@@ -41,5 +53,9 @@ export class DatasetApiService {
 
   create(request: CreateDatasetRequest) {
     return this.http.post<Dataset>('/api/datasets', request);
+  }
+
+  listEnergyObservations(datasetId: string) {
+    return this.http.get<readonly EnergyObservation[]>(`/api/datasets/${datasetId}/energy-observations`);
   }
 }

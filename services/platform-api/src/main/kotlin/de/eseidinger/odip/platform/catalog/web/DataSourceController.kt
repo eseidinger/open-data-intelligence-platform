@@ -1,6 +1,7 @@
 package de.eseidinger.odip.platform.catalog.web
 
 import de.eseidinger.odip.platform.catalog.domain.DataSourceEntity
+import de.eseidinger.odip.platform.catalog.domain.DataSourceNormalizer
 import de.eseidinger.odip.platform.catalog.domain.DataSourceType
 import de.eseidinger.odip.platform.catalog.service.DataSourceService
 import jakarta.validation.Valid
@@ -41,6 +42,7 @@ class DataSourceController(
         owner = source.owner,
         license = source.license,
         refreshCadence = source.refreshCadence,
+        normalizer = source.normalizer,
         createdAt = source.createdAt,
         updatedAt = source.updatedAt,
     )
@@ -61,6 +63,7 @@ data class CreateDataSourceRequest(
     val license: String? = null,
     @field:Size(max = 255)
     val refreshCadence: String? = null,
+    val normalizer: DataSourceNormalizer? = null,
 )
 
 data class DataSourceResponse(
@@ -71,6 +74,7 @@ data class DataSourceResponse(
     val owner: String?,
     val license: String?,
     val refreshCadence: String?,
+    val normalizer: DataSourceNormalizer?,
     val createdAt: Instant,
     val updatedAt: Instant,
 )

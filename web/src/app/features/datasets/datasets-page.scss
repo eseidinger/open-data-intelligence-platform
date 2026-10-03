@@ -65,6 +65,14 @@ table {
   margin: 1rem 0;
 }
 
+.observations-panel {
+  margin-top: 1.5rem;
+}
+
+.artifact-id {
+  font-family: monospace;
+}
+
 .error-message {
   background: var(--mat-sys-error-container);
   border-radius: 0.5rem;

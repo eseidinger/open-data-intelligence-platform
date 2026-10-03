@@ -71,6 +71,9 @@ components:
         refreshCadence:
           type: string
           maxLength: 255
+        normalizer:
+          type: [string, 'null']
+          enum: [EUROSTAT_RENEWABLE_SHARE]
     DataSource:
       allOf:
         - $ref: '#/components/schemas/CreateDataSourceRequest'

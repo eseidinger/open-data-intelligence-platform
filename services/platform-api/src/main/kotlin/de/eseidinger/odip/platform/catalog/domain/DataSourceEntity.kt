@@ -33,6 +33,9 @@ class DataSourceEntity(
     @Column(name = "refresh_cadence")
     var refreshCadence: String? = null,
 
+    @Enumerated(EnumType.STRING)
+    var normalizer: DataSourceNormalizer? = null,
+
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: Instant = Instant.now(),
 

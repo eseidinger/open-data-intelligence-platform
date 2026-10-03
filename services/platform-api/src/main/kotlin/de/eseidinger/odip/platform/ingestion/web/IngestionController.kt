@@ -2,7 +2,10 @@ package de.eseidinger.odip.platform.ingestion.web
 
 import de.eseidinger.odip.platform.ingestion.domain.PipelineRunEntity
 import de.eseidinger.odip.platform.ingestion.domain.RawArtifactEntity
+import de.eseidinger.odip.platform.ingestion.domain.ArtifactValidationStatus
 import de.eseidinger.odip.platform.ingestion.service.IngestionService
+import de.eseidinger.odip.platform.ingestion.service.RawArtifactWithValidation
+import de.eseidinger.odip.platform.curation.web.CreateEnergyObservationRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -31,9 +34,11 @@ class IngestionController(private val ingestionService: IngestionService) {
     @PostMapping("/pipeline-runs/{runId}/failed") fun fail(@PathVariable runId: UUID, @Valid @RequestBody request: FailRunRequest) = ingestionService.fail(runId, request.reason).toResponse()
 }
 
-data class CompleteRunRequest(@field:NotBlank @field:Pattern(regexp = "^s3://.+") val storageUri: String, val contentType: String? = null, @field:PositiveOrZero val contentLength: Long, @field:Pattern(regexp = "^[a-fA-F0-9]{64}$") val checksumSha256: String, val sourceVersion: String? = null)
+data class CompleteRunRequest(@field:NotBlank @field:Pattern(regexp = "^s3://.+") val storageUri: String, val contentType: String? = null, @field:PositiveOrZero val contentLength: Long, @field:Pattern(regexp = "^[a-fA-F0-9]{64}$") val checksumSha256: String, val sourceVersion: String? = null, @field:Valid val validation: ArtifactValidationRequest? = null, @field:Valid val energyObservation: CreateEnergyObservationRequest? = null)
+data class ArtifactValidationRequest(val status: ArtifactValidationStatus, val detectedFormat: String? = null, @field:PositiveOrZero val recordCount: Long? = null, @field:Pattern(regexp = "^[a-fA-F0-9]{64}$") val schemaFingerprint: String? = null, val failureReason: String? = null)
 data class FailRunRequest(@field:NotBlank val reason: String)
 data class PipelineRunResponse(val id: UUID, val sourceId: UUID, val sourceName: String, val status: String, val requestedAt: Instant, val startedAt: Instant?, val completedAt: Instant?)
-data class RawArtifactResponse(val id: UUID, val storageUri: String, val contentType: String?, val contentLength: Long, val checksumSha256: String, val sourceVersion: String?, val retrievedAt: Instant)
+data class RawArtifactResponse(val id: UUID, val storageUri: String, val contentType: String?, val contentLength: Long, val checksumSha256: String, val sourceVersion: String?, val retrievedAt: Instant, val validation: RawArtifactValidationResponse?)
+data class RawArtifactValidationResponse(val status: String, val detectedFormat: String?, val recordCount: Long?, val schemaFingerprint: String?, val failureReason: String?, val validatedAt: Instant)
 private fun PipelineRunEntity.toResponse() = PipelineRunResponse(id, requireNotNull(source).id, requireNotNull(source).name, status.name, requestedAt, startedAt, completedAt)
-private fun RawArtifactEntity.toResponse() = RawArtifactResponse(id, storageUri, contentType, contentLength, checksumSha256, sourceVersion, retrievedAt)
+private fun RawArtifactWithValidation.toResponse() = RawArtifactResponse(artifact.id, artifact.storageUri, artifact.contentType, artifact.contentLength, artifact.checksumSha256, artifact.sourceVersion, artifact.retrievedAt, validation?.let { RawArtifactValidationResponse(it.status.name, it.detectedFormat, it.recordCount, it.schemaFingerprint, it.failureReason, it.validatedAt) })

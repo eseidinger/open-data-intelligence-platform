@@ -1,11 +1,14 @@
 package de.eseidinger.odip.platform.ingestion.service
 
 import de.eseidinger.odip.platform.catalog.persistence.DataSourceRepository
+import de.eseidinger.odip.platform.curation.service.EnergyCurationService
 import de.eseidinger.odip.platform.ingestion.domain.PipelineRunEntity
 import de.eseidinger.odip.platform.ingestion.domain.PipelineRunStatus
 import de.eseidinger.odip.platform.ingestion.domain.RawArtifactEntity
+import de.eseidinger.odip.platform.ingestion.domain.RawArtifactValidationEntity
 import de.eseidinger.odip.platform.ingestion.persistence.PipelineRunRepository
 import de.eseidinger.odip.platform.ingestion.persistence.RawArtifactRepository
+import de.eseidinger.odip.platform.ingestion.persistence.RawArtifactValidationRepository
 import de.eseidinger.odip.platform.ingestion.web.CompleteRunRequest
 import java.time.Instant
 import java.util.UUID
@@ -19,14 +22,18 @@ class IngestionService(
     private val dataSourceRepository: DataSourceRepository,
     private val pipelineRunRepository: PipelineRunRepository,
     private val rawArtifactRepository: RawArtifactRepository,
+    private val rawArtifactValidationRepository: RawArtifactValidationRepository,
+    private val energyCurationService: EnergyCurationService,
 ) {
     @Transactional(readOnly = true)
     fun list(): List<PipelineRunEntity> = pipelineRunRepository.findAll().sortedByDescending { it.requestedAt }
 
     @Transactional(readOnly = true)
-    fun artifacts(runId: UUID): List<RawArtifactEntity> {
+    fun artifacts(runId: UUID): List<RawArtifactWithValidation> {
         run(runId)
-        return rawArtifactRepository.findAllByPipelineRun_IdOrderByRetrievedAtDesc(runId)
+        return rawArtifactRepository.findAllByPipelineRun_IdOrderByRetrievedAtDesc(runId).map { artifact ->
+            RawArtifactWithValidation(artifact, rawArtifactValidationRepository.findByRawArtifact_Id(artifact.id))
+        }
     }
 
     @Transactional
@@ -40,7 +47,7 @@ class IngestionService(
         val run = run(runId)
         requireStatus(run, PipelineRunStatus.QUEUED)
         val source = run.source ?: throw notFound("Data source", runId)
-        return IngestionJob(run.id, source.id, source.location)
+        return IngestionJob(run.id, source.id, source.location, source.normalizer?.name)
     }
 
     @Transactional
@@ -57,7 +64,11 @@ class IngestionService(
         val run = run(runId)
         requireStatus(run, PipelineRunStatus.RUNNING)
         val source = run.source ?: throw notFound("Data source", runId)
-        rawArtifactRepository.save(RawArtifactEntity(pipelineRun = run, source = source, storageUri = request.storageUri, contentType = request.contentType, contentLength = request.contentLength, checksumSha256 = request.checksumSha256, sourceVersion = request.sourceVersion))
+        val artifact = rawArtifactRepository.save(RawArtifactEntity(pipelineRun = run, source = source, storageUri = request.storageUri, contentType = request.contentType, contentLength = request.contentLength, checksumSha256 = request.checksumSha256, sourceVersion = request.sourceVersion))
+        request.validation?.let { validation ->
+            rawArtifactValidationRepository.save(RawArtifactValidationEntity(rawArtifact = artifact, status = validation.status, detectedFormat = validation.detectedFormat, recordCount = validation.recordCount, schemaFingerprint = validation.schemaFingerprint, failureReason = validation.failureReason))
+        }
+        request.energyObservation?.let { observation -> energyCurationService.curate(artifact.id, observation) }
         run.status = PipelineRunStatus.SUCCEEDED
         run.completedAt = Instant.now()
         return run
@@ -79,4 +90,5 @@ class IngestionService(
     private fun notFound(type: String, id: UUID) = ResponseStatusException(HttpStatus.NOT_FOUND, "$type $id was not found")
 }
 
-data class IngestionJob(val runId: UUID, val sourceId: UUID, val location: String)
+data class IngestionJob(val runId: UUID, val sourceId: UUID, val location: String, val normalizer: String?)
+data class RawArtifactWithValidation(val artifact: RawArtifactEntity, val validation: RawArtifactValidationEntity?)
