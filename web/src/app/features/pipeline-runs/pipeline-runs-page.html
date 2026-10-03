@@ -1,0 +1,7 @@
+<section class="header"><div><p class="eyebrow">Pipeline monitoring</p><h1>Pipeline runs</h1><p>Track queued raw ingestions and their outcomes.</p></div><button mat-stroked-button (click)="load()" [disabled]="loading()">Refresh</button></section>
+@if (error(); as message) { <p class="error" role="alert">{{ message }}</p> }
+<mat-card appearance="outlined"><mat-card-content>
+  @if (loading()) { <div class="loading"><mat-spinner diameter="28" aria-label="Loading pipeline runs"></mat-spinner><span>Loading runs…</span></div> }
+  @else if (runs().length === 0) { <p>No pipeline runs have been requested.</p> }
+  @else { <table mat-table [dataSource]="runs()"><ng-container matColumnDef="sourceName"><th mat-header-cell *matHeaderCellDef>Source</th><td mat-cell *matCellDef="let run">{{ run.sourceName }}</td></ng-container><ng-container matColumnDef="status"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let run">{{ run.status }}</td></ng-container><ng-container matColumnDef="requestedAt"><th mat-header-cell *matHeaderCellDef>Requested</th><td mat-cell *matCellDef="let run">{{ run.requestedAt }}</td></ng-container><ng-container matColumnDef="completedAt"><th mat-header-cell *matHeaderCellDef>Completed</th><td mat-cell *matCellDef="let run">{{ run.completedAt || '—' }}</td></ng-container><tr mat-header-row *matHeaderRowDef="displayedColumns"></tr><tr mat-row *matRowDef="let row; columns: displayedColumns"></tr></table> }
+</mat-card-content></mat-card>

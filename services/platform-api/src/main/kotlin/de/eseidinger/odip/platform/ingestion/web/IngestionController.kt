@@ -31,5 +31,5 @@ class IngestionController(private val ingestionService: IngestionService) {
 
 data class CompleteRunRequest(@field:NotBlank @field:Pattern(regexp = "^s3://.+") val storageUri: String, val contentType: String? = null, @field:PositiveOrZero val contentLength: Long, @field:Pattern(regexp = "^[a-fA-F0-9]{64}$") val checksumSha256: String, val sourceVersion: String? = null)
 data class FailRunRequest(@field:NotBlank val reason: String)
-data class PipelineRunResponse(val id: UUID, val sourceId: UUID, val status: String, val requestedAt: Instant, val startedAt: Instant?, val completedAt: Instant?)
-private fun PipelineRunEntity.toResponse() = PipelineRunResponse(id, requireNotNull(source).id, status.name, requestedAt, startedAt, completedAt)
+data class PipelineRunResponse(val id: UUID, val sourceId: UUID, val sourceName: String, val status: String, val requestedAt: Instant, val startedAt: Instant?, val completedAt: Instant?)
+private fun PipelineRunEntity.toResponse() = PipelineRunResponse(id, requireNotNull(source).id, requireNotNull(source).name, status.name, requestedAt, startedAt, completedAt)
