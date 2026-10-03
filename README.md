@@ -35,6 +35,10 @@ The [documentation index](docs/README.md) is the authoritative entry point for t
 
 ODIP is in the foundation/planning stage. The immediate objective is one complete energy-data vertical slice: register a licensed source, capture immutable raw input, validate and curate it, record lineage and quality, then make it available through the API and dataset browser.
 
+## License
+
+ODIP is licensed under the [Apache License 2.0](LICENSE).
+
 ## Core principles
 
 1. Keep logical datasets independent from physical storage.
