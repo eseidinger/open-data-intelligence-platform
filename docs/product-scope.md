@@ -27,7 +27,7 @@ An operator can register one licensed public source, execute a repeatable pipeli
 - Batch ingestion from a public API or file source.
 - Immutable raw capture, validation, normalization, and curated relational storage.
 - Pipeline-run metadata, data-quality metrics, and rejected-record handling.
-- PostgreSQL, S3-compatible object storage, a Kotlin/Spring API, Python worker, and Angular UI.
+- PostgreSQL, a Kotlin/Spring API, Python worker, and Angular UI.
 - One energy-data vertical slice from source to UI.
 
 ## Deliberately out of scope for the MVP
@@ -36,6 +36,10 @@ An operator can register one licensed public source, execute a repeatable pipeli
 - Mandatory specialized stores (search, graph, document, or vector databases).
 - Autonomous writes or unrestricted database access by an LLM.
 - Multiple unrelated domains, production-scale distributed processing, and a generic marketplace.
+
+## Planned after the data-foundation MVP
+
+Phase 2 adds S3-compatible object storage for large immutable raw artifacts and Parquet analytical representations. It is not required for the Phase 1 PostgreSQL deployment, but it is a required component of the Phase 2 architecture.
 
 ## Success measures
 

@@ -10,15 +10,15 @@ Exit criteria: a new contributor can start the stack locally, run automated chec
 
 ## Phase 1 — Data foundation
 
-Implement source and dataset catalog APIs; PostgreSQL and object-storage adapters; a Python batch worker; raw capture; validation, normalization, and curated storage; pipeline-run records; and an Angular dataset browser. Deliver one energy source end to end.
+Implement source and dataset catalog APIs; PostgreSQL-backed raw and curated storage; a Python batch worker; raw capture; validation and normalization; pipeline-run records; and an Angular dataset browser. Deliver one energy source end to end.
 
 Exit criteria: a licensed source is registered, ingested, versioned, browsable, and traceable from a curated record back to its raw artifact and pipeline run.
 
 ## Phase 2 — Quality and analytics
 
-Add profiling, expectations, reject workflows, freshness reporting, Parquet publication, DuckDB queries, historical data loading, and basic charts/questions for the energy use case.
+Add profiling, expectations, reject workflows, freshness reporting, historical data loading, and basic charts/questions for the energy use case. Introduce an S3-compatible object-storage adapter for large immutable raw artifacts and Parquet publications, including a controlled migration path from PostgreSQL-backed artifacts. Add DuckDB queries over the published analytical representations.
 
-Exit criteria: users can inspect quality/freshness and answer the documented reference questions from curated data; the same analytical query can run reproducibly over its specified representation.
+Exit criteria: users can inspect quality/freshness and answer the documented reference questions from curated data; the same analytical query can run reproducibly over its specified representation. Raw and Parquet artifacts are stored in S3-compatible storage, and their lineage, checksums, retention, and retrieval work through the storage abstraction.
 
 ## Phase 3 — Experimentation
 

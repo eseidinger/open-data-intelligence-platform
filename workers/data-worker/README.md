@@ -8,4 +8,4 @@ uv sync
 uv run odip-ingest --run-id <pipeline-run-id>
 ```
 
-For local development, the API default is `http://localhost:8080`. Override it with `ODIP_API_URL` or the `--api-url` option when required. The worker does not need database or object-storage credentials.
+For local development, the API default is `http://localhost:8080`. Override it with `ODIP_API_URL` or the `--api-url` option when required. The worker does not need database credentials.

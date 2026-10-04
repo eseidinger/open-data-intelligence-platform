@@ -8,7 +8,7 @@ The repository is a monorepo organized around the ODIP baseline architecture. Co
 | `workers/data-worker` | Python ingestion, transformation, profiling, analytics, and AI jobs. |
 | `web` | Angular/TypeScript dataset browser and operator interface. |
 | `contracts` | Versioned API and data-contract definitions shared across components. |
-| `infrastructure` | Local development, database migrations, object-storage setup, and deployment/observability assets. |
+| `infrastructure` | Local PostgreSQL development setup and deployment assets. |
 | `experiments` | Reproducible workload fixtures and experiment definitions. |
 | `scripts` | Repository-level developer and automation scripts. |
 
@@ -16,4 +16,4 @@ Build files, component configuration, and executable code should be added as eac
 
 ## Local foundation
 
-Start PostgreSQL and the local S3-compatible object store with the instructions in [infrastructure/compose/README.md](infrastructure/compose/README.md). Run the API with `./gradlew bootRun` from `services/platform-api`, then start the UI with `npm start` from `web`. The Angular development server proxies `/api` and `/actuator` to the API at `localhost:8080`.
+Start PostgreSQL with the instructions in [infrastructure/compose/README.md](infrastructure/compose/README.md). Run the API with `./gradlew bootRun` from `services/platform-api`, then start the UI with `npm start` from `web`. The Angular development server proxies `/api` and `/actuator` to the API at `localhost:8080`.

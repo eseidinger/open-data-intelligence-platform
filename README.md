@@ -14,7 +14,9 @@ The first reference implementation is **energy intelligence**: public electricit
 
 ## Baseline architecture
 
-The first implementation is intentionally small: a Kotlin/Spring Boot platform API and orchestration layer, Python workers for data and AI work, PostgreSQL for operational metadata and curated serving data, S3-compatible object storage for artifacts, DuckDB for analytics, and an Angular user interface.
+The first implementation is intentionally small: a Kotlin/Spring Boot platform API and orchestration layer, Python workers for data and AI work, PostgreSQL for operational metadata, raw artifacts, and curated serving data, DuckDB for analytics, and an Angular user interface.
+
+Phase 2 introduces S3-compatible object storage for large raw artifacts and Parquet publications; it is not a dependency of the current Phase 1 PostgreSQL-based deployment.
 
 Specialized search, graph, vector, document, and streaming technologies are optional adapters. They are introduced only when a product requirement or reproducible experiment justifies them.
 

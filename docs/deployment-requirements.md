@@ -26,9 +26,11 @@ The database must use durable storage, backups, retention appropriate to the ser
 
 PostgreSQL is the raw-artifact store. The API persists each downloaded payload in the `raw_artifact.payload` `BYTEA` column, along with its metadata, checksum, validation result, and generated `postgres://raw-artifacts/<artifact-id>` reference. The API, not the worker, owns database access and returns stored bytes through `GET /api/raw-artifacts/{artifactId}/content`.
 
-Provision database storage, backups, replication, retention, and restore capacity for the raw payloads as well as relational data. Enforce a maximum artifact size in the API/ingress before accepting payloads; account for JSON base64 transport overhead and PostgreSQL write-ahead-log, backup, and replication volume. This design is appropriate for bounded, modest-sized artifacts. Revisit dedicated object storage before accepting large files or high sustained ingestion volume.
+Provision database storage, backups, replication, retention, and restore capacity for the raw payloads as well as relational data. Enforce a maximum artifact size in the API/ingress before accepting payloads; account for JSON base64 transport overhead and PostgreSQL write-ahead-log, backup, and replication volume. This design is appropriate for bounded, modest-sized artifacts.
 
 The migration adds the payload column without inventing content for existing artifact rows. If prior artifacts must remain downloadable, retain their old storage long enough to backfill the payload column or document that historical payloads are unavailable; all newly completed runs store their payload in PostgreSQL.
+
+S3-compatible object storage is a required Phase 2 capability for raw artifacts and Parquet publications. It is not required by the current Phase 1 deployment. Before entering Phase 2, the deployment must add endpoint, bucket, identity, encryption, lifecycle, backup, health-check, and PostgreSQL-to-S3 migration requirements.
 
 ### Ingestion worker
 
@@ -61,7 +63,7 @@ Provide the following environment variables (or equivalent platform-injected con
 | `ODIP_DATABASE_PASSWORD` | Password for that account, injected as a secret. |
 | `ODIP_RAW_ARTIFACT_MAX_PAYLOAD_BYTES` | Maximum accepted raw artifact size in bytes; defaults to 10 MiB and must be set to a database-tested limit. |
 
-Configure each worker with `ODIP_API_URL`, the internal base URL of the API. The worker needs no PostgreSQL or object-storage credentials; it posts the payload to the API over the internal network.
+Configure each worker with `ODIP_API_URL`, the internal base URL of the API. The worker needs no PostgreSQL credentials; it posts the payload to the API over the internal network.
 
 Do not use the development defaults (`localhost` or database user/password `odip`) in a deployed environment. Keep passwords and any future signing keys out of the image, source control, logs, and command-line arguments.
 

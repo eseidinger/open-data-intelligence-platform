@@ -27,3 +27,7 @@ Record the source license and attribution requirements before ingestion. Classif
 ## Retention and deletion
 
 Dataset owners define retention for raw inputs, rejects, curated versions, and exports. Retention actions must preserve the minimum lineage required for audit, subject to legal and license obligations. Derived projections can be rebuilt and should reference their parent version rather than duplicate governance metadata.
+
+## Storage evolution
+
+Phase 1 stores bounded raw artifacts in PostgreSQL. Phase 2 moves raw artifacts and stores Parquet publications in S3-compatible object storage through the platform storage abstraction. Moving an artifact between backends must preserve its stable identity, checksum, source and run lineage, classification, retention policy, and audit history. The original copy must not be removed until the migrated copy has been verified and references have been updated transactionally.

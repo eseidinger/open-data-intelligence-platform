@@ -17,7 +17,7 @@ Public APIs / files / databases
     Ingestion and transformation
              |
              v
- Object storage + PostgreSQL catalog/data <--- Python worker
+ PostgreSQL catalog, raw artifacts, and data <--- Python worker
              |
              v
        Kotlin / Spring API
@@ -36,9 +36,8 @@ External sources remain outside the trust boundary. The platform records their l
 | Catalog service | Sources, datasets, schemas, lineage, pipeline and experiment metadata | Kotlin / Spring Boot + PostgreSQL |
 | Pipeline orchestration | Starts runs, records state, retries approved work, exposes results | Kotlin / Spring Boot |
 | Data worker | Extraction, profiling, validation, transformation, enrichment, analytical jobs | Python |
-| Operational store | Catalog metadata and normalized/curated serving data | PostgreSQL |
-| Artifact store | Immutable raw inputs, Parquet outputs, exports, run artifacts | S3-compatible object storage |
-| Analytical engine | Local/worker analytical queries over Parquet and PostgreSQL | DuckDB |
+| Operational and raw-artifact store | Catalog metadata, immutable raw inputs, and normalized/curated serving data | PostgreSQL |
+| Analytical engine | Local/worker analytical queries over PostgreSQL | DuckDB |
 | Web client | Dataset browsing, pipeline monitoring, quality, experiments, analysis | Angular / TypeScript |
 
 ## Data flow and states
@@ -72,5 +71,7 @@ The API owns catalog and orchestration operations. Workers receive a declared ru
 AI clients use narrow, read-oriented tools such as `listDatasets`, `describeDataset`, `getDatasetSchema`, `queryDataset`, `executeAnalytics`, `getDataQualityReport`, and `getDatasetLineage`. Tool policies enforce dataset authorization, parameter constraints, row/scan limits, and audit logging.
 
 ## Evolution path
+
+Phase 2 introduces S3-compatible object storage for large immutable raw artifacts and Parquet analytical representations. PostgreSQL remains the catalog and curated-data baseline, while artifact access stays behind a storage adapter. Existing PostgreSQL artifacts require an explicit, checksum-verified migration before their storage references change.
 
 Search, graph, vector, document, and streaming systems are optional adapters. Introduce one only with an experiment or product requirement that cannot be met by the baseline. Kafka or another broker is deferred until asynchronous/streaming needs justify its operational cost.
