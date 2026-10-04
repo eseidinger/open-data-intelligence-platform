@@ -8,11 +8,13 @@ import de.eseidinger.odip.platform.ingestion.service.RawArtifactWithValidation
 import de.eseidinger.odip.platform.curation.web.CreateEnergyObservationRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.PositiveOrZero
 import java.time.Instant
 import java.util.UUID
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -32,9 +34,16 @@ class IngestionController(private val ingestionService: IngestionService) {
     @PostMapping("/pipeline-runs/{runId}/started") fun start(@PathVariable runId: UUID) = ingestionService.start(runId).toResponse()
     @PostMapping("/pipeline-runs/{runId}/completed") fun complete(@PathVariable runId: UUID, @Valid @RequestBody request: CompleteRunRequest) = ingestionService.complete(runId, request).toResponse()
     @PostMapping("/pipeline-runs/{runId}/failed") fun fail(@PathVariable runId: UUID, @Valid @RequestBody request: FailRunRequest) = ingestionService.fail(runId, request.reason).toResponse()
+    @GetMapping("/raw-artifacts/{artifactId}/content")
+    fun content(@PathVariable artifactId: UUID): ResponseEntity<ByteArray> {
+        val artifact = ingestionService.artifactContent(artifactId)
+        val payload = requireNotNull(artifact.payload) { "Raw artifact content is unavailable" }
+        val contentType = artifact.contentType?.let { runCatching { MediaType.parseMediaType(it) }.getOrNull() } ?: MediaType.APPLICATION_OCTET_STREAM
+        return ResponseEntity.ok().contentType(contentType).contentLength(artifact.contentLength).body(payload)
+    }
 }
 
-data class CompleteRunRequest(@field:NotBlank @field:Pattern(regexp = "^s3://.+") val storageUri: String, val contentType: String? = null, @field:PositiveOrZero val contentLength: Long, @field:Pattern(regexp = "^[a-fA-F0-9]{64}$") val checksumSha256: String, val sourceVersion: String? = null, @field:Valid val validation: ArtifactValidationRequest? = null, @field:Valid val energyObservation: CreateEnergyObservationRequest? = null)
+data class CompleteRunRequest(@field:NotEmpty val payload: ByteArray, val contentType: String? = null, @field:PositiveOrZero val contentLength: Long, @field:Pattern(regexp = "^[a-fA-F0-9]{64}$") val checksumSha256: String, val sourceVersion: String? = null, @field:Valid val validation: ArtifactValidationRequest? = null, @field:Valid val energyObservation: CreateEnergyObservationRequest? = null)
 data class ArtifactValidationRequest(val status: ArtifactValidationStatus, val detectedFormat: String? = null, @field:PositiveOrZero val recordCount: Long? = null, @field:Pattern(regexp = "^[a-fA-F0-9]{64}$") val schemaFingerprint: String? = null, val failureReason: String? = null)
 data class FailRunRequest(@field:NotBlank val reason: String)
 data class PipelineRunResponse(val id: UUID, val sourceId: UUID, val sourceName: String, val status: String, val requestedAt: Instant, val startedAt: Instant?, val completedAt: Instant?)

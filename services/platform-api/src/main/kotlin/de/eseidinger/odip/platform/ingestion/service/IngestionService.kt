@@ -12,7 +12,9 @@ import de.eseidinger.odip.platform.ingestion.persistence.RawArtifactValidationRe
 import de.eseidinger.odip.platform.ingestion.web.CompleteRunRequest
 import java.time.Instant
 import java.util.UUID
+import java.security.MessageDigest
 import org.springframework.http.HttpStatus
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
@@ -24,6 +26,7 @@ class IngestionService(
     private val rawArtifactRepository: RawArtifactRepository,
     private val rawArtifactValidationRepository: RawArtifactValidationRepository,
     private val energyCurationService: EnergyCurationService,
+    @Value("\${odip.raw-artifact.max-payload-bytes}") private val maxPayloadBytes: Long,
 ) {
     @Transactional(readOnly = true)
     fun list(): List<PipelineRunEntity> = pipelineRunRepository.findAll().sortedByDescending { it.requestedAt }
@@ -64,7 +67,12 @@ class IngestionService(
         val run = run(runId)
         requireStatus(run, PipelineRunStatus.RUNNING)
         val source = run.source ?: throw notFound("Data source", runId)
-        val artifact = rawArtifactRepository.save(RawArtifactEntity(pipelineRun = run, source = source, storageUri = request.storageUri, contentType = request.contentType, contentLength = request.contentLength, checksumSha256 = request.checksumSha256, sourceVersion = request.sourceVersion))
+        require(request.payload.size.toLong() <= maxPayloadBytes) { "Payload exceeds the configured maximum size" }
+        require(request.payload.size.toLong() == request.contentLength) { "Payload length does not match contentLength" }
+        val calculatedChecksum = MessageDigest.getInstance("SHA-256").digest(request.payload).joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        require(calculatedChecksum.equals(request.checksumSha256, ignoreCase = true)) { "Payload checksum does not match checksumSha256" }
+        val artifactId = UUID.randomUUID()
+        val artifact = rawArtifactRepository.save(RawArtifactEntity(id = artifactId, pipelineRun = run, source = source, storageUri = "postgres://raw-artifacts/$artifactId", payload = request.payload, contentType = request.contentType, contentLength = request.contentLength, checksumSha256 = calculatedChecksum, sourceVersion = request.sourceVersion))
         request.validation?.let { validation ->
             rawArtifactValidationRepository.save(RawArtifactValidationEntity(rawArtifact = artifact, status = validation.status, detectedFormat = validation.detectedFormat, recordCount = validation.recordCount, schemaFingerprint = validation.schemaFingerprint, failureReason = validation.failureReason))
         }
@@ -83,6 +91,9 @@ class IngestionService(
         run.failureReason = reason
         return run
     }
+
+    @Transactional(readOnly = true)
+    fun artifactContent(artifactId: UUID): RawArtifactEntity = rawArtifactRepository.findById(artifactId).orElseThrow { notFound("Raw artifact", artifactId) }
 
     private fun run(id: UUID) = pipelineRunRepository.findById(id).orElseThrow { notFound("Pipeline run", id) }
     private fun requireStatus(run: PipelineRunEntity, status: PipelineRunStatus) { if (run.status != status) throw invalidState(run) }

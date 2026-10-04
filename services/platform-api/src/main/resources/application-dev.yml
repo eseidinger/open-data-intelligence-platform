@@ -9,10 +9,6 @@ spring:
   flyway:
     enabled: true
 
-odip:
-  object-storage:
-    health-url: ${ODIP_OBJECT_STORAGE_HEALTH_URL:http://localhost:9000/healthz}
-
 management:
   endpoint:
     health:

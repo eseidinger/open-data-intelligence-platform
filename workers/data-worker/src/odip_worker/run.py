@@ -1,12 +1,10 @@
 import argparse
+import base64
 import hashlib
 import os
 import sys
 
-import boto3
 import requests
-
-from botocore.exceptions import ClientError
 
 from odip_worker.normalization import normalize
 from odip_worker.validation import validate_payload
@@ -29,16 +27,7 @@ def main() -> None:
         validation = validate_payload(payload, response.headers.get("Content-Type"))
         energy_observation = normalize(payload, job.get("normalizer"))
         checksum = hashlib.sha256(payload).hexdigest()
-        key = f"raw/{job['sourceId']}/{args.run_id}/source"
-        s3 = boto3.client("s3", endpoint_url=os.getenv("ODIP_S3_ENDPOINT", "http://localhost:9000"), aws_access_key_id=os.getenv("ODIP_S3_ACCESS_KEY", "odip"), aws_secret_access_key=os.getenv("ODIP_S3_SECRET_KEY", "odip-local-development"))
-        bucket = os.getenv("ODIP_S3_BUCKET", "odip-raw")
-        try:
-            s3.create_bucket(Bucket=bucket)
-        except ClientError as error:
-            if error.response["Error"].get("Code") not in {"BucketAlreadyOwnedByYou", "BucketAlreadyExists"}:
-                raise
-        s3.put_object(Bucket=bucket, Key=key, Body=payload, ContentType=response.headers.get("Content-Type", "application/octet-stream"))
-        requests.post(f"{base_url}/api/pipeline-runs/{args.run_id}/completed", json={"storageUri": f"s3://{bucket}/{key}", "contentType": response.headers.get("Content-Type"), "contentLength": len(payload), "checksumSha256": checksum, "sourceVersion": response.headers.get("ETag"), "validation": validation, "energyObservation": energy_observation}, timeout=15).raise_for_status()
+        requests.post(f"{base_url}/api/pipeline-runs/{args.run_id}/completed", json={"payload": base64.b64encode(payload).decode("ascii"), "contentType": response.headers.get("Content-Type"), "contentLength": len(payload), "checksumSha256": checksum, "sourceVersion": response.headers.get("ETag"), "validation": validation, "energyObservation": energy_observation}, timeout=60).raise_for_status()
     except Exception as error:
         requests.post(f"{base_url}/api/pipeline-runs/{args.run_id}/failed", json={"reason": str(error)[:4000]}, timeout=15)
         raise

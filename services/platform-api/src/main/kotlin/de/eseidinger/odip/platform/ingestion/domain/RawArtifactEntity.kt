@@ -19,6 +19,7 @@ class RawArtifactEntity(
     @OneToOne(fetch = FetchType.LAZY) @JoinColumn(name = "pipeline_run_id", nullable = false) var pipelineRun: PipelineRunEntity? = null,
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "source_id", nullable = false) var source: DataSourceEntity? = null,
     @Column(name = "storage_uri", nullable = false) var storageUri: String = "",
+    @Column(name = "payload") var payload: ByteArray? = null,
     @Column(name = "content_type") var contentType: String? = null,
     @Column(name = "content_length", nullable = false) var contentLength: Long = 0,
     @Column(name = "checksum_sha256", nullable = false) var checksumSha256: String = "",
