@@ -15,18 +15,5 @@ services:
       timeout: 3s
       retries: 10
 
-  object-store:
-    # SeaweedFS provides a license-free, S3-compatible object store for local development.
-    image: chrislusf/seaweedfs:latest
-    environment:
-      AWS_ACCESS_KEY_ID: odip
-      AWS_SECRET_ACCESS_KEY: odip-local-development
-      S3_BUCKET: odip-raw
-    ports:
-      - "9000:8333"
-    volumes:
-      - object-store-data:/data
-
 volumes:
   postgres-data:
-  object-store-data:
