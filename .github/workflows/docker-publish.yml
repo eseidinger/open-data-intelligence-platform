@@ -1,0 +1,69 @@
+name: Build and publish Docker images
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-hub-main
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    name: Publish Docker Hub images
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: eseidinger
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - id: platform-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: docker.io/eseidinger/odip-platform
+          tags: |
+            type=ref,event=branch
+            type=sha,format=long,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          target: platform
+          push: true
+          tags: ${{ steps.platform-meta.outputs.tags }}
+          labels: ${{ steps.platform-meta.outputs.labels }}
+          cache-from: type=gha,scope=platform
+          cache-to: type=gha,mode=max,scope=platform
+
+      - id: worker-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: docker.io/eseidinger/odip-data-worker
+          tags: |
+            type=ref,event=branch
+            type=sha,format=long,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: workers/data-worker
+          file: workers/data-worker/Dockerfile
+          push: true
+          tags: ${{ steps.worker-meta.outputs.tags }}
+          labels: ${{ steps.worker-meta.outputs.labels }}
+          cache-from: type=gha,scope=data-worker
+          cache-to: type=gha,mode=max,scope=data-worker
