@@ -55,7 +55,13 @@
         "schedule": "* * * * *",
         "concurrencyPolicy": "Forbid",
         "retryLimit": 0,
-        "maxRunSeconds": 300
+        "maxRunSeconds": 300,
+        "outbound": [
+          {
+            "dns": "jsonplaceholder.typicode.com",
+            "port": 443
+          }
+        ]
       }
     ]
   }
