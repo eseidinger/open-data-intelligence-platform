@@ -23,6 +23,17 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class IngestionControllerIntegrationTests(@Autowired private val mockMvc: MockMvc, @Autowired private val sources: DataSourceRepository, @Autowired private val datasets: DatasetRepository) {
     @Test
+    fun `atomically claims the next queued run`() {
+        val source = sources.save(DataSourceEntity(name = "Claim fixture ${java.util.UUID.randomUUID()}", sourceType = DataSourceType.API, location = "https://example.test/claim.json", refreshCadence = "annual"))
+        mockMvc.perform(post("/api/data-sources/${source.id}/ingestions")).andExpect(status().isAccepted)
+
+        mockMvc.perform(post("/api/pipeline-runs/claim-next"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.location").value(source.location))
+        mockMvc.perform(post("/api/pipeline-runs/claim-next")).andExpect(status().isNoContent)
+    }
+
+    @Test
     fun `queues and completes a raw ingestion run`() {
         val source = sources.save(DataSourceEntity(name = "Fixture ${java.util.UUID.randomUUID()}", sourceType = DataSourceType.API, location = "https://example.test/data.json", refreshCadence = "annual"))
         val dataset = datasets.save(DatasetEntity(name = "Fixture dataset ${java.util.UUID.randomUUID()}", classification = DatasetClassification.PUBLIC, sources = mutableSetOf(source)))

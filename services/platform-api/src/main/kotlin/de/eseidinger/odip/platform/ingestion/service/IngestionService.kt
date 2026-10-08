@@ -45,6 +45,16 @@ class IngestionService(
         return pipelineRunRepository.save(PipelineRunEntity(source = source))
     }
 
+    /** Claims the oldest queued run and moves it to RUNNING in one transaction. */
+    @Transactional
+    fun claimNext(): IngestionJob? {
+        val run = pipelineRunRepository.claimNextQueued() ?: return null
+        val source = run.source ?: throw notFound("Data source", run.id)
+        run.status = PipelineRunStatus.RUNNING
+        run.startedAt = Instant.now()
+        return IngestionJob(run.id, source.id, source.location, source.normalizer?.name)
+    }
+
     @Transactional(readOnly = true)
     fun job(runId: UUID): IngestionJob {
         val run = run(runId)

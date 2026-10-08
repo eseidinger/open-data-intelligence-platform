@@ -22,7 +22,7 @@ RUN ./gradlew --no-daemon bootJar
 
 FROM eclipse-temurin:21-jre-alpine AS platform
 RUN apk add --no-cache curl \
-    && addgroup --system odip && adduser --system --ingroup odip odip \
+    && addgroup --gid 10001 --system odip && adduser --uid 10001 --system --ingroup odip odip \
     && mkdir /tmp/odip && chown odip:odip /tmp/odip
 
 WORKDIR /app

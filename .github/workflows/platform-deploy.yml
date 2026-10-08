@@ -1,0 +1,56 @@
+name: Deploy to Developer Platform
+
+on:
+  workflow_run:
+    workflows:
+      - Build and publish Docker images
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Docker image tag to deploy
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      IMAGE_TAG: ${{ inputs.image_tag || github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: python3 -m pip install developer-platform-cli
+      - name: Create deployment declaration
+        run: >-
+          jq --arg platform_image "docker.io/eseidinger/odip-platform:${IMAGE_TAG}"
+          --arg worker_image "docker.io/eseidinger/odip-data-worker:${IMAGE_TAG}"
+          '(.spec.components[] | select(.name == "web").runtime.image) = $platform_image |
+          (.spec.components[] | select(.name == "ingestion-worker").runtime.image) = $worker_image'
+          application.json > "$RUNNER_TEMP/application.json"
+      - name: Deploy and wait for readiness
+        run: >-
+          devplat deploy apply --project odip
+          --file "$RUNNER_TEMP/application.json" --wait --output json
+        env:
+          PLATFORM_API_URL: ${{ vars.PLATFORM_API_URL }}
+          PLATFORM_TOKEN_ENDPOINT: ${{ vars.PLATFORM_TOKEN_ENDPOINT }}
+          PLATFORM_CLIENT_ID: ${{ secrets.PLATFORM_CLIENT_ID }}
+          PLATFORM_CLIENT_SECRET: ${{ secrets.PLATFORM_CLIENT_SECRET }}

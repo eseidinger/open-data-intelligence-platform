@@ -30,6 +30,8 @@ class IngestionController(private val ingestionService: IngestionService) {
     @GetMapping("/pipeline-runs/{runId}/artifacts") fun artifacts(@PathVariable runId: UUID) = ingestionService.artifacts(runId).map { it.toResponse() }
     @PostMapping("/data-sources/{sourceId}/ingestions")
     fun queue(@PathVariable sourceId: UUID): ResponseEntity<PipelineRunResponse> = ResponseEntity.status(HttpStatus.ACCEPTED).body(ingestionService.queue(sourceId).toResponse())
+    @PostMapping("/pipeline-runs/claim-next")
+    fun claimNext(): ResponseEntity<de.eseidinger.odip.platform.ingestion.service.IngestionJob> = ingestionService.claimNext()?.let { ResponseEntity.ok(it) } ?: ResponseEntity.noContent().build()
     @GetMapping("/pipeline-runs/{runId}/job") fun job(@PathVariable runId: UUID) = ingestionService.job(runId)
     @PostMapping("/pipeline-runs/{runId}/started") fun start(@PathVariable runId: UUID) = ingestionService.start(runId).toResponse()
     @PostMapping("/pipeline-runs/{runId}/completed") fun complete(@PathVariable runId: UUID, @Valid @RequestBody request: CompleteRunRequest) = ingestionService.complete(runId, request).toResponse()

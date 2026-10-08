@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${ODIP_DATABASE_URL}
-    username: ${ODIP_DATABASE_USERNAME}
-    password: ${ODIP_DATABASE_PASSWORD}
+    url: ${ODIP_DATABASE_URL:jdbc:postgresql://${PGHOST:localhost}:${PGPORT:5432}/${PGDATABASE:odip}}
+    username: ${ODIP_DATABASE_USERNAME:${PGUSER:odip}}
+    password: ${ODIP_DATABASE_PASSWORD:${PGPASSWORD:odip}}
   jpa:
     hibernate:
       ddl-auto: validate

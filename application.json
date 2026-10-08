@@ -1,0 +1,50 @@
+{
+  "apiVersion": "platform.example/v1alpha2",
+  "kind": "Application",
+  "metadata": {
+    "name": "odip",
+    "project": "odip",
+    "environment": "default"
+  },
+  "spec": {
+    "configuration": {
+      "values": {
+        "ODIP_API_URL": "http://web"
+      }
+    },
+    "components": [
+      {
+        "name": "web",
+        "type": "service",
+        "runtime": {
+          "type": "container",
+          "image": "docker.io/eseidinger/odip-platform:latest"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "protocol": "http",
+            "port": 8080
+          }
+        ],
+        "exposure": "public",
+        "health": {
+          "readiness": {
+            "profile": "status"
+          }
+        }
+      },
+      {
+        "name": "ingestion-worker",
+        "type": "scheduled",
+        "runtime": {
+          "type": "container",
+          "image": "docker.io/eseidinger/odip-data-worker:latest",
+          "args": ["--claim-next"]
+        },
+        "schedule": "* * * * *",
+        "concurrencyPolicy": "Forbid"
+      }
+    ]
+  }
+}
