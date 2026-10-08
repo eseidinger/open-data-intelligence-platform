@@ -3,11 +3,27 @@ import base64
 import hashlib
 import os
 import sys
+import time
 
 import requests
 
 from odip_worker.normalization import normalize
 from odip_worker.validation import validate_payload
+
+
+def claim_next(base_url: str) -> dict | None:
+    """Wait for a rolling API deployment, then claim at most one queued run."""
+    for attempt in range(24):
+        try:
+            response = requests.post(f"{base_url}/api/pipeline-runs/claim-next", timeout=15)
+            if response.status_code == 204:
+                return None
+            response.raise_for_status()
+            return response.json()
+        except requests.ConnectionError:
+            if attempt == 23:
+                raise
+            time.sleep(5)
 
 
 def main() -> None:
@@ -19,11 +35,9 @@ def main() -> None:
     args = parser.parse_args()
     base_url = args.api_url.rstrip("/")
     if args.claim_next:
-        claim_response = requests.post(f"{base_url}/api/pipeline-runs/claim-next", timeout=15)
-        if claim_response.status_code == 204:
+        job = claim_next(base_url)
+        if job is None:
             return
-        claim_response.raise_for_status()
-        job = claim_response.json()
     else:
         job_response = requests.get(f"{base_url}/api/pipeline-runs/{args.run_id}/job", timeout=15)
         job_response.raise_for_status()

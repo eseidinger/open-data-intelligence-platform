@@ -30,7 +30,7 @@
         "exposure": "public",
         "health": {
           "readiness": {
-            "profile": "status"
+            "path": "/actuator/health/readiness"
           }
         }
       },
@@ -43,7 +43,9 @@
           "args": ["--claim-next"]
         },
         "schedule": "* * * * *",
-        "concurrencyPolicy": "Forbid"
+        "concurrencyPolicy": "Forbid",
+        "retryLimit": 0,
+        "maxRunSeconds": 300
       }
     ]
   }
