@@ -9,7 +9,7 @@
   "spec": {
     "configuration": {
       "values": {
-        "ODIP_API_URL": "http://web"
+        "ODIP_API_URL": "http://web:8080"
       }
     },
     "components": [

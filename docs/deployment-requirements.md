@@ -65,7 +65,7 @@ Provide the following environment variables (or equivalent platform-injected con
 | `ODIP_DATABASE_PASSWORD` | Password for that account, injected as a secret. |
 | `ODIP_RAW_ARTIFACT_MAX_PAYLOAD_BYTES` | Maximum accepted raw artifact size in bytes; defaults to 10 MiB and must be set to a database-tested limit. |
 
-Configure each worker with `ODIP_API_URL`, the internal base URL of the API. The worker needs no PostgreSQL credentials; it posts the payload to the API over the internal network.
+Configure each worker with `ODIP_API_URL`, the internal base URL of the API (`http://web:8080` for the Developer Platform declaration). The worker needs no PostgreSQL credentials; it posts the payload to the API over the internal network.
 
 Do not use the development defaults (`localhost` or database user/password `odip`) in a deployed environment. Keep passwords and any future signing keys out of the image, source control, logs, and command-line arguments.
 
