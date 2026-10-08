@@ -22,8 +22,7 @@ RUN ./gradlew --no-daemon bootJar
 
 FROM eclipse-temurin:21-jre-alpine AS platform
 RUN apk add --no-cache curl \
-    && addgroup --gid 10001 --system odip && adduser --uid 10001 --system --ingroup odip odip \
-    && mkdir /tmp/odip && chown odip:odip /tmp/odip
+    && addgroup --gid 10001 --system odip && adduser --uid 10001 --system --ingroup odip odip
 
 WORKDIR /app
 COPY --from=api-builder /workspace/platform-api/build/libs/*.jar /app/platform-api.jar
@@ -31,7 +30,7 @@ COPY --from=api-builder /workspace/platform-api/build/libs/*.jar /app/platform-a
 USER odip
 ENV SPRING_PROFILES_ACTIVE=prod \
     SERVER_PORT=8080 \
-    JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=/tmp/odip"
+    JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=/tmp"
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD curl --fail --silent http://127.0.0.1:8080/actuator/health/liveness || exit 1
