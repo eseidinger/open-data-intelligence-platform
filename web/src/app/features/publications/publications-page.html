@@ -1,0 +1,186 @@
+<section aria-labelledby="publications-heading">
+  <h1 id="publications-heading">Dataset publications</h1>
+  <p>
+    Prepare complete dataset versions and inspect their quality and provenance. Published versions
+    are immutable.
+  </p>
+  <button mat-stroked-button type="button" (click)="refresh()" [disabled]="busy()">Refresh</button>
+  @if (error(); as text) {
+    <p role="alert">{{ text }}</p>
+  }
+  @if (message(); as text) {
+    <p role="status">{{ text }}</p>
+  }
+  @if (busy()) {
+    <p role="status">Loading…</p>
+  }
+
+  <mat-card appearance="outlined">
+    <mat-card-content>
+      <h2>Version history</h2>
+      @for (draft of drafts(); track draft.id) {
+        <p>
+          <button
+            mat-button
+            type="button"
+            (click)="select(draft)"
+            [attr.aria-pressed]="selected()?.id === draft.id"
+          >
+            {{ draft.manifest.datasetId }} / {{ draft.manifest.version }}
+          </button>
+          — {{ draft.status }}
+        </p>
+      } @empty {
+        <p>No publications are available to your identity.</p>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  @if (writableDatasets().length > 0) {
+    <mat-card appearance="outlined">
+      <mat-card-content>
+        <h2>Create a draft</h2>
+        <form [formGroup]="form" (ngSubmit)="create()">
+          <mat-form-field
+            ><mat-label>Dataset</mat-label
+            ><mat-select formControlName="datasetId">
+              @for (dataset of writableDatasets(); track dataset.id) {
+                <mat-option [value]="dataset.id">{{ dataset.name }}</mat-option>
+              }
+            </mat-select></mat-form-field
+          >
+          <label for="publication-manifest">Publication manifest</label>
+          <input
+            id="publication-manifest"
+            type="file"
+            accept=".json,application/json"
+            (change)="chooseManifest($event)"
+            [disabled]="busy()"
+          />
+          <button mat-flat-button type="submit" [disabled]="busy() || form.invalid">
+            Create draft
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (selected(); as draft) {
+    <mat-card appearance="outlined">
+      <mat-card-content>
+        <h2>{{ draft.manifest.datasetId }} / {{ draft.manifest.version }}</h2>
+        <dl>
+          <dt>Publication status</dt>
+          <dd>{{ draft.status }}</dd>
+          <dt>Schema</dt>
+          <dd>{{ draft.manifest.schemaRef }}</dd>
+          <dt>Manifest SHA-256</dt>
+          <dd class="digest">{{ draft.manifestSha256 }}</dd>
+          <dt>Quality policy</dt>
+          <dd>{{ draft.manifest.quality.policyRef }}</dd>
+        </dl>
+        @if (draft.failureCode) {
+          <p role="alert">Validation failed: {{ draft.failureCode }}</p>
+        }
+        @if (draft.report) {
+          <h3>Validation evidence</h3>
+          <pre>{{ draft.report | json }}</pre>
+        }
+        @for (warning of draft.manifest.quality.warnings; track warning.code) {
+          <p>{{ warning.message }}</p>
+        }
+        <h3>Artifacts</h3>
+        @for (artifact of draft.manifest.artifacts; track artifact.artifactId) {
+          <div class="artifact">
+            <h4>{{ artifact.role }}</h4>
+            <p>{{ artifact.mediaType }} {{ artifact.unit || '' }}</p>
+            <p class="digest">{{ artifact.sha256 }}</p>
+            @if (canWrite(draft)) {
+              @if (draft.status === 'DRAFT') {
+                <label [for]="'artifact-' + artifact.artifactId"
+                  >Attach {{ artifact.artifactId }}</label
+                >
+                <input
+                  [id]="'artifact-' + artifact.artifactId"
+                  type="file"
+                  (change)="upload(draft, artifact.artifactId, $event)"
+                  [disabled]="busy()"
+                />
+              }
+              <button
+                mat-button
+                type="button"
+                (click)="download(draft, artifact.artifactId)"
+                [disabled]="busy()"
+              >
+                Download {{ artifact.artifactId }}
+              </button>
+            }
+          </div>
+        }
+        @if (draft.status === 'DRAFT' && canWrite(draft)) {
+          <button mat-flat-button type="button" (click)="publish(draft)" [disabled]="busy()">
+            Request validation and publication
+          </button>
+        }
+        <h3>Provenance</h3>
+        <h4>Raw input lineage</h4>
+        @for (input of draft.inputArtifacts ?? []; track input.rawArtifactId) {
+          <p class="digest">
+            Artifact {{ input.rawArtifactId }} · run {{ input.pipelineRunId }}<br />Captured
+            {{ input.capturedAt }} · {{ input.sha256 }}
+          </p>
+        }
+        @for (source of draft.manifest.provenance; track $index) {
+          <p>
+            {{ source.sourceId }} — {{ source.sourceOwner }}<br />{{ source.license }} ·
+            {{ source.retrievedAt }} · {{ source.transformationVersion }}
+          </p>
+        }
+        <h3>Reference metadata</h3>
+        <pre>{{ draft.manifest.metadata | json }}</pre>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (capabilities().manageGrants) {
+    <mat-card appearance="outlined">
+      <mat-card-content>
+        <h2>Dataset access</h2>
+        <form [formGroup]="grantForm" (ngSubmit)="grant()">
+          <mat-form-field
+            ><mat-label>Dataset</mat-label
+            ><mat-select formControlName="datasetId" (selectionChange)="loadGrants()">
+              @for (dataset of datasets(); track dataset.id) {
+                <mat-option [value]="dataset.id">{{ dataset.name }}</mat-option>
+              }
+            </mat-select></mat-form-field
+          >
+          <mat-form-field
+            ><mat-label>Stable principal ID</mat-label
+            ><input matInput formControlName="principalId"
+          /></mat-form-field>
+          <mat-form-field
+            ><mat-label>Permission</mat-label
+            ><mat-select formControlName="permission">
+              @for (permission of ['READ', 'WRITE', 'INGEST', 'VALIDATE']; track permission) {
+                <mat-option [value]="permission">{{ permission }}</mat-option>
+              }
+            </mat-select></mat-form-field
+          >
+          <button mat-flat-button type="submit" [disabled]="busy() || grantForm.invalid">
+            Grant access
+          </button>
+        </form>
+        @for (grant of grants(); track grant.principalId + grant.permission) {
+          <p>
+            {{ grant.principalId }} — {{ grant.permission }}
+            <button mat-button type="button" (click)="revoke(grant)" [disabled]="busy()">
+              Revoke {{ grant.permission }} for {{ grant.principalId }}
+            </button>
+          </p>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</section>

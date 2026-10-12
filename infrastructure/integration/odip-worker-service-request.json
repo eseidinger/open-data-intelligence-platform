@@ -1,0 +1,6 @@
+{
+  "name": "odip-worker",
+  "providerProject": "odip",
+  "application": "odip",
+  "projectWideCredential": true
+}

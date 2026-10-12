@@ -1,0 +1,34 @@
+:host {
+  display: block;
+}
+mat-card {
+  margin-block: 1.5rem;
+}
+form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+form label,
+form input[type='file'] {
+  max-width: 100%;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.digest {
+  overflow-wrap: anywhere;
+}
+.artifact {
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+dt {
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+dd {
+  margin-left: 0;
+}

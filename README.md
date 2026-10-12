@@ -30,12 +30,13 @@ The [documentation index](docs/README.md) is the authoritative entry point for t
 | [Architecture overview](docs/architecture/overview.md) | Components, logical model, data flow, interfaces, and evolution path. |
 | [Architecture decisions](docs/architecture/decisions.md) | Accepted baseline decisions and ADR format. |
 | [Development plan](docs/development-plan.md) | Phased delivery plan and exit criteria. |
+| [Energy configuration integration plan](docs/energy-configuration-integration-plan.md) | Next milestone: immutable dataset publication and the VEF integration handoff. |
 | [Data lifecycle and governance](docs/data-lifecycle-and-governance.md) | Provenance, quality, licensing, access, and retention policies. |
 | [Experiment framework](docs/experiment-framework.md) | Comparable workloads, measurement controls, and evidence requirements. |
 
 ## Current status
 
-ODIP is in the foundation/planning stage. The immediate objective is one complete energy-data vertical slice: register a licensed source, capture immutable raw input, validate and curate it, record lineage and quality, then make it available through the API and dataset browser.
+ODIP implements catalog and ingestion, PostgreSQL raw storage, energy curation, and generic immutable dataset publication with scoped access and an operator interface. The [energy configuration integration](docs/energy-configuration-integration-plan.md) is verified locally, including restart and PostgreSQL restoration. The next gate is platform provisioning and the deployed VEF handoff using the [integration runbook](docs/energy-configuration-integration-runbook.md).
 
 ## License
 

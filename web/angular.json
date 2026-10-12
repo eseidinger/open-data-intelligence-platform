@@ -35,6 +35,7 @@
           },
           "configurations": {
             "production": {
+              "deployUrl": "/ui/",
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",

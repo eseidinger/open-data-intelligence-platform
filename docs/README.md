@@ -8,6 +8,9 @@ This documentation turns the project vision in the root [README](../README.md) i
 - [Architecture overview](architecture/overview.md) — system boundaries, components, data flow, and design principles.
 - [Architecture decisions](architecture/decisions.md) — baseline choices and the rules for introducing alternatives.
 - [Development plan](development-plan.md) — phased delivery plan, milestones, and exit criteria.
+- [Energy configuration integration plan](energy-configuration-integration-plan.md) — next delivery milestone: immutable publications, the energy adapter, scoped access, and the VEF handoff.
+
+The ODIP publication implementation is available locally. Use the [integration runbook](energy-configuration-integration-runbook.md) for verification, provisioning, and deployment; the deployed VEF handoff remains the next integration gate.
 
 ## Operating the platform
 

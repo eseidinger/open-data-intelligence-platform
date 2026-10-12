@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
+  { path: 'publications', loadComponent: () => import('./features/publications/publications-page').then(module => module.PublicationsPageComponent) },
   {
     path: 'sources',
     loadComponent: () => import('./features/sources/sources-page').then((module) => module.SourcesPageComponent),

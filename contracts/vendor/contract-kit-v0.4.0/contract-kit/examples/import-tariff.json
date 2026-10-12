@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "energy-import-tariff/v1",
+  "unit": "EUR/kWh",
+  "period": {
+    "start": "2024-01-01T00:00:00Z",
+    "endExclusive": "2024-01-01T01:00:00Z",
+    "step": "PT1H"
+  },
+  "values": [
+    {
+      "start": "2024-01-01T00:00:00Z",
+      "value": 0.3
+    }
+  ]
+}

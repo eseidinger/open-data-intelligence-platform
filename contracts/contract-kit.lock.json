@@ -1,0 +1,7 @@
+{
+  "version": "0.4.0",
+  "tag": "contract-kit-v0.4.0",
+  "sha256": "884e3590614328c2adafa457153e11575dc1be09b9f53d7b0f53704fe39d02b0",
+  "archive": "vendor/contract-kit-v0.4.0.tar.gz",
+  "release": "https://github.com/eseidinger/energy-system-configuration/releases/tag/contract-kit-v0.4.0"
+}

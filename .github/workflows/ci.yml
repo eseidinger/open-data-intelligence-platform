@@ -35,12 +35,18 @@ jobs:
       ODIP_DATABASE_PASSWORD: odip
     steps:
       - uses: actions/checkout@v4
+      - run: python3 ../../scripts/verify-contract-kit.py
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
           cache: gradle
-      - run: ./gradlew --no-daemon test
+      - run: ./gradlew --no-daemon test bootJar
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --project ../../workers/data-worker --locked python ../../scripts/local-publication-acceptance.py
 
   web:
     name: Web
@@ -58,6 +64,9 @@ jobs:
       - run: npm ci
       - run: npm test -- --watch=false
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:a11y
+      - run: npm audit --audit-level=high
 
   data-worker:
     name: Data worker
@@ -76,3 +85,6 @@ jobs:
           cache-dependency-glob: workers/data-worker/uv.lock
       - run: uv sync --locked
       - run: uv run python -m unittest discover -s tests
+      - run: python ../../scripts/verify-contract-kit.py
+      - run: uv run --frozen pytest
+        working-directory: contracts/vendor/contract-kit-v0.4.0/contract-kit

@@ -21,6 +21,9 @@ repositories {
 }
 
 dependencies {
+	implementation("org.springframework.boot:spring-boot-starter-jdbc")
+	implementation("com.networknt:json-schema-validator:1.0.87")
+	implementation("io.github.erdtman:java-json-canonicalization:1.1")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-flyway")
@@ -53,4 +56,12 @@ allOpen {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+tasks.processResources {
+	from("../../contracts/vendor/contract-kit-v0.4.0/contract-kit/schemas") { into("contract-schemas") }
+}
+
+tasks.processTestResources {
+	from("../../contracts/vendor/contract-kit-v0.4.0/contract-kit/fixtures") { into("contract-fixtures") }
 }

@@ -1,0 +1,27 @@
+{
+  "component": "api",
+  "defaultDecision": "deny",
+  "identityAttributes": {
+    "displayName": false,
+    "email": false
+  },
+  "routes": [
+    {
+      "name": "published-dataset-reads",
+      "match": {
+        "pathPrefix": "/api/v1/datasets",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "bearer-token"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-readers"
+        ]
+      }
+    }
+  ]
+}

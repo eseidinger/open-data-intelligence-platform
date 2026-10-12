@@ -34,6 +34,6 @@ export interface RawArtifactValidation {
 @Injectable({ providedIn: 'root' })
 export class PipelineRunApiService {
   private readonly http = inject(HttpClient);
-  list() { return this.http.get<readonly PipelineRun[]>('/api/pipeline-runs'); }
-  listArtifacts(runId: string) { return this.http.get<readonly RawArtifact[]>(`/api/pipeline-runs/${runId}/artifacts`); }
+  list() { return this.http.get<readonly PipelineRun[]>('/api/v1/operator-pipeline-runs'); }
+  listArtifacts(runId: string) { return this.http.get<readonly RawArtifact[]>(`/api/v1/operator-pipeline-runs/${runId}/artifacts`); }
 }

@@ -1,0 +1,10 @@
+{
+  "EUROSTAT_RENEWABLE_SHARE": {
+    "id": "eurostat-renewable-share/v1",
+    "handler": "odip_worker.energy.annual:normalize_payload"
+  },
+  "eurostat-renewable-share/v1": {
+    "id": "eurostat-renewable-share/v1",
+    "handler": "odip_worker.energy.annual:normalize_payload"
+  }
+}

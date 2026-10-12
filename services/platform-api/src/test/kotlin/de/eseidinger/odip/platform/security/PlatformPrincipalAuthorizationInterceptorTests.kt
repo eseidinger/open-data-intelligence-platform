@@ -35,9 +35,29 @@ class PlatformPrincipalAuthorizationInterceptorTests {
         kotlin.test.assertEquals(401, response.status)
     }
 
+    @Test
+    fun `malformed duplicate and incomplete service context is denied`() {
+        for (mutation in listOf<(MockHttpServletRequest) -> Unit>(
+            { it.addHeader("X-Platform-Principal-Id","prn_duplicate") },
+            { it.removeHeader("X-Platform-Principal-Group-Ids") },
+            { it.addHeader("X-Platform-Principal-Kind","service") },
+        )) {
+            val request=MockHttpServletRequest("GET","/api/v1/datasets")
+            request.addHeader("X-Platform-Principal-Id","prn_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            request.addHeader("X-Platform-Principal-Kind","user")
+            request.addHeader("X-Platform-Principal-Issuer","https://identity.test")
+            request.addHeader("X-Platform-Principal-Subject","subject")
+            request.addHeader("X-Platform-Principal-Group-Ids","grp_e2987e192a0a41b4a0273c71c14fef47")
+            mutation(request)
+            val response=MockHttpServletResponse()
+            assertFalse(interceptor.preHandle(request,response,Any()))
+            kotlin.test.assertEquals(401,response.status)
+        }
+    }
+
     private fun PlatformPrincipalAuthorizationInterceptor.allows(method: String, groups: String): Boolean {
         val request = MockHttpServletRequest(method, "/api/data-sources")
-        request.addHeader("X-Platform-Principal-Id", "prn_test")
+        request.addHeader("X-Platform-Principal-Id", "prn_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         request.addHeader("X-Platform-Principal-Kind", "user")
         request.addHeader("X-Platform-Principal-Issuer", "https://identity.test")
         request.addHeader("X-Platform-Principal-Subject", "test-subject")

@@ -1,0 +1,50 @@
+[
+  {
+    "document": "examples/normal-rotation.json",
+    "schema": "Rotation"
+  },
+  {
+    "document": "examples/odip-access-policy.json",
+    "schema": "PolicyCreate"
+  },
+  {
+    "document": "examples/odip-application.json",
+    "schema": "ApplicationEnvelopeV1Alpha2"
+  },
+  {
+    "document": "examples/odip-dataset-readers-group.json",
+    "schema": "GroupCreate"
+  },
+  {
+    "document": "examples/odip-dataset-writers-group.json",
+    "schema": "GroupCreate"
+  },
+  {
+    "document": "examples/odip-governance.json",
+    "schema": "Governance"
+  },
+  {
+    "document": "examples/odip-service-approval.json",
+    "schema": "Approval"
+  },
+  {
+    "document": "examples/vef-access-policy.json",
+    "schema": "PolicyCreate"
+  },
+  {
+    "document": "examples/vef-application-users-group.json",
+    "schema": "GroupCreate"
+  },
+  {
+    "document": "examples/vef-application.json",
+    "schema": "ApplicationEnvelopeV1Alpha2"
+  },
+  {
+    "document": "examples/vef-governance.json",
+    "schema": "Governance"
+  },
+  {
+    "document": "examples/vef-odip-service-request.json",
+    "schema": "ServiceRequest"
+  }
+]

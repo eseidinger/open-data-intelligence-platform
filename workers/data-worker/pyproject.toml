@@ -2,7 +2,7 @@
 name = "odip-data-worker"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["requests>=2.32"]
+dependencies = ["requests>=2.32", "jsonschema==4.26.0", "rfc8785==0.1.4", "urllib3>=2.6.3"]
 
 [project.scripts]
 odip-ingest = "odip_worker.run:main"
@@ -13,3 +13,6 @@ package = true
 [build-system]
 requires = ["setuptools>=75"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+odip_worker = ["adapters.json"]

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "energy-candidate/v1",
+  "configurationId": "cfg-pv10-inv1-bat1",
+  "components": [
+    {
+      "componentId": "pv-demo-400",
+      "type": "PV_MODULE",
+      "quantity": 10,
+      "existing": false
+    },
+    {
+      "componentId": "inverter-demo-5",
+      "type": "INVERTER",
+      "quantity": 1,
+      "existing": false
+    },
+    {
+      "componentId": "battery-demo-5",
+      "type": "BATTERY",
+      "quantity": 1,
+      "existing": false
+    }
+  ],
+  "feasible": true,
+  "constraints": [
+    {
+      "code": "roof_area",
+      "status": "PASS",
+      "actual": 20,
+      "limit": 35,
+      "unit": "m2"
+    }
+  ],
+  "metrics": {
+    "initialInvestmentEUR": 5700,
+    "annualizedCostEUR": 1234.56,
+    "selfSufficiency": 0.6,
+    "annualDemandKWh": 4500,
+    "gridImportKWh": 1800,
+    "gridExportKWh": 500,
+    "onSiteSolarUseKWh": 2700,
+    "unmetDemandKWh": 0,
+    "inverterClippingKWh": 10,
+    "terminalDiscardedEnergyKWh": 0
+  }
+}

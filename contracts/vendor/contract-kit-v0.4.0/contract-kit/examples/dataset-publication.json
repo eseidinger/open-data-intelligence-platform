@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "dataset-publication/v1",
+  "datasetId": "energy-reference-wasserburg-am-inn-2024",
+  "version": "1.0.0",
+  "status": "PUBLISHED",
+  "schemaRef": "urn:portfolio:energy-configuration-input:v1",
+  "metadata": {
+    "regionCode": "DE-BY-09187182",
+    "period": {
+      "start": "2024-01-01T00:00:00Z",
+      "endExclusive": "2024-01-01T01:00:00Z",
+      "step": "PT1H"
+    }
+  },
+  "publishedAt": "2026-10-10T10:00:00Z",
+  "artifacts": [
+    {
+      "artifactId": "pv-yield",
+      "role": "PV_YIELD_PER_KWP",
+      "mediaType": "application/json",
+      "unit": "kWh/kWp",
+      "sha256": "41b16b20db97183915db1816af84e728341a16f5bbc7e742d51e14d3f4c25fae",
+      "path": "artifacts/pv-yield"
+    },
+    {
+      "artifactId": "import-tariff",
+      "role": "IMPORT_TARIFF",
+      "mediaType": "application/json",
+      "unit": "EUR/kWh",
+      "sha256": "edf601049d06055bd0d658cd144fb7aa3cb8330c784e7a1765b429630277b5c3",
+      "path": "artifacts/import-tariff"
+    },
+    {
+      "artifactId": "export-tariff",
+      "role": "EXPORT_TARIFF",
+      "mediaType": "application/json",
+      "unit": "EUR/kWh",
+      "sha256": "ee8515061f44a85776cf994ef35315c93c613a6f45d8fc04ad5771cbea2da457",
+      "path": "artifacts/export-tariff"
+    },
+    {
+      "artifactId": "component-catalog",
+      "role": "COMPONENT_CATALOG",
+      "mediaType": "application/json",
+      "sha256": "6d2714937a8403ab5e6ee8d953ce72a74b850deb59e6ae96d1c34ad4fedb2b26",
+      "path": "artifacts/component-catalog"
+    },
+    {
+      "artifactId": "reference-load-shape",
+      "role": "REFERENCE_LOAD_SHAPE",
+      "mediaType": "application/json",
+      "unit": "fraction",
+      "sha256": "7e02a8f49fa97b7af8aec713cc2c6a54e5047bd871366d8cc8a97c7feee7152d",
+      "path": "artifacts/reference-load-shape"
+    }
+  ],
+  "quality": {
+    "status": "PASS",
+    "policyRef": "urn:portfolio:energy-quality:v1",
+    "warnings": []
+  },
+  "provenance": [
+    {
+      "sourceId": "pvgis-wasserburg-2024",
+      "sourceOwner": "European Commission Joint Research Centre",
+      "sourceVersion": "PVGIS 6",
+      "license": "PVGIS usage conditions; acknowledgement required",
+      "retrievedAt": "2026-10-10T09:00:00Z",
+      "rawArtifactId": "pvgis-source-response",
+      "transformationVersion": "energy-fixture-builder/0.2.0"
+    }
+  ]
+}

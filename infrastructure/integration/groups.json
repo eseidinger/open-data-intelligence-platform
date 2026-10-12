@@ -1,0 +1,14 @@
+[
+  {
+    "name": "dataset-operators",
+    "displayName": "ODIP dataset operators"
+  },
+  {
+    "name": "dataset-readers",
+    "displayName": "ODIP publication readers"
+  },
+  {
+    "name": "ingestion-workers",
+    "displayName": "ODIP ingestion and validation workers"
+  }
+]

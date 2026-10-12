@@ -24,4 +24,6 @@ class PipelineRunEntity(
     @Column(name = "started_at") var startedAt: Instant? = null,
     @Column(name = "completed_at") var completedAt: Instant? = null,
     @Column(name = "failure_reason") var failureReason: String? = null,
+    @Column(name = "owner_principal") var ownerPrincipal: String? = null,
+    @Column(name = "claim_token") var claimToken: UUID? = null,
 )

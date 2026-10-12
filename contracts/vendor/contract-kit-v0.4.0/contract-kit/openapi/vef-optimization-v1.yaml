@@ -1,0 +1,228 @@
+openapi: 3.1.0
+info:
+  title: VEF energy optimization API
+  version: 1.0.0
+  description: Submit bounded energy optimization runs and retrieve immutable results.
+servers:
+  - url: https://api-vef.apps.example.invalid
+security:
+  - platformSession: []
+paths:
+  /api/v1/optimization-runs:
+    post:
+      operationId: createOptimizationRun
+      parameters:
+        - name: X-Platform-CSRF-Token
+          in: header
+          required: true
+          description: Value of the managed __Host-platform-csrf cookie; the boundary also requires a same-origin Origin header.
+          schema: {type: string, minLength: 1}
+        - name: Origin
+          in: header
+          required: true
+          description: Exact public HTTPS origin of this application.
+          schema: {type: string, format: uri}
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: ../schemas/energy-optimization-request-v1.schema.json}
+      responses:
+        '202':
+          description: Run accepted or the identical idempotent run returned.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RunAccepted'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '302': {$ref: '#/components/responses/LoginRequired'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '503': {$ref: '#/components/responses/AccessUnavailable'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '413': {$ref: '#/components/responses/PayloadTooLarge'}
+        '422': {$ref: '#/components/responses/Unprocessable'}
+  /api/v1/optimization-runs/{runId}:
+    get:
+      operationId: getOptimizationRun
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+      responses:
+        '200':
+          description: Current run state or immutable completed result.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ActiveRun'
+                  - $ref: ../schemas/energy-optimization-result-v1.schema.json
+                  - $ref: '#/components/schemas/FailedRun'
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '302': {$ref: '#/components/responses/LoginRequired'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '503': {$ref: '#/components/responses/AccessUnavailable'}
+        '404': {$ref: '#/components/responses/NotFound'}
+  /api/v1/optimization-runs/{runId}/candidates:
+    get:
+      operationId: listOptimizationCandidates
+      parameters:
+        - $ref: '#/components/parameters/RunId'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Ranked candidate page; rank order is stable for a completed run.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CandidatePage'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '302': {$ref: '#/components/responses/LoginRequired'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '503': {$ref: '#/components/responses/AccessUnavailable'}
+        '404': {$ref: '#/components/responses/NotFound'}
+        '409': {$ref: '#/components/responses/Conflict'}
+  /api/v1/capabilities:
+    get:
+      operationId: getOptimizationCapabilities
+      responses:
+        '200':
+          description: Bounds enforced before a run is accepted.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Capabilities'}
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '302': {$ref: '#/components/responses/LoginRequired'}
+        '401': {$ref: '#/components/responses/Unauthorized'}
+        '403': {$ref: '#/components/responses/Forbidden'}
+        '503': {$ref: '#/components/responses/AccessUnavailable'}
+components:
+  securitySchemes:
+    platformSession:
+      type: apiKey
+      in: cookie
+      name: __Host-platform-session
+      description: >-
+        Platform-managed browser session after OIDC login and application-group
+        approval. Unauthenticated requests redirect to login. The backend receives
+        normalized principal headers. This cookie is one part of the managed
+        session; applications do not create or inspect it.
+  parameters:
+    RunId:
+      name: runId
+      in: path
+      required: true
+      schema: {type: string, pattern: '^[a-zA-Z0-9][a-zA-Z0-9_-]{7,127}$'}
+    Page:
+      name: page
+      in: query
+      schema: {type: integer, minimum: 0, default: 0}
+    PageSize:
+      name: pageSize
+      in: query
+      schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+  schemas:
+    RunAccepted:
+      type: object
+      additionalProperties: false
+      required: [runId, status, createdAt]
+      properties:
+        runId: {type: string, pattern: '^[a-zA-Z0-9][a-zA-Z0-9_-]{7,127}$'}
+        status: {type: string, const: QUEUED}
+        createdAt: {type: string, format: date-time, pattern: 'Z$'}
+    ActiveRun:
+      type: object
+      additionalProperties: false
+      required: [runId, status, createdAt]
+      properties:
+        runId: {type: string, pattern: '^[a-zA-Z0-9][a-zA-Z0-9_-]{7,127}$'}
+        status: {type: string, enum: [QUEUED, RUNNING]}
+        createdAt: {type: string, format: date-time, pattern: 'Z$'}
+        startedAt: {type: string, format: date-time, pattern: 'Z$'}
+    FailedRun:
+      type: object
+      additionalProperties: false
+      required: [runId, status, createdAt, completedAt, error]
+      properties:
+        runId: {type: string, pattern: '^[a-zA-Z0-9][a-zA-Z0-9_-]{7,127}$'}
+        status: {type: string, const: FAILED}
+        createdAt: {type: string, format: date-time, pattern: 'Z$'}
+        completedAt: {type: string, format: date-time, pattern: 'Z$'}
+        error: {$ref: ../schemas/error-v1.schema.json}
+    CandidatePage:
+      type: object
+      additionalProperties: false
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items: {$ref: ../schemas/energy-candidate-v1.schema.json}
+        page: {type: integer, minimum: 0}
+        pageSize: {type: integer, minimum: 1, maximum: 100}
+        total: {type: integer, minimum: 0, maximum: 100000}
+    Capabilities:
+      type: object
+      additionalProperties: false
+      required: [maxModelsPerType, maxPvModules, inverterCount, maxBatteries, maxCandidateEvaluations, runTimeoutSeconds, maxPageSize]
+      properties:
+        maxModelsPerType: {type: integer, const: 20}
+        maxPvModules: {type: integer, const: 100}
+        inverterCount: {type: integer, const: 1}
+        maxBatteries: {type: integer, const: 4}
+        maxCandidateEvaluations: {type: integer, const: 100000}
+        runTimeoutSeconds: {type: integer, const: 300}
+        maxPageSize: {type: integer, const: 100}
+    Error:
+      $ref: ../schemas/error-v1.schema.json
+  responses:
+    LoginRequired:
+      description: Browser session missing or expired; platform redirects to login without reaching VEF.
+      headers:
+        Location:
+          schema: {type: string}
+    BadRequest:
+      description: Syntactically invalid request or ambiguous route path.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Error'
+              - $ref: ../schemas/platform-access-error-v1.schema.json
+    Unauthorized:
+      description: Invalid platform session identity or missing/malformed normalized backend identity.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Error'
+              - $ref: ../schemas/platform-access-error-v1.schema.json
+    Forbidden:
+      description: Caller lacks authority for this operation or run.
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Error'
+              - $ref: ../schemas/platform-access-error-v1.schema.json
+    NotFound:
+      description: Run was not found.
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+    Conflict:
+      description: Idempotency conflict or run has no candidate result yet.
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+    PayloadTooLarge:
+      description: Request exceeds the declared transfer limit.
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+    Unprocessable:
+      description: Request violates domain rules, capability bounds, or search-space limit.
+      content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}
+    AccessUnavailable:
+      description: Platform authentication or authorization snapshot unavailable; fail closed before the backend.
+      content:
+        application/json:
+          schema: {$ref: ../schemas/platform-access-error-v1.schema.json}

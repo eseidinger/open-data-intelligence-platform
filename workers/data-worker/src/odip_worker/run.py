@@ -1,77 +1,73 @@
 import argparse
 import base64
 import hashlib
-import os
 import sys
 import time
-
+import os
 import requests
-
-from odip_worker.normalization import normalize
+from odip_worker.auth import api_url, call, headers as platform_principal_headers
+from odip_worker.transformation import transform
 from odip_worker.validation import validate_payload
+from odip_worker.retrieval import download
+from odip_worker.publication import claim_and_validate
 
-
-def platform_principal_headers() -> dict[str, str]:
-    """Supply the configured service principal when calling the internal API."""
-    return {
-        "X-Platform-Principal-Id": os.getenv("ODIP_API_PRINCIPAL_ID", "odip-ingestion-worker"),
-        "X-Platform-Principal-Kind": os.getenv("ODIP_API_PRINCIPAL_KIND", "service"),
-        "X-Platform-Principal-Issuer": os.getenv("ODIP_API_PRINCIPAL_ISSUER", "https://odip.internal"),
-        "X-Platform-Principal-Subject": os.getenv("ODIP_API_PRINCIPAL_SUBJECT", "odip-ingestion-worker"),
-        "X-Platform-Principal-Group-Ids": os.getenv("ODIP_API_PRINCIPAL_GROUP_IDS", "grp_e2987e192a0a41b4a0273c71c14fef47"),
-    }
-
-
-def claim_next(base_url: str) -> dict | None:
-    """Wait for a rolling API deployment, then claim at most one queued run."""
+def claim_next(base_url):
     for attempt in range(24):
         try:
-            response = requests.post(f"{base_url}/api/pipeline-runs/claim-next", headers=platform_principal_headers(), timeout=15)
-            if response.status_code == 204:
-                return None
+            response = call("post", f"{base_url}/api/pipeline-runs/claim-next")
+            if response.status_code == 204: return None
             response.raise_for_status()
             return response.json()
         except requests.ConnectionError:
-            if attempt == 23:
-                raise
+            if attempt == 23: raise
             time.sleep(5)
 
-
-def main() -> None:
+def main():
     parser = argparse.ArgumentParser()
-    run_selection = parser.add_mutually_exclusive_group(required=True)
-    run_selection.add_argument("--run-id")
-    run_selection.add_argument("--claim-next", action="store_true", help="Atomically claim and process one queued run")
+    selection = parser.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--run-id")
+    selection.add_argument("--claim-next", action="store_true")
+    selection.add_argument("--publication-only", action="store_true")
     parser.add_argument("--api-url", default=os.getenv("ODIP_API_URL", "http://localhost:8080"))
     args = parser.parse_args()
-    base_url = args.api_url.rstrip("/")
+    base_url = api_url(args.api_url)
+    if args.publication_only:
+        claim_and_validate(base_url)
+        return
     if args.claim_next:
+        if claim_and_validate(base_url): return
         job = claim_next(base_url)
-        if job is None:
-            return
+        if job is None: return
     else:
-        job_response = requests.get(f"{base_url}/api/pipeline-runs/{args.run_id}/job", headers=platform_principal_headers(), timeout=15)
-        job_response.raise_for_status()
-        job = job_response.json()
-        requests.post(f"{base_url}/api/pipeline-runs/{args.run_id}/started", headers=platform_principal_headers(), timeout=15).raise_for_status()
-
+        response = call("get", f"{base_url}/api/pipeline-runs/{args.run_id}/job")
+        response.raise_for_status()
+        job = response.json()
+        started = call("post", f"{base_url}/api/pipeline-runs/{args.run_id}/started")
+        started.raise_for_status()
+        job["claimToken"] = started.json()["claimToken"]
     run_id = job["runId"]
     try:
-        response = requests.get(job["location"], timeout=60)
-        response.raise_for_status()
-        payload = response.content
-        validation = validate_payload(payload, response.headers.get("Content-Type"))
-        energy_observation = normalize(payload, job.get("normalizer"))
-        checksum = hashlib.sha256(payload).hexdigest()
-        requests.post(f"{base_url}/api/pipeline-runs/{run_id}/completed", headers=platform_principal_headers(), json={"payload": base64.b64encode(payload).decode("ascii"), "contentType": response.headers.get("Content-Type"), "contentLength": len(payload), "checksumSha256": checksum, "sourceVersion": response.headers.get("ETag"), "validation": validation, "energyObservation": energy_observation}, timeout=60).raise_for_status()
-    except Exception as error:
-        requests.post(f"{base_url}/api/pipeline-runs/{run_id}/failed", headers=platform_principal_headers(), json={"reason": str(error)[:4000]}, timeout=15)
-        raise
-
+        payload, content_type, source_version = download(job["location"])
+        validation = validate_payload(payload, content_type)
+        transformation = transform(payload, job.get("normalizer"))
+        complete = {"payload": base64.b64encode(payload).decode("ascii"), "contentType": content_type, "contentLength": len(payload),
+                    "checksumSha256": hashlib.sha256(payload).hexdigest(), "sourceVersion": source_version,
+                    "validation": validation, "transformation": transformation, "claimToken": job.get("claimToken")}
+        for attempt in range(3):
+            try:
+                call("post", f"{base_url}/api/pipeline-runs/{run_id}/completed", json=complete).raise_for_status()
+                break
+            except requests.ConnectionError:
+                if attempt == 2: raise
+                time.sleep(2 ** attempt)
+    except Exception:
+        try:
+            call("post", f"{base_url}/api/pipeline-runs/{run_id}/failed", json={"reason": "ingestion_failed"}).raise_for_status()
+        finally:
+            raise RuntimeError("Ingestion failed; see the run's safe diagnostic") from None
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as error:
-        print(error, file=sys.stderr)
-        raise
+    try: main()
+    except Exception:
+        print("Worker failed; inspect the run status and configuration", file=sys.stderr)
+        sys.exit(1)

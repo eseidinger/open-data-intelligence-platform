@@ -1,0 +1,9 @@
+{
+  "maximumDataClassification": "Confidential",
+  "maximumTelemetryClassification": "Internal",
+  "personalData": false,
+  "domainRetentionOwner": "VEF application owner",
+  "domainRetentionPolicy": "Requests, runs, results, and evidence: 180 days after completion; active row deletion is application-owned.",
+  "purgeAuthority": "VEF project administrator",
+  "recoveryOwner": "VEF application owner and platform operator"
+}

@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
+import de.eseidinger.odip.platform.ingestion.domain.ArtifactValidationStatus
+import de.eseidinger.odip.platform.publication.checkPublication
 
 @Service
 class EnergyCurationService(
@@ -25,12 +27,19 @@ class EnergyCurationService(
     @Transactional
     fun curate(rawArtifactId: UUID, request: CreateEnergyObservationRequest): EnergyObservationEntity {
         val artifact = artifacts.findById(rawArtifactId).orElseThrow { notFound("Raw artifact", rawArtifactId) }
+        checkPublication(artifactValidations.findByRawArtifact_Id(rawArtifactId)?.status == ArtifactValidationStatus.VALID,
+            "quality_failed", "Validated raw input is required before curation")
         val sourceId = requireNotNull(artifact.source).id
         val dataset = datasets.findAllBySources_Id(sourceId).singleOrNull()
             ?: throw ResponseStatusException(HttpStatus.CONFLICT, "Raw artifact $rawArtifactId must map to exactly one dataset")
+        val existing = observations.findByRawArtifact_IdAndIndicatorCodeAndGeoCodeAndObservationYearAndUnitCode(rawArtifactId, request.indicatorCode, request.geoCode, request.observationYear, request.unitCode)
+        if (existing != null) {
+            checkPublication(existing.observationValue.compareTo(request.observationValue) == 0, "version_immutable", "Curated values cannot change", 409)
+            return existing
+        }
+        checkPublication(datasetVersions.findByDataset_IdAndRawArtifact_Id(dataset.id, artifact.id) == null, "version_immutable", "New observations require a new input/version", 409)
         val version = publishVersion(dataset.id, artifact.id)
-        return observations.findByRawArtifact_IdAndIndicatorCodeAndGeoCodeAndObservationYearAndUnitCode(rawArtifactId, request.indicatorCode, request.geoCode, request.observationYear, request.unitCode)
-            ?: observations.save(EnergyObservationEntity(rawArtifact = artifact, dataset = dataset, datasetVersion = version, indicatorCode = request.indicatorCode, geoCode = request.geoCode, observationYear = request.observationYear, unitCode = request.unitCode, observationValue = request.observationValue))
+        return observations.save(EnergyObservationEntity(rawArtifact = artifact, dataset = dataset, datasetVersion = version, indicatorCode = request.indicatorCode, geoCode = request.geoCode, observationYear = request.observationYear, unitCode = request.unitCode, observationValue = request.observationValue))
     }
 
     @Transactional(readOnly = true)

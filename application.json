@@ -9,7 +9,9 @@
   "spec": {
     "configuration": {
       "values": {
-        "ODIP_API_URL": "http://api:8080"
+        "ODIP_API_URL": "https://web-odip.apps.example.invalid",
+        "ODIP_IDENTITY_MODE": "platform",
+        "ODIP_WORKER_BINDING_PREFIX": "RENDER_REQUIRED"
       }
     },
     "components": [
@@ -18,7 +20,7 @@
         "type": "service",
         "runtime": {
           "type": "container",
-          "image": "docker.io/eseidinger/odip-platform:latest"
+          "image": "docker.io/eseidinger/odip-platform:integration-0.4.0"
         },
         "ports": [
           {
@@ -45,17 +47,23 @@
         }
       },
       {
-        "name": "api",
-        "type": "service",
+        "name": "ingestion-worker",
+        "type": "scheduled",
         "runtime": {
           "type": "container",
-          "image": "docker.io/eseidinger/odip-platform:latest"
+          "image": "docker.io/eseidinger/odip-data-worker:integration-0.4.0",
+          "args": [
+            "--claim-next"
+          ]
         },
-        "ports": [
+        "schedule": "* * * * *",
+        "concurrencyPolicy": "Forbid",
+        "retryLimit": 0,
+        "maxRunSeconds": 300,
+        "outbound": [
           {
-            "name": "http",
-            "protocol": "http",
-            "port": 8080
+            "dns": "jsonplaceholder.typicode.com",
+            "port": 443
           }
         ],
         "resources": {
@@ -67,32 +75,15 @@
             "cpu": "500m",
             "memory": "512Mi"
           }
-        },
-        "exposure": "private",
-        "health": {
-          "readiness": {
-            "path": "/actuator/health/readiness"
-          }
         }
-      },
+      }
+    ],
+    "resources": [
       {
-        "name": "ingestion-worker",
-        "type": "scheduled",
-        "runtime": {
-          "type": "container",
-          "image": "docker.io/eseidinger/odip-data-worker:latest",
-          "args": ["--claim-next"]
-        },
-        "schedule": "* * * * *",
-        "concurrencyPolicy": "Forbid",
-        "retryLimit": 0,
-        "maxRunSeconds": 300,
-        "outbound": [
-          {
-            "dns": "jsonplaceholder.typicode.com",
-            "port": 443
-          }
-        ]
+        "name": "database",
+        "type": "postgres",
+        "profile": "shared-dev",
+        "deletionPolicy": "retain"
       }
     ]
   }

@@ -1,0 +1,36 @@
+This repository uses a file-scoped dual-license arrangement.
+
+Apache License 2.0
+------------------
+
+The following repository-authored material is licensed under the Apache
+License, Version 2.0:
+
+- JSON Schema and OpenAPI definitions;
+- test runners, scripts, and other software;
+- software configuration and generated software artifacts, unless marked
+  otherwise.
+
+The full license text is in LICENSES/Apache-2.0.txt.
+SPDX identifier: Apache-2.0
+
+Creative Commons Attribution 4.0 International
+------------------------------------------------
+
+The following repository-authored material is licensed under the Creative
+Commons Attribution 4.0 International license:
+
+- documentation, architecture decisions, and review records;
+- repository-authored examples and synthetic fixtures;
+- repository-authored expected results and other reference data.
+
+The full license text is in LICENSES/CC-BY-4.0.txt.
+SPDX identifier: CC-BY-4.0
+
+Third-party material
+--------------------
+
+Third-party material is not relicensed by this repository. Its source,
+attribution, modification status, and applicable terms must be recorded in the
+NOTICE file and in artifact provenance. A file-specific notice overrides the
+default scope above for that third-party material.

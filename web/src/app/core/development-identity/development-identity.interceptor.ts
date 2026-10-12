@@ -15,6 +15,7 @@ export const developmentIdentityInterceptor: HttpInterceptorFn = (request, next)
       'X-Platform-Principal-Issuer': identity.issuer,
       'X-Platform-Principal-Subject': identity.subject,
       'X-Platform-Principal-Group-Ids': identity.groupIds,
+      ...(identity.principalKind === 'service' ? { 'X-Platform-Principal-Client-Id': 'development-client' } : {}),
     },
   }));
 };

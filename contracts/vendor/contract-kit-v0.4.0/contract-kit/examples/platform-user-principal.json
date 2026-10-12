@@ -1,0 +1,7 @@
+{
+  "X-Platform-Principal-Id": "prn_33333333333333333333333333333333",
+  "X-Platform-Principal-Kind": "user",
+  "X-Platform-Principal-Issuer": "https://identity.example.invalid/realms/platform",
+  "X-Platform-Principal-Subject": "human-example",
+  "X-Platform-Principal-Group-Ids": "grp_22222222222222222222222222222222"
+}

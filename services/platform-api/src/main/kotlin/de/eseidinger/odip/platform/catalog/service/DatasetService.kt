@@ -8,17 +8,22 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
+import de.eseidinger.odip.platform.publication.DatasetAccess
+import jakarta.servlet.http.HttpServletRequest
 
 @Service
 class DatasetService(
     private val datasetRepository: DatasetRepository,
     private val dataSourceRepository: DataSourceRepository,
+    private val access: DatasetAccess,
+    private val httpRequest: HttpServletRequest,
 ) {
     @Transactional(readOnly = true)
-    fun list(): List<DatasetEntity> = datasetRepository.findAllByOrderByNameAsc()
+    fun list(): List<DatasetEntity> = datasetRepository.findAllByOrderByNameAsc().filter { access.operator(httpRequest) || access.allowed(access.principal(httpRequest), it.id, "READ") }
 
     @Transactional
     fun create(request: CreateDatasetRequest): DatasetEntity {
+        access.requireOperator(httpRequest)
         if (datasetRepository.existsByName(request.name)) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "A dataset named '${request.name}' already exists")
         }
@@ -33,7 +38,7 @@ class DatasetService(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more source IDs are not registered")
         }
 
-        return datasetRepository.save(
+        val dataset = datasetRepository.saveAndFlush(
             DatasetEntity(
                 name = request.name,
                 description = request.description?.ifBlank { null },
@@ -42,5 +47,7 @@ class DatasetService(
                 sources = sources.toMutableSet(),
             ),
         )
+        listOf("READ", "WRITE", "INGEST", "VALIDATE").forEach { access.grant(dataset.id, access.principal(httpRequest), it) }
+        return dataset
     }
 }

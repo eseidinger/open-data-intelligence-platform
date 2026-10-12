@@ -1,0 +1,1305 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ODIP publication preparation and operator API",
+    "version": "1.0.0",
+    "description": "Extensions to the pinned consumer API. Browser routes use the platform session and CSRF boundary; worker routes use approved service bindings. Local dataset grants apply independently."
+  },
+  "components": {
+    "securitySchemes": {
+      "platformSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-platform-session"
+      },
+      "platformBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "parameters": {
+      "DraftId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "ArtifactId": {
+        "name": "artifact",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,99}$"
+        }
+      },
+      "DatasetId": {
+        "name": "dataset",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "Origin": {
+        "name": "Origin",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "Csrf": {
+        "name": "X-Platform-CSRF-Token",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "schemas": {
+      "DraftRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "datasetId",
+          "manifest"
+        ],
+        "properties": {
+          "datasetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "manifest": {
+            "$ref": "../vendor/contract-kit-v0.4.0/contract-kit/schemas/dataset-publication-v1.schema.json"
+          },
+          "rawArtifactIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "ValidationReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "manifestSha256",
+          "policyRef",
+          "checks",
+          "artifactDigests",
+          "claimToken"
+        ],
+        "properties": {
+          "manifestSha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "policyRef": {
+            "type": "string",
+            "format": "uri"
+          },
+          "checks": {
+            "type": "object",
+            "additionalProperties": {
+              "enum": [
+                "PASS",
+                "FAIL"
+              ]
+            }
+          },
+          "artifactDigests": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "failureCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "claimToken": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Grant": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "principalId",
+          "permission"
+        ],
+        "properties": {
+          "principalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "permission": {
+            "enum": [
+              "READ",
+              "WRITE",
+              "INGEST",
+              "VALIDATE"
+            ]
+          }
+        }
+      },
+      "Draft": {
+        "type": "object",
+        "required": [
+          "id",
+          "datasetId",
+          "status",
+          "manifestSha256",
+          "manifest"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "datasetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "VALIDATING",
+              "FAILED",
+              "PUBLISHED"
+            ]
+          },
+          "manifestSha256": {
+            "type": "string"
+          },
+          "manifest": {
+            "$ref": "../vendor/contract-kit-v0.4.0/contract-kit/schemas/dataset-publication-v1.schema.json"
+          },
+          "report": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "failureCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "claimToken": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "RawInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "payload",
+          "contentLength",
+          "checksumSha256"
+        ],
+        "properties": {
+          "payload": {
+            "type": "string",
+            "contentEncoding": "base64"
+          },
+          "contentType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contentLength": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "checksumSha256": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{64}$"
+          },
+          "sourceVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "validation": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "VALID",
+                  "INVALID",
+                  "UNSUPPORTED"
+                ]
+              },
+              "detectedFormat": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "recordCount": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "schemaFingerprint": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "failureReason": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          "transformation": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "data": {
+                "type": "object"
+              }
+            }
+          },
+          "claimToken": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        }
+      }
+    },
+    "responses": {
+      "Error400": {
+        "description": "Invalid request, fields, or idempotency header"
+      },
+      "Error401": {
+        "description": "Missing or invalid trusted context or service credential"
+      },
+      "Error403": {
+        "description": "Platform route or local dataset permission denied"
+      },
+      "Error409": {
+        "description": "Conflicting idempotency key, immutable version, or stale claim"
+      },
+      "Error413": {
+        "description": "Decoded body, manifest, or artifact exceeds its bound"
+      },
+      "Error422": {
+        "description": "Schema, checksum, profile, or aggregate publication limit failure"
+      },
+      "Error503": {
+        "description": "Platform access material unavailable"
+      },
+      "Error404": {
+        "description": "Dataset, draft, version, or artifact not found"
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/publication-drafts": {
+      "get": {
+        "operationId": "listPublicationDrafts",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Draft"
+                  }
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPublicationDraft",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Draft"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/v1/publication-drafts/{id}": {
+      "get": {
+        "operationId": "getPublicationDraft",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DraftId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Draft"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/v1/publication-drafts/{id}/artifacts/{artifact}": {
+      "get": {
+        "operationId": "downloadOperatorArtifact",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DraftId"
+          },
+          {
+            "$ref": "#/components/parameters/ArtifactId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      },
+      "put": {
+        "operationId": "attachPublicationArtifact",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DraftId"
+          },
+          {
+            "$ref": "#/components/parameters/ArtifactId"
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "contentEncoding": "binary"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/publication-drafts/{id}/publish": {
+      "post": {
+        "operationId": "requestPublication",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DraftId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Draft"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/v1/publication-jobs/claim-next": {
+      "post": {
+        "operationId": "claimPublicationValidation",
+        "security": [
+          {
+            "platformBearer": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Draft"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No eligible validation job is queued"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/v1/publication-jobs/{id}/artifacts/{artifact}": {
+      "get": {
+        "operationId": "readValidationArtifact",
+        "security": [
+          {
+            "platformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DraftId"
+          },
+          {
+            "$ref": "#/components/parameters/ArtifactId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/v1/publication-jobs/{id}/completed": {
+      "post": {
+        "operationId": "completePublicationValidation",
+        "security": [
+          {
+            "platformBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DraftId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidationReport"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Draft"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/v1/dataset-grants/{dataset}": {
+      "get": {
+        "operationId": "listDatasetGrants",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DatasetId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Grant"
+                  }
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      },
+      "put": {
+        "operationId": "createDatasetGrant",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DatasetId"
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Grant"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "revokeDatasetGrant",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DatasetId"
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "name": "principalId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "permission",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "READ",
+                "WRITE",
+                "INGEST",
+                "VALIDATE"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/v1/operator-capabilities": {
+      "get": {
+        "operationId": "getOperatorCapabilities",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "manageGrants",
+                    "writableDatasetIds"
+                  ],
+                  "properties": {
+                    "manageGrants": {
+                      "type": "boolean"
+                    },
+                    "writableDatasetIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/v1/publication-retention": {
+      "put": {
+        "operationId": "recordSupportEnd",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "schemaRef",
+                  "supportEndsAt"
+                ],
+                "properties": {
+                  "schemaRef": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "supportEndsAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful operation"
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        }
+      }
+    },
+    "/api/v1/reference-inputs": {
+      "post": {
+        "operationId": "captureReferenceInput",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sourceId",
+                  "input"
+                ],
+                "properties": {
+                  "sourceId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "input": {
+                    "$ref": "#/components/schemas/RawInput"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Immutable input captured with run and artifact IDs"
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          }
+        }
+      }
+    },
+    "/api/v1/operator-pipeline-runs": {
+      "get": {
+        "operationId": "listOperatorPipelineRuns",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorized pipeline history"
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          }
+        }
+      }
+    },
+    "/api/v1/operator-pipeline-runs/{id}/artifacts": {
+      "get": {
+        "operationId": "listOperatorPipelineArtifacts",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DraftId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Input metadata and validation evidence"
+          },
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          }
+        }
+      }
+    }
+  }
+}

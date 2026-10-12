@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portfolio:error:v1",
+  "title": "Machine-readable API error v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "code", "message"],
+  "properties": {
+    "schemaVersion": { "const": "error/v1" },
+    "status": { "type": "integer", "minimum": 400, "maximum": 599 },
+    "code": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "message": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "correlationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "fieldErrors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "code", "message"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "message": { "type": "string", "minLength": 1, "maxLength": 500 }
+        }
+      }
+    }
+  }
+}

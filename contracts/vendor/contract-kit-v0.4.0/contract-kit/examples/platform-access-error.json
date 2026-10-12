@@ -1,0 +1,4 @@
+{
+  "code": "application_access_denied",
+  "detail": "Bearer token required"
+}

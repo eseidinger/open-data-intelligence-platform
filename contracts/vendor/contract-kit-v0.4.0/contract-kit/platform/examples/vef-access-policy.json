@@ -1,0 +1,95 @@
+{
+  "component": "api",
+  "defaultDecision": "deny",
+  "identityAttributes": {
+    "displayName": false,
+    "email": false
+  },
+  "routes": [
+    {
+      "name": "create-run",
+      "match": {
+        "path": "/api/v1/optimization-runs",
+        "methods": [
+          "POST"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "application-users"
+        ]
+      }
+    },
+    {
+      "name": "read-runs",
+      "match": {
+        "pathPrefix": "/api/v1/optimization-runs",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "application-users"
+        ]
+      }
+    },
+    {
+      "name": "capabilities",
+      "match": {
+        "path": "/api/v1/capabilities",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "application-users"
+        ]
+      }
+    },
+    {
+      "name": "ui",
+      "match": {
+        "path": "/",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "application-users"
+        ]
+      }
+    },
+    {
+      "name": "ui-assets",
+      "match": {
+        "pathPrefix": "/ui",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "application-users"
+        ]
+      }
+    }
+  ]
+}

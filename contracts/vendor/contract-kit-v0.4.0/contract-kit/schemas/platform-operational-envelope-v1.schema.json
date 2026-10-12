@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portfolio:platform:operational-envelope:v1",
+  "title": "Minimized operational log envelope for centralized workload retention",
+  "description": "Application emission profile for the platform's operational-envelope-v1 format. Emit compact JSON within the collector's 4 KB line limit. The collector discards unknown fields; this emission profile excludes them. There is no schemaVersion field on the wire. Correlation is opaque and application-owned, with no domain data or secrets.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event", "level"],
+  "properties": {
+    "event": {
+      "enum": [
+        "application.started", "application.ready", "application.completed", "application.failed",
+        "request.started", "request.ready", "request.completed", "request.failed",
+        "job.started", "job.ready", "job.completed", "job.failed"
+      ]
+    },
+    "level": {"enum": ["debug", "info", "warning", "error"]},
+    "correlationId": {
+      "type": "string",
+      "maxLength": 36,
+      "pattern": "^(?:[a-f0-9]{32}|[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})?$",
+      "not": {"pattern": "[\r\n]"}
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "urn:portfolio:energy-configuration-input:v1": {
+    "policyRef": "urn:portfolio:energy-quality:v1",
+    "checks": ["schema", "integrity", "intervals", "units", "ranges", "catalog", "usage_rights"],
+    "artifactSchemas": {
+      "PV_YIELD_PER_KWP": "energy-pv-yield-v1", "IMPORT_TARIFF": "energy-import-tariff-v1",
+      "EXPORT_TARIFF": "energy-export-tariff-v1", "REFERENCE_LOAD_SHAPE": "energy-reference-load-shape-v1",
+      "COMPONENT_CATALOG": "energy-component-catalog-v1"
+    }
+  },
+  "urn:portfolio:mobility-counts:v1": {
+    "policyRef": "urn:portfolio:mobility-counts-quality:v1",
+    "checks": ["schema", "integrity", "usage_rights"],
+    "artifactSchemas": {"HOURLY_COUNTS": "mobility-counts-v1"}
+  }
+}

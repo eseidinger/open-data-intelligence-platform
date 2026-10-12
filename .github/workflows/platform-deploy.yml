@@ -30,6 +30,10 @@ jobs:
     environment: production
     env:
       IMAGE_TAG: ${{ inputs.image_tag || github.event.workflow_run.head_sha }}
+      ODIP_HOST: ${{ vars.ODIP_HOST }}
+      IDENTITY_HOST: ${{ vars.IDENTITY_HOST }}
+      ODIP_WORKER_BINDING_PREFIX: ${{ vars.ODIP_WORKER_BINDING_PREFIX }}
+      ODIP_OPERATOR_GROUP_IDS: ${{ vars.ODIP_OPERATOR_GROUP_IDS }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -40,11 +44,11 @@ jobs:
       - run: python3 -m pip install developer-platform-cli
       - name: Create deployment declaration
         run: >-
-          jq --arg platform_image "docker.io/eseidinger/odip-platform:${IMAGE_TAG}"
-          --arg worker_image "docker.io/eseidinger/odip-data-worker:${IMAGE_TAG}"
-          '(.spec.components[] | select(.name == "web" or .name == "api").runtime.image) = $platform_image |
-          (.spec.components[] | select(.name == "ingestion-worker").runtime.image) = $worker_image'
-          application.json > "$RUNNER_TEMP/application.json"
+          python3 scripts/render-integration.py --image-tag "$IMAGE_TAG"
+          --odip-host "$ODIP_HOST" --identity-host "$IDENTITY_HOST"
+          --worker-secret-prefix "$ODIP_WORKER_BINDING_PREFIX"
+          --operator-group-ids "$ODIP_OPERATOR_GROUP_IDS"
+          > "$RUNNER_TEMP/application.json"
       - name: Deploy and wait for readiness
         run: >-
           devplat deploy apply --project odip

@@ -13,21 +13,25 @@ The image listens on port `8080` and starts with the `prod` Spring profile. Set
 appropriate `ODIP_RAW_ARTIFACT_MAX_PAYLOAD_BYTES` at runtime. Do not place those
 values in an image or build argument.
 
-Build the worker separately from its own directory:
+Build the worker from the repository root so its pinned contract resources are included:
 
 ```bash
-docker build --tag odip-data-worker:<release-id> workers/data-worker
+docker build --file workers/data-worker/Dockerfile --tag odip-data-worker:<release-id> .
 ```
 
-Run the worker with `ODIP_API_URL` set to the API's internal URL and provide the
-pipeline run when starting the container:
+Run the worker with `ODIP_API_URL` set to the protected HTTPS application origin.
+Provide its approved project-wide service binding and `ODIP_WORKER_BINDING_PREFIX`
+through the platform; it does not construct production identity headers:
 
 ```bash
-docker run --rm -e ODIP_API_URL=http://platform-api:8080 \
-  odip-data-worker:<release-id> --run-id <pipeline-run-id>
+docker run --rm --env-file <protected-worker-environment-file> \
+  odip-data-worker:<release-id> --claim-next
 ```
 
-The worker image has no database configuration and exposes no port.
+The worker image has no database configuration and exposes no port. It installs
+from the frozen lock and includes the immutable contract kit. Follow the
+[integration runbook](energy-configuration-integration-runbook.md) to provision
+bindings and render the descriptor with an actual commit image tag.
 
 ## Continuous delivery
 

@@ -10,7 +10,10 @@ spring:
     enabled: true
 
 odip:
+  source-policy:
+    enabled: false
   raw-artifact:
     max-payload-bytes: 10485760
   authorization:
     require-principal-context: false
+    strict-principal-format: false

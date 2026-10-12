@@ -1,0 +1,359 @@
+{
+  "component": "web",
+  "defaultDecision": "deny",
+  "identityAttributes": {
+    "displayName": false,
+    "email": false
+  },
+  "routes": [
+    {
+      "name": "consumer-publications",
+      "match": {
+        "pathPrefix": "/api/v1/datasets",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "bearer-token"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-readers"
+        ]
+      }
+    },
+    {
+      "name": "worker-publications",
+      "match": {
+        "pathPrefix": "/api/v1/publication-jobs",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      "authentication": {
+        "mode": "bearer-token"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "ingestion-workers"
+        ]
+      }
+    },
+    {
+      "name": "worker-ingestion",
+      "match": {
+        "pathPrefix": "/api/pipeline-runs",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      "authentication": {
+        "mode": "bearer-token"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "ingestion-workers"
+        ]
+      }
+    },
+    {
+      "name": "operator-3",
+      "match": {
+        "pathPrefix": "/api/v1/publication-drafts",
+        "methods": [
+          "GET",
+          "POST",
+          "PUT"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "operator-4",
+      "match": {
+        "pathPrefix": "/api/v1/dataset-grants",
+        "methods": [
+          "GET",
+          "PUT",
+          "DELETE"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "operator-5",
+      "match": {
+        "pathPrefix": "/api/v1/operator-capabilities",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "operator-6",
+      "match": {
+        "pathPrefix": "/api/v1/operator-pipeline-runs",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "operator-7",
+      "match": {
+        "pathPrefix": "/api/v1/reference-inputs",
+        "methods": [
+          "POST"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "operator-8",
+      "match": {
+        "pathPrefix": "/api/v1/publication-retention",
+        "methods": [
+          "PUT"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "operator-9",
+      "match": {
+        "pathPrefix": "/api/data-sources",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "operator-10",
+      "match": {
+        "pathPrefix": "/api/datasets",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "operator-11",
+      "match": {
+        "pathPrefix": "/api/raw-artifacts",
+        "methods": [
+          "GET",
+          "POST"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "ui-12",
+      "match": {
+        "path": "/",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "ui-13",
+      "match": {
+        "path": "/sources",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "ui-14",
+      "match": {
+        "path": "/datasets",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "ui-15",
+      "match": {
+        "path": "/pipeline-runs",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "ui-16",
+      "match": {
+        "path": "/publications",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "ui-17",
+      "match": {
+        "path": "/index.html",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "ui-18",
+      "match": {
+        "path": "/favicon.ico",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
+      "name": "ui-assets",
+      "match": {
+        "pathPrefix": "/ui",
+        "methods": [
+          "GET"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    }
+  ]
+}

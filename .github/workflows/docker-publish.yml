@@ -60,7 +60,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
       - uses: docker/build-push-action@v6
         with:
-          context: workers/data-worker
+          context: .
           file: workers/data-worker/Dockerfile
           push: true
           tags: ${{ steps.worker-meta.outputs.tags }}

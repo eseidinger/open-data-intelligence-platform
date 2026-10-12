@@ -13,3 +13,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+odip:
+  authorization:
+    strict-principal-format: false

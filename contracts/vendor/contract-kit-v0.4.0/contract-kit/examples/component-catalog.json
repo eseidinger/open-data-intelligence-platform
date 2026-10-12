@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "energy-component-catalog/v1",
+  "catalogVersion": "1.0.0",
+  "currency": "EUR",
+  "components": [
+    {
+      "componentId": "pv-demo-400",
+      "type": "PV_MODULE",
+      "displayName": "Synthetic 400 Wp module",
+      "unitPriceEUR": 150,
+      "available": true,
+      "source": {
+        "owner": "Energy System Configuration",
+        "reference": "https://example.invalid/synthetic-components",
+        "version": "1.0.0",
+        "license": "CC-BY-4.0",
+        "retrievedAt": "2026-10-10T09:00:00Z"
+      },
+      "ratedPowerKWp": 0.4,
+      "areaM2": 2
+    },
+    {
+      "componentId": "inverter-demo-5",
+      "type": "INVERTER",
+      "displayName": "Synthetic 5 kW inverter",
+      "unitPriceEUR": 1200,
+      "available": true,
+      "source": {
+        "owner": "Energy System Configuration",
+        "reference": "https://example.invalid/synthetic-components",
+        "version": "1.0.0",
+        "license": "CC-BY-4.0",
+        "retrievedAt": "2026-10-10T09:00:00Z"
+      },
+      "acPowerKW": 5,
+      "efficiencyFraction": 0.96
+    },
+    {
+      "componentId": "battery-demo-5",
+      "type": "BATTERY",
+      "displayName": "Synthetic 5 kWh battery",
+      "unitPriceEUR": 3000,
+      "available": true,
+      "source": {
+        "owner": "Energy System Configuration",
+        "reference": "https://example.invalid/synthetic-components",
+        "version": "1.0.0",
+        "license": "CC-BY-4.0",
+        "retrievedAt": "2026-10-10T09:00:00Z"
+      },
+      "usableCapacityKWh": 5,
+      "maxChargePowerKW": 2.5,
+      "maxDischargePowerKW": 2.5,
+      "roundTripEfficiencyFraction": 0.9
+    }
+  ]
+}

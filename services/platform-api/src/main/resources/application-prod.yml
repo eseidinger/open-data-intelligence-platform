@@ -17,3 +17,7 @@ spring:
 
 server:
   forward-headers-strategy: framework
+
+odip:
+  authorization:
+    strict-principal-format: true
