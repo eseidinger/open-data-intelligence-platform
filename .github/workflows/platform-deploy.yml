@@ -42,7 +42,7 @@ jobs:
         run: >-
           jq --arg platform_image "docker.io/eseidinger/odip-platform:${IMAGE_TAG}"
           --arg worker_image "docker.io/eseidinger/odip-data-worker:${IMAGE_TAG}"
-          '(.spec.components[] | select(.name == "web").runtime.image) = $platform_image |
+          '(.spec.components[] | select(.name == "web" or .name == "api").runtime.image) = $platform_image |
           (.spec.components[] | select(.name == "ingestion-worker").runtime.image) = $worker_image'
           application.json > "$RUNNER_TEMP/application.json"
       - name: Deploy and wait for readiness

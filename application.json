@@ -9,7 +9,7 @@
   "spec": {
     "configuration": {
       "values": {
-        "ODIP_API_URL": "http://web:8080",
+        "ODIP_API_URL": "http://api:8080",
         "ODIP_AUTHORIZATION_USER_GROUP_IDS": "grp_e2987e192a0a41b4a0273c71c14fef47",
         "ODIP_AUTHORIZATION_GUEST_GROUP_IDS": "grp_8461fd4adec843d9be0d466a38fd564e",
         "ODIP_API_PRINCIPAL_ID": "odip-ingestion-worker",
@@ -45,6 +45,37 @@
           }
         },
         "exposure": "public",
+        "health": {
+          "readiness": {
+            "path": "/actuator/health/readiness"
+          }
+        }
+      },
+      {
+        "name": "api",
+        "type": "service",
+        "runtime": {
+          "type": "container",
+          "image": "docker.io/eseidinger/odip-platform:latest"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "protocol": "http",
+            "port": 8080
+          }
+        ],
+        "resources": {
+          "requests": {
+            "cpu": "250m",
+            "memory": "256Mi"
+          },
+          "limits": {
+            "cpu": "500m",
+            "memory": "512Mi"
+          }
+        },
+        "exposure": "private",
         "health": {
           "readiness": {
             "path": "/actuator/health/readiness"
