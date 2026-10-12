@@ -67,7 +67,7 @@ Provide the following environment variables (or equivalent platform-injected con
 
 Configure each worker with `ODIP_API_URL`, the internal base URL of the API (`http://api:8080` for the Developer Platform declaration). The worker needs no PostgreSQL credentials; it posts the payload to the API over the internal network.
 
-The API requires the Developer Platform's forwarded principal headers for every `/api/**` call. `ODIP_AUTHORIZATION_USER_GROUP_IDS` is configured as `grp_e2987e192a0a41b4a0273c71c14fef47`, and `ODIP_AUTHORIZATION_GUEST_GROUP_IDS` as `grp_8461fd4adec843d9be0d466a38fd564e`. The `X-Platform-Principal-Group-Ids` header contains one or more stable IDs separated by spaces. The scheduled worker sends its configured service identity through `ODIP_API_PRINCIPAL_ID`, `ODIP_API_PRINCIPAL_KIND`, `ODIP_API_PRINCIPAL_ISSUER`, `ODIP_API_PRINCIPAL_SUBJECT`, and `ODIP_API_PRINCIPAL_GROUP_IDS`; its group IDs must overlap the configured user group IDs.
+The API requires the Developer Platform's forwarded principal headers for every `/api/**` call. The user and guest group defaults are `grp_e2987e192a0a41b4a0273c71c14fef47` and `grp_8461fd4adec843d9be0d466a38fd564e`; use `ODIP_GROUP_IDS_USERS` and `ODIP_GROUP_IDS_GUESTS` to override them outside the platform declaration. The `X-Platform-Principal-Group-Ids` header contains one or more stable IDs separated by spaces. The scheduled worker sends its default service identity with the user group ID, so it can claim and complete ingestion runs.
 
 Do not use the development defaults (`localhost` or database user/password `odip`) in a deployed environment. Keep passwords and any future signing keys out of the image, source control, logs, and command-line arguments.
 

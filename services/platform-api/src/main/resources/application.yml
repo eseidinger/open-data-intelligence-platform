@@ -20,5 +20,5 @@ odip:
   raw-artifact:
     max-payload-bytes: ${ODIP_RAW_ARTIFACT_MAX_PAYLOAD_BYTES:10485760}
   authorization:
-    user-group-ids: ${ODIP_AUTHORIZATION_USER_GROUP_IDS:grp_e2987e192a0a41b4a0273c71c14fef47}
-    guest-group-ids: ${ODIP_AUTHORIZATION_GUEST_GROUP_IDS:grp_8461fd4adec843d9be0d466a38fd564e}
+    user-group-ids: ${ODIP_GROUP_IDS_USERS:grp_e2987e192a0a41b4a0273c71c14fef47}
+    guest-group-ids: ${ODIP_GROUP_IDS_GUESTS:grp_8461fd4adec843d9be0d466a38fd564e}
