@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink, RouterOutlet } from '@angular/router';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -10,4 +11,6 @@ import { RouterLink, RouterOutlet } from '@angular/router';
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App {}
+export class App {
+  readonly development = environment.development;
+}

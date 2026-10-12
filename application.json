@@ -9,7 +9,14 @@
   "spec": {
     "configuration": {
       "values": {
-        "ODIP_API_URL": "http://web:8080"
+        "ODIP_API_URL": "http://web:8080",
+        "ODIP_AUTHORIZATION_USER_GROUP_IDS": "grp_e2987e192a0a41b4a0273c71c14fef47",
+        "ODIP_AUTHORIZATION_GUEST_GROUP_IDS": "grp_8461fd4adec843d9be0d466a38fd564e",
+        "ODIP_API_PRINCIPAL_ID": "odip-ingestion-worker",
+        "ODIP_API_PRINCIPAL_KIND": "service",
+        "ODIP_API_PRINCIPAL_ISSUER": "https://odip.internal",
+        "ODIP_API_PRINCIPAL_SUBJECT": "odip-ingestion-worker",
+        "ODIP_API_PRINCIPAL_GROUP_IDS": "grp_e2987e192a0a41b4a0273c71c14fef47"
       }
     },
     "components": [

@@ -4,6 +4,9 @@
   <a mat-button routerLink="/sources">Sources</a>
   <a mat-button routerLink="/datasets">Datasets</a>
   <a mat-button routerLink="/pipeline-runs">Pipeline runs</a>
+  @if (development) {
+    <a mat-button routerLink="/development/identity">Development identity</a>
+  }
 </mat-toolbar>
 
 <main>

@@ -1,0 +1,68 @@
+package de.eseidinger.odip.platform.security
+
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
+import org.springframework.stereotype.Component
+import org.springframework.web.servlet.HandlerInterceptor
+
+private const val GROUP_IDS_HEADER = "X-Platform-Principal-Group-Ids"
+
+@ConfigurationProperties("odip.authorization")
+data class PlatformAuthorizationProperties(
+    val userGroupIds: Set<String> = emptySet(),
+    val guestGroupIds: Set<String> = emptySet(),
+    val requirePrincipalContext: Boolean = true,
+)
+
+@Configuration
+@EnableConfigurationProperties(PlatformAuthorizationProperties::class)
+class PlatformAuthorizationConfiguration
+
+@Component
+class PlatformPrincipalAuthorizationInterceptor(
+    private val properties: PlatformAuthorizationProperties,
+) : HandlerInterceptor {
+    override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
+        if (!request.requestURI.startsWith("/api/")) {
+            return true
+        }
+
+        if (!properties.requirePrincipalContext) {
+            return true
+        }
+
+        if (!hasValidPrincipalContext(request)) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "A valid platform principal context is required")
+            return false
+        }
+
+        val groupIds = request.getHeader(GROUP_IDS_HEADER)
+            ?.trim()
+            ?.split(Regex("\\s+"))
+            ?.filter(String::isNotBlank)
+            ?.toSet()
+            .orEmpty()
+        val isUser = groupIds.any(properties.userGroupIds::contains)
+        val isGuest = groupIds.any(properties.guestGroupIds::contains)
+
+        if (isUser || isGuest && request.method in readOnlyMethods) {
+            return true
+        }
+
+        response.sendError(HttpServletResponse.SC_FORBIDDEN, "The caller is not allowed to perform this operation")
+        return false
+    }
+
+    private companion object {
+        val readOnlyMethods = setOf(HttpMethod.GET.name(), HttpMethod.HEAD.name(), HttpMethod.OPTIONS.name())
+    }
+
+    private fun hasValidPrincipalContext(request: HttpServletRequest): Boolean =
+        listOf("X-Platform-Principal-Id", "X-Platform-Principal-Issuer", "X-Platform-Principal-Subject")
+            .all { !request.getHeader(it).isNullOrBlank() } &&
+            request.getHeader("X-Platform-Principal-Kind") in setOf("user", "service")
+}

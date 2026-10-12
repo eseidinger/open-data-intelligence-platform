@@ -11,11 +11,22 @@ from odip_worker.normalization import normalize
 from odip_worker.validation import validate_payload
 
 
+def platform_principal_headers() -> dict[str, str]:
+    """Supply the configured service principal when calling the internal API."""
+    return {
+        "X-Platform-Principal-Id": os.getenv("ODIP_API_PRINCIPAL_ID", "odip-ingestion-worker"),
+        "X-Platform-Principal-Kind": os.getenv("ODIP_API_PRINCIPAL_KIND", "service"),
+        "X-Platform-Principal-Issuer": os.getenv("ODIP_API_PRINCIPAL_ISSUER", "https://odip.internal"),
+        "X-Platform-Principal-Subject": os.getenv("ODIP_API_PRINCIPAL_SUBJECT", "odip-ingestion-worker"),
+        "X-Platform-Principal-Group-Ids": os.getenv("ODIP_API_PRINCIPAL_GROUP_IDS", "grp_e2987e192a0a41b4a0273c71c14fef47"),
+    }
+
+
 def claim_next(base_url: str) -> dict | None:
     """Wait for a rolling API deployment, then claim at most one queued run."""
     for attempt in range(24):
         try:
-            response = requests.post(f"{base_url}/api/pipeline-runs/claim-next", timeout=15)
+            response = requests.post(f"{base_url}/api/pipeline-runs/claim-next", headers=platform_principal_headers(), timeout=15)
             if response.status_code == 204:
                 return None
             response.raise_for_status()
@@ -39,10 +50,10 @@ def main() -> None:
         if job is None:
             return
     else:
-        job_response = requests.get(f"{base_url}/api/pipeline-runs/{args.run_id}/job", timeout=15)
+        job_response = requests.get(f"{base_url}/api/pipeline-runs/{args.run_id}/job", headers=platform_principal_headers(), timeout=15)
         job_response.raise_for_status()
         job = job_response.json()
-        requests.post(f"{base_url}/api/pipeline-runs/{args.run_id}/started", timeout=15).raise_for_status()
+        requests.post(f"{base_url}/api/pipeline-runs/{args.run_id}/started", headers=platform_principal_headers(), timeout=15).raise_for_status()
 
     run_id = job["runId"]
     try:
@@ -52,9 +63,9 @@ def main() -> None:
         validation = validate_payload(payload, response.headers.get("Content-Type"))
         energy_observation = normalize(payload, job.get("normalizer"))
         checksum = hashlib.sha256(payload).hexdigest()
-        requests.post(f"{base_url}/api/pipeline-runs/{run_id}/completed", json={"payload": base64.b64encode(payload).decode("ascii"), "contentType": response.headers.get("Content-Type"), "contentLength": len(payload), "checksumSha256": checksum, "sourceVersion": response.headers.get("ETag"), "validation": validation, "energyObservation": energy_observation}, timeout=60).raise_for_status()
+        requests.post(f"{base_url}/api/pipeline-runs/{run_id}/completed", headers=platform_principal_headers(), json={"payload": base64.b64encode(payload).decode("ascii"), "contentType": response.headers.get("Content-Type"), "contentLength": len(payload), "checksumSha256": checksum, "sourceVersion": response.headers.get("ETag"), "validation": validation, "energyObservation": energy_observation}, timeout=60).raise_for_status()
     except Exception as error:
-        requests.post(f"{base_url}/api/pipeline-runs/{run_id}/failed", json={"reason": str(error)[:4000]}, timeout=15)
+        requests.post(f"{base_url}/api/pipeline-runs/{run_id}/failed", headers=platform_principal_headers(), json={"reason": str(error)[:4000]}, timeout=15)
         raise
 
 

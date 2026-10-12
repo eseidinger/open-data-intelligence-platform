@@ -1,0 +1,3 @@
+odip:
+  authorization:
+    require-principal-context: false

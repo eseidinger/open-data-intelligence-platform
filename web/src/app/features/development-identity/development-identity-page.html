@@ -1,0 +1,47 @@
+<section class="page-header" aria-labelledby="development-identity-heading">
+  <div>
+    <p class="eyebrow">Development tools</p>
+    <h1 id="development-identity-heading">Platform identity</h1>
+    <p>Configure the platform principal headers sent to the local API. Settings are saved only in this browser.</p>
+  </div>
+</section>
+
+<mat-card appearance="outlined">
+  <mat-card-header>
+    <mat-card-title>Forwarded principal</mat-card-title>
+    <mat-card-subtitle>Use stable group IDs. The default user and guest IDs match this application's access groups.</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <form [formGroup]="form" (ngSubmit)="save()" class="identity-form">
+      <mat-form-field>
+        <mat-label>Principal ID</mat-label>
+        <input matInput formControlName="principalId" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Principal kind</mat-label>
+        <mat-select formControlName="principalKind">
+          <mat-option value="user">User</mat-option>
+          <mat-option value="service">Service</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field class="full-width">
+        <mat-label>Issuer</mat-label>
+        <input matInput formControlName="issuer" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field class="full-width">
+        <mat-label>Subject</mat-label>
+        <input matInput formControlName="subject" autocomplete="off" />
+      </mat-form-field>
+      <mat-form-field class="full-width">
+        <mat-label>Group IDs</mat-label>
+        <input matInput formControlName="groupIds" autocomplete="off" />
+        <mat-hint>Separate IDs with spaces.</mat-hint>
+      </mat-form-field>
+      <div class="actions">
+        <button mat-stroked-button type="button" (click)="useRole('grp_e2987e192a0a41b4a0273c71c14fef47')">Use user role</button>
+        <button mat-stroked-button type="button" (click)="useRole('grp_8461fd4adec843d9be0d466a38fd564e')">Use guest role</button>
+        <button mat-flat-button type="submit">Save identity</button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>
