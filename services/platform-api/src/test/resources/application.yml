@@ -1,3 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/odip
+    username: odip
+    password: odip
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
 odip:
+  raw-artifact:
+    max-payload-bytes: 10485760
   authorization:
     require-principal-context: false
