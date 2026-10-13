@@ -30,9 +30,6 @@ jobs:
     environment: production
     env:
       IMAGE_TAG: ${{ inputs.image_tag || github.event.workflow_run.head_sha }}
-      ODIP_HOST: ${{ vars.ODIP_HOST }}
-      IDENTITY_HOST: ${{ vars.IDENTITY_HOST }}
-      ODIP_WORKER_BINDING_PREFIX: ${{ vars.ODIP_WORKER_BINDING_PREFIX }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -44,8 +41,6 @@ jobs:
       - name: Create deployment declaration
         run: >-
           python3 scripts/render-integration.py --image-tag "$IMAGE_TAG"
-          --odip-host "$ODIP_HOST" --identity-host "$IDENTITY_HOST"
-          --worker-secret-prefix "$ODIP_WORKER_BINDING_PREFIX"
           > "$RUNNER_TEMP/application.json"
       - name: Deploy and wait for readiness
         run: >-

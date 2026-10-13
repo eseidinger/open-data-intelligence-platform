@@ -103,19 +103,21 @@ docker build --file workers/data-worker/Dockerfile --tag odip-data-worker:<commi
 
 The worker installs from its frozen lock and bundles the pinned kit. The API bundles the shared schemas and production UI. Both images run as non-root users.
 
-Render the descriptor using the published 40-character commit image tag, actual ingress and identity hostnames, and managed worker prefix:
+The root `application.json` declares this installation's protected ODIP origin (`https://web-odip.apps.eseidinger.de`) and the worker's HTTPS egress to ODIP, identity (`identity.eseidinger.de`), and approved reference sources. The token endpoint URL itself comes from the managed worker binding. For another installation, edit `spec.configuration.values.ODIP_API_URL` and the worker's `outbound` DNS rules together; its API and token endpoint hosts must both be allowed. Source registration policy is declared by `ODIP_SOURCE_HOSTS` separately from network egress.
+
+The descriptor sets `ODIP_WORKER_BINDING_PREFIX` to this installation's managed prefix, `ACCESS_BCC37E90DE10`. This is a non-secret reference; client credentials remain in the platform's managed secret. For another installation, use its approved worker binding's `spec.secretPrefix`.
+
+Render the descriptor using the published 40-character commit image tag:
 
 ```bash
-python scripts/render-integration.py \
-  --image-tag <commit-sha> \
-  --odip-host <odip-ingress-host> \
-  --identity-host <identity-host> \
-  --worker-secret-prefix <managed-prefix>
+python scripts/render-integration.py --image-tag <commit-sha>
 ```
 
-The renderer writes JSON to stdout and does not deploy. The root `application.json` is a template: its example origin and image tags are not deployable release references. The rendered declaration keeps one public API/UI component and one scheduled worker, declares retained PostgreSQL storage, and approves only the selected ODIP/identity and source egress. Supply the PostgreSQL resource and credentials through the platform.
+The renderer writes JSON to stdout and does not deploy. It preserves the descriptor's installation configuration, binding prefix, and network rules and pins both images. Use `--file <descriptor-path>` to render an alternative installation descriptor or `--worker-secret-prefix <managed-prefix>` to override the declared prefix. The root `application.json` still needs rendering because its image tags are placeholders. The rendered declaration keeps one public API/UI component and one scheduled worker and declares retained PostgreSQL storage. Supply the PostgreSQL resource and credentials through the platform.
 
-The existing deployment workflow uses this renderer. Configure its non-secret variables `ODIP_HOST`, `IDENTITY_HOST`, and `ODIP_WORKER_BINDING_PREFIX` before invoking it. Group IDs are managed in the platform access policy, not injected into application configuration. Its control-plane credentials are distinct from application bindings. Applying governance, groups, access policy, and approved service access remains an explicit provisioning step.
+The existing deployment workflow uses this renderer and reads the hostnames and binding prefix from the descriptor; it needs no `ODIP_HOST`, `IDENTITY_HOST`, or `ODIP_WORKER_BINDING_PREFIX` GitHub variables. Keep the control-plane variables `PLATFORM_API_URL` and `PLATFORM_TOKEN_ENDPOINT` and secrets `PLATFORM_CLIENT_ID` and `PLATFORM_CLIENT_SECRET` configured separately. Group IDs are managed in the platform access policy, not injected into application configuration. Applying governance, groups, access policy, and approved service access remains an explicit provisioning step.
+
+After merging a workflow fix, start a new deployment workflow on `main` with an already-published commit image tag, or let a new successful image publication trigger it. Re-running an old failed run uses its old workflow revision and does not pick up the fix.
 
 The API checks source host policy on registration; the worker additionally pins validated public addresses, validates each redirect and TLS hostname, rejects unsupported content and compression, and enforces limits while downloading. Source egress is separate from identity and API egress. DNS rules pin addresses at apply time and must be reapplied when approved addresses change.
 

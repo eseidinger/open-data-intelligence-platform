@@ -9,9 +9,10 @@
   "spec": {
     "configuration": {
       "values": {
-        "ODIP_API_URL": "https://web-odip.apps.example.invalid",
+        "ODIP_API_URL": "https://web-odip.apps.eseidinger.de",
         "ODIP_IDENTITY_MODE": "platform",
-        "ODIP_WORKER_BINDING_PREFIX": "RENDER_REQUIRED"
+        "ODIP_SOURCE_HOSTS": "jsonplaceholder.typicode.com,ec.europa.eu,re.jrc.ec.europa.eu,github.com",
+        "ODIP_WORKER_BINDING_PREFIX": "ACCESS_BCC37E90DE10"
       }
     },
     "components": [
@@ -61,6 +62,22 @@
         "retryLimit": 0,
         "maxRunSeconds": 300,
         "outbound": [
+          {
+            "dns": "web-odip.apps.eseidinger.de",
+            "port": 443
+          },
+          {
+            "dns": "identity.eseidinger.de",
+            "port": 443
+          },
+          {
+            "dns": "re.jrc.ec.europa.eu",
+            "port": 443
+          },
+          {
+            "dns": "ec.europa.eu",
+            "port": 443
+          },
           {
             "dns": "jsonplaceholder.typicode.com",
             "port": 443
