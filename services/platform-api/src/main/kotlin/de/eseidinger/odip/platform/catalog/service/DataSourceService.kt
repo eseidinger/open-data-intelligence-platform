@@ -7,20 +7,16 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import de.eseidinger.odip.platform.security.SourcePolicy
-import de.eseidinger.odip.platform.publication.DatasetAccess
-import jakarta.servlet.http.HttpServletRequest
 
 @Service
 class DataSourceService(
     private val dataSourceRepository: DataSourceRepository,
     private val policy: SourcePolicy,
-    private val access: DatasetAccess,
-    private val httpRequest: HttpServletRequest,
 ) {
     fun list(): List<DataSourceEntity> = dataSourceRepository.findAllByOrderByNameAsc()
 
     fun create(request: CreateDataSourceRequest): DataSourceEntity {
-        access.requireOperator(httpRequest)
+        // Source catalog administration is authorized by the platform policy.
         policy.check(request.location)
         if (dataSourceRepository.existsByName(request.name)) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "A data source named '${request.name}' already exists")

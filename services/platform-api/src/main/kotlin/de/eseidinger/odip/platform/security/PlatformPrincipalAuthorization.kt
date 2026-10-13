@@ -5,16 +5,11 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.HandlerInterceptor
 
-private const val GROUP_IDS_HEADER = "X-Platform-Principal-Group-Ids"
-
 @ConfigurationProperties("odip.authorization")
 data class PlatformAuthorizationProperties(
-    val userGroupIds: Set<String> = emptySet(),
-    val guestGroupIds: Set<String> = emptySet(),
     val requirePrincipalContext: Boolean = true,
     val strictPrincipalFormat: Boolean = true,
 )
@@ -43,32 +38,10 @@ class PlatformPrincipalAuthorizationInterceptor(
             return false
         }
 
-        // The platform authenticates and authorizes v1 routes. DatasetAccess
-        // enforces local object permissions; platform groups are not repeated here.
-        if (request.requestURI.startsWith("/api/v1/")) return true
-        if (request.getHeader("X-Platform-Principal-Kind") == "service" && request.requestURI.startsWith("/api/pipeline-runs/")) return true
-
-        val groupIds = request.getHeader(GROUP_IDS_HEADER)
-            ?.trim()
-            ?.split(Regex("\\s+"))
-            ?.filter(String::isNotBlank)
-            ?.toSet()
-            .orEmpty()
-        val isUser = groupIds.any(properties.userGroupIds::contains)
-        val isGuest = groupIds.any(properties.guestGroupIds::contains)
-
-        if (isUser || isGuest && request.method in readOnlyMethods) {
-            return true
-        }
-
-        response.status = 403
-        response.contentType = "application/json"
-        response.writer.write("""{"schemaVersion":"error/v1","status":403,"code":"forbidden","message":"The caller is not allowed to perform this operation"}""")
-        return false
-    }
-
-    private companion object {
-        val readOnlyMethods = setOf(HttpMethod.GET.name(), HttpMethod.HEAD.name(), HttpMethod.OPTIONS.name())
+        // All routes, including legacy routes, are authorized at the platform
+        // boundary. Here we validate trusted context; domain services enforce
+        // dataset grants, ownership, and claim tokens independently of groups.
+        return true
     }
 
     private fun hasValidPrincipalContext(request: HttpServletRequest): Boolean {

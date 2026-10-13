@@ -21,7 +21,7 @@ class PublicationController(private val service: PublicationService, private val
     @PutMapping("/publication-retention")
     @Transactional
     fun support(request: HttpServletRequest, @RequestBody body: SupportEndRequest): ResponseEntity<Void> {
-        access.requireOperator(request)
+        // The platform's operator policy authorizes retention administration.
         checkPublication(body.schemaRef.length in 1..200 && body.supportEndsAt.isAfter(Instant.now()),"invalid_retention","Support end must be in the future",400)
         jdbc.update("INSERT INTO publication_support VALUES (?,?) ON CONFLICT(schema_ref) DO UPDATE SET support_ends_at=EXCLUDED.support_ends_at",body.schemaRef,java.sql.Timestamp.from(body.supportEndsAt))
         access.audit(access.principal(request),"support_end_recorded")
@@ -60,17 +60,16 @@ class PublicationController(private val service: PublicationService, private val
     fun complete(request: HttpServletRequest, @PathVariable id: UUID, @RequestBody report: ValidationReport) = service.complete(request, id, report)
 
     @GetMapping("/operator-capabilities")
-    fun capabilities(request: HttpServletRequest) = mapOf("manageGrants" to access.operator(request), "writableDatasetIds" to
+    // This endpoint is operator-only at the platform boundary, not a local role.
+    fun capabilities(request: HttpServletRequest) = mapOf("manageGrants" to true, "writableDatasetIds" to
         jdbc.queryForList("SELECT id FROM dataset", UUID::class.java).filterNotNull().filter { access.allowed(access.principal(request),it,"WRITE") })
     @GetMapping("/dataset-grants/{dataset}")
-    fun grants(request: HttpServletRequest, @PathVariable dataset: UUID): List<Map<String, Any?>> {
-        access.requireOperator(request)
+    fun grants(@PathVariable dataset: UUID): List<Map<String, Any?>> {
         return jdbc.queryForList("SELECT principal_id AS \"principalId\",permission FROM dataset_grant WHERE dataset_id=? ORDER BY principal_id,permission", dataset)
     }
     @PutMapping("/dataset-grants/{dataset}")
     @Transactional
     fun grant(request: HttpServletRequest, @PathVariable dataset: UUID, @RequestBody body: GrantRequest): ResponseEntity<Void> {
-        access.requireOperator(request)
         checkPublication(jdbc.queryForList("SELECT id FROM dataset WHERE id=?", dataset).isNotEmpty(), "not_found", "Dataset was not found", 404)
         access.grant(dataset, body.principalId, body.permission)
         access.audit(access.principal(request), "grant_created", dataset)
@@ -79,7 +78,6 @@ class PublicationController(private val service: PublicationService, private val
     @DeleteMapping("/dataset-grants/{dataset}")
     @Transactional
     fun revoke(request: HttpServletRequest, @PathVariable dataset: UUID, @RequestParam principalId: String, @RequestParam permission: String): ResponseEntity<Void> {
-        access.requireOperator(request)
         jdbc.update("DELETE FROM dataset_grant WHERE dataset_id=? AND principal_id=? AND permission=?", dataset, principalId, permission)
         access.audit(access.principal(request), "grant_revoked", dataset)
         return ResponseEntity.noContent().build()

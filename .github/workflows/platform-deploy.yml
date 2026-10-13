@@ -33,7 +33,6 @@ jobs:
       ODIP_HOST: ${{ vars.ODIP_HOST }}
       IDENTITY_HOST: ${{ vars.IDENTITY_HOST }}
       ODIP_WORKER_BINDING_PREFIX: ${{ vars.ODIP_WORKER_BINDING_PREFIX }}
-      ODIP_OPERATOR_GROUP_IDS: ${{ vars.ODIP_OPERATOR_GROUP_IDS }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -47,7 +46,6 @@ jobs:
           python3 scripts/render-integration.py --image-tag "$IMAGE_TAG"
           --odip-host "$ODIP_HOST" --identity-host "$IDENTITY_HOST"
           --worker-secret-prefix "$ODIP_WORKER_BINDING_PREFIX"
-          --operator-group-ids "$ODIP_OPERATOR_GROUP_IDS"
           > "$RUNNER_TEMP/application.json"
       - name: Deploy and wait for readiness
         run: >-

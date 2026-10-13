@@ -25,7 +25,7 @@ class LegacyObjectAuthorization(private val access: DatasetAccess, private val j
         }
         val principal = access.principal(request)
         if (datasets.isNotEmpty() && datasets.filterNotNull().none { access.allowed(principal, it, permission) }) reject(403, "forbidden", "Dataset permission is required")
-        if (datasets.isEmpty() && !access.operator(request)) reject(403, "forbidden", "Unlinked sources require an operator")
+        if (datasets.isEmpty() && !access.developmentBypass()) reject(403, "forbidden", "A contributing dataset permission is required")
         return true
     }
 }

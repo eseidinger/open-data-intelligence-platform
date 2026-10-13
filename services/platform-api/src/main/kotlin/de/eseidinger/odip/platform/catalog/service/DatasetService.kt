@@ -19,11 +19,11 @@ class DatasetService(
     private val httpRequest: HttpServletRequest,
 ) {
     @Transactional(readOnly = true)
-    fun list(): List<DatasetEntity> = datasetRepository.findAllByOrderByNameAsc().filter { access.operator(httpRequest) || access.allowed(access.principal(httpRequest), it.id, "READ") }
+    fun list(): List<DatasetEntity> = datasetRepository.findAllByOrderByNameAsc().filter { access.allowed(access.principal(httpRequest), it.id, "READ") }
 
     @Transactional
     fun create(request: CreateDatasetRequest): DatasetEntity {
-        access.requireOperator(httpRequest)
+        // Dataset registration is protected by the platform's operator route.
         if (datasetRepository.existsByName(request.name)) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "A dataset named '${request.name}' already exists")
         }

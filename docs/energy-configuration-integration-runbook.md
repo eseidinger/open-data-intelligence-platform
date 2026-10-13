@@ -42,7 +42,9 @@ The worker requests service access to ODIP from the ODIP project itself. Its app
 
 Provision VEF's separate approved read-only service binding using the shared kit's service-request and approval inputs. VEF owns its credentials and result database. ODIP and VEF never share database access.
 
-In the Publications page, grant the worker READ, INGEST, and VALIDATE on assigned datasets. Grant VEF READ only on the energy dataset. Grant WRITE only to permitted publishers. Catalog registration grants the creator its initial dataset permissions. For historical datasets, operators can grant their own access explicitly before preparing publications. Local grants use the stable principal, so normal client rotation does not change them.
+The platform owns route-level group authorization for both legacy and versioned APIs. ODIP validates trusted principal context and enforces only dataset permissions, job ownership, and claim tokens; it has no operator/guest group configuration. Grant administration, source/dataset registration, retention administration, and the operator capability route must remain restricted to `dataset-operators` by the platform policy. `manageGrants` in the operator capability response reflects admission to that protected route, not a second group check. Never replace the policy with an all-groups catch-all or expose the backend directly.
+
+In the Publications page, grant the worker READ, INGEST, and VALIDATE on assigned datasets. Grant VEF READ only on the energy dataset. Grant READ and WRITE to permitted publishers, and INGEST when they capture inputs. Catalog registration grants the creator its initial dataset permissions. Operators have no implicit access to other datasets or pipeline runs. For historical datasets, use their known UUIDs with the protected dataset-grant API to assign explicit permissions before they become visible in the catalog/UI. Local grants use the stable principal, so normal client rotation does not change them. Link an unassigned source to a registered dataset before queueing ingestion.
 
 Require platform network isolation that prevents direct backend access, including from another component in the same project. Header validation alone is not authentication. The worker calls ODIP through the protected public HTTPS origin rather than its former private DNS endpoint.
 
@@ -57,20 +59,19 @@ docker build --file workers/data-worker/Dockerfile --tag odip-data-worker:<commi
 
 The worker installs from its frozen lock and bundles the pinned kit. The API bundles the shared schemas and production UI. Both images run as non-root users.
 
-Render the descriptor using the published 40-character commit image tag, actual ingress and identity hostnames, managed worker prefix, and stable operator group IDs:
+Render the descriptor using the published 40-character commit image tag, actual ingress and identity hostnames, and managed worker prefix:
 
 ```bash
 python scripts/render-integration.py \
   --image-tag <commit-sha> \
   --odip-host <odip-ingress-host> \
   --identity-host <identity-host> \
-  --worker-secret-prefix <managed-prefix> \
-  --operator-group-ids <stable-group-ids>
+  --worker-secret-prefix <managed-prefix>
 ```
 
 The renderer writes JSON to stdout and does not deploy. The root `application.json` is a template: its example origin and image tags are not deployable release references. The rendered declaration keeps one public API/UI component and one scheduled worker, declares retained PostgreSQL storage, and approves only the selected ODIP/identity and source egress. Supply the PostgreSQL resource and credentials through the platform.
 
-The existing deployment workflow uses this renderer. Configure its non-secret variables `ODIP_HOST`, `IDENTITY_HOST`, `ODIP_WORKER_BINDING_PREFIX`, and `ODIP_OPERATOR_GROUP_IDS` before invoking it. Its control-plane credentials are distinct from application bindings. Applying governance, groups, access policy, and approved service access remains an explicit provisioning step.
+The existing deployment workflow uses this renderer. Configure its non-secret variables `ODIP_HOST`, `IDENTITY_HOST`, and `ODIP_WORKER_BINDING_PREFIX` before invoking it. Group IDs are managed in the platform access policy, not injected into application configuration. Its control-plane credentials are distinct from application bindings. Applying governance, groups, access policy, and approved service access remains an explicit provisioning step.
 
 The API checks source host policy on registration; the worker additionally pins validated public addresses, validates each redirect and TLS hostname, rejects unsupported content and compression, and enforces limits while downloading. Source egress is separate from identity and API egress. DNS rules pin addresses at apply time and must be reapplied when approved addresses change.
 
@@ -91,7 +92,7 @@ For local development, explicitly set `ODIP_IDENTITY_MODE=development`. The deve
 
 ## Readiness and operations
 
-Readiness includes PostgreSQL; liveness retains process-health semantics. Expired publication claims are released after five minutes with a new claim nonce on the next assignment. Stuck ingestion runs become FAILED after five minutes and retain diagnostics; an operator starts a fresh run rather than replaying terminal transitions. Completion retries require the same owning principal, claim, and bytes.
+Readiness includes PostgreSQL; liveness retains process-health semantics. Expired publication claims are released after five minutes with a new claim nonce on the next assignment. Stuck ingestion runs become FAILED after five minutes and retain diagnostics; an operator with INGEST permission queues a fresh run rather than replaying terminal transitions. Operators cannot fail another principal's job or bypass claims. Every ingestion completion, including manually started runs, requires the owning principal, its current INGEST grant, and the returned claim token. Completion retries must retain the same bytes. Atomic reference-input capture uses its server-generated claim internally.
 
 Metrics include publication outcomes, duration, and retrieval count. Application audit records associate dataset/publication actions with stable principals and opaque correlation IDs. Central logs contain only compact platform operational envelopes. Customer details, domain IDs, and credentials do not enter those envelopes.
 

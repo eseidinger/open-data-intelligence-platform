@@ -40,7 +40,8 @@ class IngestionService(
 
     @Transactional(readOnly = true)
     fun artifacts(runId: UUID): List<RawArtifactWithValidation> {
-        run(runId)
+        val source = run(runId).source ?: throw notFound("Data source", runId)
+        access.requireSource(request, source.id, "READ")
         return rawArtifactRepository.findAllByPipelineRun_IdOrderByRetrievedAtDesc(runId).map { artifact ->
             RawArtifactWithValidation(artifact, rawArtifactValidationRepository.findByRawArtifact_Id(artifact.id))
         }
@@ -49,6 +50,7 @@ class IngestionService(
     @Transactional
     fun queue(sourceId: UUID): PipelineRunEntity {
         val source = dataSourceRepository.findById(sourceId).orElseThrow { notFound("Data source", sourceId) }
+        access.requireSource(request, source.id, "INGEST")
         return pipelineRunRepository.save(PipelineRunEntity(source = source))
     }
 
@@ -56,7 +58,7 @@ class IngestionService(
     @Transactional
     fun claimNext(): IngestionJob? {
         val principal = access.principal(request)
-        val run = pipelineRunRepository.claimNextQueued(principal, access.operator(request)) ?: return null
+        val run = pipelineRunRepository.claimNextQueued(principal, access.developmentBypass()) ?: return null
         val source = run.source ?: throw notFound("Data source", run.id)
         run.status = PipelineRunStatus.RUNNING
         run.startedAt = Instant.now()
@@ -70,12 +72,14 @@ class IngestionService(
         val run = run(runId)
         requireStatus(run, PipelineRunStatus.QUEUED)
         val source = run.source ?: throw notFound("Data source", runId)
+        access.requireSource(request, source.id, "INGEST")
         return IngestionJob(run.id, source.id, source.location, source.normalizer)
     }
 
     @Transactional
     fun start(runId: UUID): PipelineRunEntity {
         val run = run(runId,true)
+        access.requireSource(request, requireNotNull(run.source).id, "INGEST")
         requireStatus(run, PipelineRunStatus.QUEUED)
         run.status = PipelineRunStatus.RUNNING
         run.startedAt = Instant.now()
@@ -87,8 +91,9 @@ class IngestionService(
     @Transactional
     fun complete(runId: UUID, request: CompleteRunRequest): PipelineRunEntity {
         val run = run(runId,true)
+        access.requireSource(this.request, requireNotNull(run.source).id, "INGEST")
         checkPublication(run.ownerPrincipal == access.principal(this.request), "forbidden", "Only the owning worker may complete the run", 403)
-        checkPublication(access.operator(this.request) || request.claimToken != null && request.claimToken == run.claimToken, "stale_claim", "The ingestion claim is no longer current", 409)
+        checkPublication(request.claimToken != null && request.claimToken == run.claimToken, "stale_claim", "The ingestion claim is no longer current", 409)
         if (run.status == PipelineRunStatus.SUCCEEDED) {
             val prior = rawArtifactRepository.findAllByPipelineRun_IdOrderByRetrievedAtDesc(runId).singleOrNull()
             checkPublication(prior?.checksumSha256 == request.checksumSha256.lowercase() && prior?.payload?.contentEquals(request.payload) == true, "completion_conflict", "Run already completed with different content", 409)
@@ -101,7 +106,7 @@ class IngestionService(
         val calculatedChecksum = MessageDigest.getInstance("SHA-256").digest(request.payload).joinToString("") { "%02x".format(it.toInt() and 0xff) }
         checkPublication(calculatedChecksum.equals(request.checksumSha256, ignoreCase = true), "checksum_mismatch", "Payload checksum does not match checksumSha256", 400)
         val artifactId = UUID.randomUUID()
-        val artifact = rawArtifactRepository.save(RawArtifactEntity(id = artifactId, pipelineRun = run, source = source, storageUri = "postgres://raw-artifacts/$artifactId", payload = request.payload, contentType = request.contentType, contentLength = request.contentLength, checksumSha256 = calculatedChecksum, sourceVersion = request.sourceVersion))
+        val artifact = rawArtifactRepository.saveAndFlush(RawArtifactEntity(id = artifactId, pipelineRun = run, source = source, storageUri = "postgres://raw-artifacts/$artifactId", payload = request.payload, contentType = request.contentType, contentLength = request.contentLength, checksumSha256 = calculatedChecksum, sourceVersion = request.sourceVersion))
         request.validation?.let { validation ->
             rawArtifactValidationRepository.save(RawArtifactValidationEntity(rawArtifact = artifact, status = validation.status, detectedFormat = validation.detectedFormat, recordCount = validation.recordCount, schemaFingerprint = validation.schemaFingerprint, failureReason = validation.failureReason))
         }
@@ -118,7 +123,8 @@ class IngestionService(
     @Transactional
     fun fail(runId: UUID, reason: String): PipelineRunEntity {
         val run = run(runId,true)
-        checkPublication(run.ownerPrincipal == access.principal(request) || run.status == PipelineRunStatus.QUEUED && access.operator(request), "forbidden", "Only the owning worker may fail the run", 403)
+        access.requireSource(request, requireNotNull(run.source).id, "INGEST")
+        checkPublication(run.ownerPrincipal == access.principal(request), "forbidden", "Only the owning worker may fail the run", 403)
         if (run.status !in setOf(PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING)) throw invalidState(run)
         run.status = PipelineRunStatus.FAILED
         run.completedAt = Instant.now()
@@ -127,7 +133,11 @@ class IngestionService(
     }
 
     @Transactional(readOnly = true)
-    fun artifactContent(artifactId: UUID): RawArtifactEntity = rawArtifactRepository.findById(artifactId).orElseThrow { notFound("Raw artifact", artifactId) }
+    fun artifactContent(artifactId: UUID): RawArtifactEntity {
+        val artifact = rawArtifactRepository.findById(artifactId).orElseThrow { notFound("Raw artifact", artifactId) }
+        access.requireSource(request, requireNotNull(artifact.source).id, "READ")
+        return artifact
+    }
 
     private fun run(id: UUID, lock: Boolean = false): PipelineRunEntity =
         if (lock) pipelineRunRepository.locked(id) ?: throw notFound("Pipeline run",id)
@@ -136,8 +146,7 @@ class IngestionService(
     private fun invalidState(run: PipelineRunEntity) = ResponseStatusException(HttpStatus.CONFLICT, "Pipeline run ${run.id} is ${run.status}")
     private fun notFound(type: String, id: UUID) = ResponseStatusException(HttpStatus.NOT_FOUND, "$type $id was not found")
 
-    private fun sourceAllowed(source: UUID): Boolean = jdbc.queryForList("SELECT dataset_id FROM dataset_source WHERE source_id=?", UUID::class.java, source)
-        .filterNotNull().any { access.allowed(access.principal(request), it, "READ") } || access.operator(request)
+    private fun sourceAllowed(source: UUID): Boolean = access.sourceAllowed(request, source, "READ")
 
     @Scheduled(fixedDelay = 60000)
     @Transactional

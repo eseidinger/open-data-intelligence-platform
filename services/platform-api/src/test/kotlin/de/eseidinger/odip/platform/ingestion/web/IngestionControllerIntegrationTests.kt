@@ -42,8 +42,9 @@ class IngestionControllerIntegrationTests(@Autowired private val mockMvc: MockMv
         val runId = com.jayway.jsonpath.JsonPath.read<String>(queued.response.contentAsString, "$.id")
 
         mockMvc.perform(get("/api/pipeline-runs/$runId/job")).andExpect(status().isOk).andExpect(jsonPath("$.location").value(source.location))
-        mockMvc.perform(post("/api/pipeline-runs/$runId/started")).andExpect(status().isOk).andExpect(jsonPath("$.status").value("RUNNING"))
-        mockMvc.perform(post("/api/pipeline-runs/$runId/completed").contentType(MediaType.APPLICATION_JSON).content("""{"payload":"e30=","contentType":"application/json","contentLength":2,"checksumSha256":"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a","sourceVersion":"fixture-v1","validation":{"status":"VALID","detectedFormat":"JSON","recordCount":1,"schemaFingerprint":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"energyObservation":{"indicatorCode":"RENEWABLE_ENERGY_SHARE","geoCode":"DE","observationYear":2024,"unitCode":"PC","observationValue":22.474}}"""))
+        val started = mockMvc.perform(post("/api/pipeline-runs/$runId/started")).andExpect(status().isOk).andExpect(jsonPath("$.status").value("RUNNING")).andReturn()
+        val claimToken = com.jayway.jsonpath.JsonPath.read<String>(started.response.contentAsString, "$.claimToken")
+        mockMvc.perform(post("/api/pipeline-runs/$runId/completed").contentType(MediaType.APPLICATION_JSON).content("""{"claimToken":"$claimToken","payload":"e30=","contentType":"application/json","contentLength":2,"checksumSha256":"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a","sourceVersion":"fixture-v1","validation":{"status":"VALID","detectedFormat":"JSON","recordCount":1,"schemaFingerprint":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},"energyObservation":{"indicatorCode":"RENEWABLE_ENERGY_SHARE","geoCode":"DE","observationYear":2024,"unitCode":"PC","observationValue":22.474}}"""))
             .andExpect(status().isOk).andExpect(jsonPath("$.status").value("SUCCEEDED"))
         mockMvc.perform(get("/api/pipeline-runs/$runId/artifacts"))
             .andExpect(status().isOk)

@@ -19,6 +19,8 @@ Store local dataset grants by stable platform principal ID. Application operator
 
 Use the Developer Platform's managed access boundary for both VEF and worker HTTP calls. Applications require normalized principal context and finer dataset grants; they do not validate JWTs or repeat platform route checks. Production context follows the kit's ID/header formats. Development supports explicit synthetic identities.
 
+The authorization implementation was aligned with this boundary on 2026-10-13. All API routes, including legacy routes, rely on platform group authorization. Protected administrative endpoints do not perform a second operator-group check. Catalog and pipeline visibility, source ingestion, publication operations, and raw retrieval require explicit dataset grants even for operators. Ownership and current claim tokens remain mandatory; atomic input capture supplies its own token internally. Only explicit local/test mode may bypass dataset grants.
+
 Keep one deployment descriptor and project with a combined API/UI component and a scheduled worker. Remove the duplicate private API instance so there is one protected backend. Serve production assets under `/ui/` to permit disjoint browser and bearer route policies. Worker credentials remain project-wide, which means other ODIP components may receive them. This accepts the current platform boundary without claiming component credential isolation.
 
 Use the accepted 1 MiB manifest, 10 MiB artifact, and 50 MiB bundle limits. Record an explicit support-end timestamp before publication retention can expire; active publications remain retained. Purge published outputs only after the one-year grace period, retain raw inputs, and expire application audit rows after 180 days.
@@ -27,7 +29,7 @@ Use the accepted 1 MiB manifest, 10 MiB artifact, and 50 MiB bundle limits. Reco
 
 The canonical consumer API remains stable across a future storage migration. The energy adapter contains profile interpretation and source mapping; the core handles registered schemas and named policy evidence.
 
-Platform policies, application groups, service bindings, and governance are separate resources from the application descriptor. Operators must provision them and inject stable group IDs and binding configuration before deployment. Configuration rendering rejects floating image tags and placeholder hostnames.
+Platform policies, application groups, service bindings, and governance are separate resources from the application descriptor. Operators must provision them and inject binding configuration before deployment. Stable group IDs belong to platform policies, not application configuration. Configuration rendering rejects floating image tags and placeholder hostnames. Administrative API and UI access depends on the active platform policy and enforced backend isolation; there is no duplicate application role configuration as a fallback.
 
 Local tests establish publication, authorization logic, concurrency, semantic quality, restart, and actual PostgreSQL restore. Live platform isolation, rotation, egress, and the VEF numerical workflow require the target installation. Their absence does not become an accepted release claim.
 

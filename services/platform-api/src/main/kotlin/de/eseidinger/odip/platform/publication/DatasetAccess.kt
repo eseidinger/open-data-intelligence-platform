@@ -11,21 +11,24 @@ class DatasetAccess(private val jdbc: JdbcTemplate, private val properties: Plat
     fun principal(request: HttpServletRequest): String = request.getHeader("X-Platform-Principal-Id")
         ?: if (!properties.requirePrincipalContext) "development" else reject(401, "unauthorized", "Trusted principal context is required")
 
-    fun operator(request: HttpServletRequest): Boolean = !properties.requirePrincipalContext ||
-        request.getHeader("X-Platform-Principal-Kind") == "user" &&
-        request.getHeader("X-Platform-Principal-Group-Ids").orEmpty().split(Regex("\\s+")).any(properties.userGroupIds::contains)
-
-    fun requireOperator(request: HttpServletRequest) {
-        if (!operator(request)) reject(403, "forbidden", "An application operator is required")
-    }
+    // Explicit local/test mode only; never derived from principal groups.
+    fun developmentBypass(): Boolean = !properties.requirePrincipalContext
 
     fun allowed(principal: String, dataset: UUID, permission: String): Boolean =
-        !properties.requirePrincipalContext || jdbc.queryForObject(
+        developmentBypass() || jdbc.queryForObject(
             "SELECT EXISTS(SELECT 1 FROM dataset_grant WHERE dataset_id=? AND principal_id=? AND permission=?)",
             Boolean::class.java, dataset, principal, permission) == true
 
     fun require(request: HttpServletRequest, dataset: UUID, permission: String) {
         if (!allowed(principal(request), dataset, permission)) reject(403, "forbidden", "Dataset permission is required")
+    }
+
+    fun sourceAllowed(request: HttpServletRequest, source: UUID, permission: String): Boolean =
+        developmentBypass() || jdbc.queryForList("SELECT dataset_id FROM dataset_source WHERE source_id=?", UUID::class.java, source)
+            .filterNotNull().any { allowed(principal(request), it, permission) }
+
+    fun requireSource(request: HttpServletRequest, source: UUID, permission: String) {
+        if (!sourceAllowed(request, source, permission)) reject(403, "forbidden", "A contributing dataset permission is required")
     }
 
     fun grant(dataset: UUID, principal: String, permission: String) {

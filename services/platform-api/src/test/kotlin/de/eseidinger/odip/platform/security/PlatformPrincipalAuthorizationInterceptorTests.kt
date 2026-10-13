@@ -7,23 +7,23 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 
 class PlatformPrincipalAuthorizationInterceptorTests {
-    private val interceptor = PlatformPrincipalAuthorizationInterceptor(
-        PlatformAuthorizationProperties(
-            userGroupIds = setOf("grp_e2987e192a0a41b4a0273c71c14fef47"),
-            guestGroupIds = setOf("grp_8461fd4adec843d9be0d466a38fd564e"),
-        ),
-    )
+    private val interceptor = PlatformPrincipalAuthorizationInterceptor(PlatformAuthorizationProperties())
 
     @Test
-    fun `users can read and modify application data`() {
-        assertTrue(interceptor.allows("GET", "grp_e2987e192a0a41b4a0273c71c14fef47"))
-        assertTrue(interceptor.allows("POST", "grp_8461fd4adec843d9be0d466a38fd564e grp_e2987e192a0a41b4a0273c71c14fef47"))
+    fun `legacy and versioned routes trust platform authorization without repeating group checks`() {
+        for (path in listOf("/api/data-sources", "/api/pipeline-runs/claim-next", "/api/v1/datasets", "/api/v1/dataset-grants")) {
+            for (method in listOf("GET", "POST", "PUT", "DELETE")) {
+                assertTrue(interceptor.allows(method, "grp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", path))
+                assertTrue(interceptor.allows(method, "grp_8461fd4adec843d9be0d466a38fd564e grp_e2987e192a0a41b4a0273c71c14fef47", path))
+            }
+        }
     }
 
     @Test
-    fun `guests can read but cannot modify application data`() {
-        assertTrue(interceptor.allows("GET", "grp_8461fd4adec843d9be0d466a38fd564e"))
-        assertFalse(interceptor.allows("POST", "grp_8461fd4adec843d9be0d466a38fd564e"))
+    fun `group headers must retain the platform format but do not define local roles`() {
+        for (groups in listOf("", "guests", "grp_malformed", "grp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  grp_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")) {
+            assertFalse(interceptor.allows("GET", groups))
+        }
     }
 
     @Test
@@ -55,8 +55,8 @@ class PlatformPrincipalAuthorizationInterceptorTests {
         }
     }
 
-    private fun PlatformPrincipalAuthorizationInterceptor.allows(method: String, groups: String): Boolean {
-        val request = MockHttpServletRequest(method, "/api/data-sources")
+    private fun PlatformPrincipalAuthorizationInterceptor.allows(method: String, groups: String, path: String = "/api/data-sources"): Boolean {
+        val request = MockHttpServletRequest(method, path)
         request.addHeader("X-Platform-Principal-Id", "prn_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         request.addHeader("X-Platform-Principal-Kind", "user")
         request.addHeader("X-Platform-Principal-Issuer", "https://identity.test")

@@ -16,14 +16,12 @@ data class ReferenceInputRequest(val sourceId: UUID, @field:Valid val input: Com
 @RequestMapping("/api/v1")
 class OperatorIngestionController(private val ingestion: IngestionService, private val access: DatasetAccess, private val jdbc: JdbcTemplate) {
     @GetMapping("/operator-pipeline-runs")
-    fun runs(request: HttpServletRequest): List<PipelineRunResponse> {
-        access.requireOperator(request)
+    fun runs(): List<PipelineRunResponse> {
         return ingestion.list().map { PipelineRunResponse(it.id,requireNotNull(it.source).id,requireNotNull(it.source).name,it.status.name,it.requestedAt,it.startedAt,it.completedAt) }
     }
 
     @GetMapping("/operator-pipeline-runs/{id}/artifacts")
-    fun artifacts(request: HttpServletRequest, @PathVariable id: UUID): List<RawArtifactResponse> {
-        access.requireOperator(request)
+    fun artifacts(@PathVariable id: UUID): List<RawArtifactResponse> {
         return ingestion.artifacts(id).map { item ->
             val artifact = item.artifact
             val validation = item.validation
@@ -35,13 +33,14 @@ class OperatorIngestionController(private val ingestion: IngestionService, priva
     @PostMapping("/reference-inputs")
     @Transactional
     fun capture(request: HttpServletRequest, @Valid @RequestBody body: ReferenceInputRequest): Map<String, Any?> {
-        access.requireOperator(request)
         val datasets = jdbc.queryForList("SELECT dataset_id FROM dataset_source WHERE source_id=?",UUID::class.java,body.sourceId).filterNotNull()
         checkPublication(datasets.any { access.allowed(access.principal(request),it,"INGEST") },"forbidden","Input capture requires ingestion permission",403)
         val run = ingestion.queue(body.sourceId)
-        ingestion.start(run.id)
-        ingestion.complete(run.id,body.input)
-        val artifact = ingestion.artifacts(run.id).single().artifact
-        return mapOf("runId" to run.id, "rawArtifactId" to artifact.id, "sha256" to artifact.checksumSha256)
+        val started = ingestion.start(run.id)
+        ingestion.complete(run.id,body.input.copy(claimToken=started.claimToken))
+        // Capture returns identifiers for the input just submitted; it does not
+        // grant access to the source's other raw bytes or require a READ grant.
+        val artifact = jdbc.queryForMap("SELECT id,checksum_sha256 FROM raw_artifact WHERE pipeline_run_id=?", run.id)
+        return mapOf("runId" to run.id, "rawArtifactId" to artifact["id"], "sha256" to artifact["checksum_sha256"])
     }
 }

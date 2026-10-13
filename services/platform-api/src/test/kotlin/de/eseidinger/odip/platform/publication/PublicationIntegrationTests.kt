@@ -86,6 +86,17 @@ class PublicationIntegrationTests(@Autowired private val service: PublicationSer
         mvc.perform(get("/api/raw-artifacts/${UUID.randomUUID()}/content").header("X-Platform-Principal-Id","reader").header("X-Platform-Principal-Kind","service").header("X-Platform-Principal-Issuer","https://identity.test").header("X-Platform-Principal-Subject","reader").header("X-Platform-Principal-Client-Id","client-reader").header("X-Platform-Principal-Group-Ids","grp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")).andExpect(status().isForbidden)
     }
 
+    @Test fun `grants on a zero UUID dataset cannot bypass other publication permissions`() {
+        val (id, _, _) = prepare("non-energy-mobility-counts-2024")
+        val zero = datasets.saveAndFlush(DatasetEntity(id=UUID(0,0), name="Zero UUID ${UUID.randomUUID()}"))
+        access.grant(zero.id, "unapproved", "READ")
+        access.grant(zero.id, "unapproved", "VALIDATE")
+        service.publish(principal("writer"), id, "publish-$id")
+        assertNull(service.claim(principal("unapproved")))
+        finish(id)
+        assertEquals(0L, service.discover(principal("unapproved"),null,0,20)["total"])
+    }
+
     @Test fun `idempotency pins body and artifact corruption is rejected`() {
         val name = "non-energy-mobility-counts-2024"
         val (id, dataset, manifest) = prepare(name)

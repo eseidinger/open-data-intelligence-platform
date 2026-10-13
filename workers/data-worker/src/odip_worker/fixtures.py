@@ -18,7 +18,7 @@ def operator_session(base_url):
         session.headers.update({
             "X-Platform-Principal-Id":"development-operator","X-Platform-Principal-Kind":"user",
             "X-Platform-Principal-Issuer":"https://odip.internal","X-Platform-Principal-Subject":"development-operator",
-            "X-Platform-Principal-Group-Ids":os.getenv("ODIP_GROUP_IDS_USERS","grp_e2987e192a0a41b4a0273c71c14fef47"),
+            "X-Platform-Principal-Group-Ids":"grp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         })
     else:
         cookies = MozillaCookieJar(os.environ["ODIP_OPERATOR_COOKIE_FILE"])

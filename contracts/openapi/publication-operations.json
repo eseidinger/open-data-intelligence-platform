@@ -3,7 +3,7 @@
   "info": {
     "title": "ODIP publication preparation and operator API",
     "version": "1.0.0",
-    "description": "Extensions to the pinned consumer API. Browser routes use the platform session and CSRF boundary; worker routes use approved service bindings. Local dataset grants apply independently."
+    "description": "Extensions to the pinned consumer API. The platform owns route/group authorization: browser operator routes use its session and CSRF boundary, and worker routes use approved service bindings. ODIP validates trusted context and independently enforces dataset grants, job ownership, and claim tokens without local group checks or operator bypasses."
   },
   "components": {
     "securitySchemes": {
@@ -1070,7 +1070,8 @@
                   ],
                   "properties": {
                     "manageGrants": {
-                      "type": "boolean"
+                      "type": "boolean",
+                      "description": "True for callers admitted to this operator-only route by the platform policy; not a second application group check."
                     },
                     "writableDatasetIds": {
                       "type": "array",

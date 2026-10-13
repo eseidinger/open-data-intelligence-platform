@@ -119,7 +119,7 @@ class PublicationService(
     @Transactional
     fun claim(request: HttpServletRequest): Map<String, Any?>? {
         val principal = access.principal(request)
-        val ids = jdbc.queryForList("SELECT p.id FROM dataset_publication p WHERE status='VALIDATING' AND validator IS NULL AND (? OR EXISTS(SELECT 1 FROM dataset_grant g WHERE g.dataset_id=p.dataset_id AND g.principal_id=? AND g.permission='VALIDATE')) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1", access.allowed(principal, UUID(0,0), "VALIDATE"), principal)
+        val ids = jdbc.queryForList("SELECT p.id FROM dataset_publication p WHERE status='VALIDATING' AND validator IS NULL AND (? OR EXISTS(SELECT 1 FROM dataset_grant g WHERE g.dataset_id=p.dataset_id AND g.principal_id=? AND g.permission='VALIDATE')) ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1", access.developmentBypass(), principal)
         val id = ids.firstOrNull()?.get("id") as UUID? ?: return null
         jdbc.update("UPDATE dataset_publication SET validator=?,claimed_at=CURRENT_TIMESTAMP,claim_token=? WHERE id=?", principal, UUID.randomUUID(), id)
         return summary(record(id))
@@ -194,7 +194,7 @@ class PublicationService(
         checkPublication(page >= 0 && pageSize in 1..100, "invalid_pagination", "Page and pageSize are outside supported limits", 400)
         val principal = access.principal(request)
         val filter = "FROM dataset_publication p WHERE status='PUBLISHED' AND (? OR EXISTS(SELECT 1 FROM dataset_grant g WHERE g.dataset_id=p.dataset_id AND g.principal_id=? AND g.permission='READ')) AND (? IS NULL OR convert_from(manifest,'UTF8')::jsonb->>'schemaRef'=?)"
-        val bypass = access.allowed(principal,UUID(0,0),"READ")
+        val bypass = access.developmentBypass()
         // Explicit cast keeps a null schema filter typed in PostgreSQL.
         val typedFilter = filter.replace("? IS NULL", "CAST(? AS text) IS NULL")
         val count = jdbc.queryForObject("SELECT COUNT(*) $typedFilter",Long::class.java,bypass,principal,schemaRef,schemaRef) ?: 0L
