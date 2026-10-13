@@ -38,6 +38,50 @@ Use [ADR0001](architecture/adr/0001-energy-configuration-integration.md) and the
 
 The [integration inputs](../infrastructure/integration/) include application groups, a disjoint access policy, governance, and the ODIP worker service request and approval. Provision the groups through the platform, record their stable IDs, then apply the policy to the `web` component. Approve human operator membership explicitly. The consumer reader group has only bearer GET access; operator routes use browser sessions and CSRF; worker job routes use bearer authentication. No anonymous or combined session/bearer route is declared.
 
+### Configure the access policy
+
+After deploying an eligible application with public component `web` and creating the active `dataset-operators`, `dataset-readers`, and `ingestion-workers` groups, use the [policy configuration script](../scripts/configure-access-policy.py). It invokes the reviewed [Developer Platform CLI v0.2.0](https://github.com/eseidinger/developer-platform/tree/cli-v0.2.0) for every platform operation; it has no HTTP client or token prompt. Install that release with Python 3.12 or newer and put `devplat` on PATH:
+
+```bash
+uv tool install --python 3.12 \
+  'git+https://github.com/eseidinger/developer-platform.git@cli-v0.2.0#subdirectory=platform/cli'
+devplat --version
+```
+
+Create a CLI profile and sign in as a project administrator. Confirm the installation's issuer before creating the profile; the commands below use `https://identity.eseidinger.de/realms/platform`:
+
+```bash
+devplat profiles create odip-lab --api-url https://platform.eseidinger.de \
+  --issuer https://identity.eseidinger.de/realms/platform --project odip
+devplat --profile odip-lab auth login
+```
+
+If `odip-lab` already exists, inspect it with `devplat profiles show odip-lab` and reuse it rather than recreating it. Human login uses the CLI's device flow and secure OS keyring. Clear `PLATFORM_ACCESS_TOKEN`, `PLATFORM_TOKEN_ENDPOINT`, `PLATFORM_CLIENT_ID`, and `PLATFORM_CLIENT_SECRET` when using profile login: environment authentication takes precedence. On headless systems without a secure keyring, securely supply a short-lived administrator token in `PLATFORM_ACCESS_TOKEN` and set `PLATFORM_API_URL`. Tokens and credentials never belong in command-line arguments or source control. A deployment credential or hosted ODIP token cannot administer access policy.
+
+Preview the complete policy for the disposable installation:
+
+```bash
+python3 scripts/configure-access-policy.py \
+  --profile odip-lab --project odip
+```
+
+The script checks the CLI version and authentication source, then uses `devplat access context`, `access groups list`, and `access policy get` with JSON output to validate eligibility, resolve group IDs, and preview the policy. `--platform-url` overrides the CLI profile's API origin when needed; otherwise the active or selected profile supplies it. HTTPS is required, and the script never requests insecure TLS. The CLI honors `PLATFORM_CA_BUNDLE` or the profile's CA bundle.
+
+Review the preview, then apply it:
+
+```bash
+python3 scripts/configure-access-policy.py \
+  --profile odip-lab --project odip --apply
+```
+
+`--apply` creates or **replaces the entire access policy**, including any manually added rules. It sends non-secret policy JSON through stdin to `devplat access policy apply --file - --wait`. Existing-policy updates pass the exact quoted CLI ETag through `--if-match`; initial creation uses CLI v0.2.0's native version handling because that release rejects the zero-version ETag. Do not run concurrent initial policy creation from another administrator or automation. The CLI owns HTTPS transport, redirect rejection, authentication, and operation watching. The wrapper does not print raw CLI errors or credentials, preserves CLI failure exit codes, and never retries a write. It neither creates groups nor changes governance, membership, service approval, or dataset grants.
+
+CLI v0.2.0 redacts the entire `authorization` block of each policy rule, including its non-secret group assignments. The preview reports `currentGroupsRedacted`; it cannot establish equality with the desired policy from that incomplete response. An explicit apply therefore replaces a redacted policy even when its other fields look unchanged. After the CLI confirms operation success and activation, the script checks the visible fields and reports that independent group read-back is unavailable. Verify group selections in the portal and through allowed/denied access tests. A fully readable, identical active policy would cause no write.
+
+The activation timeout defaults to 120 seconds; `--wait-seconds` accepts 1–600 and is passed to the CLI's `--timeout`, with bounded subprocess overhead. An already pending, unchanged policy is observed through CLI reads without resubmission. A timeout or interrupted run does not cancel a submitted operation. Inspect **Application access → Policy / Operations** or rerun the preview before proceeding. A failed, unchanged policy requires an explicit operation retry through the platform. Once active, open ODIP, sign in, and approve the pending human request with `dataset-operators`; creating groups and applying policy does not grant membership.
+
+### Configure service bindings and dataset grants
+
 The worker requests service access to ODIP from the ODIP project itself. Its approved `ingestion-workers` binding is project-wide. Record the binding's stable principal and managed prefix; the platform injects `<prefix>_CLIENT_ID`, `<prefix>_CLIENT_SECRET`, and `<prefix>_TOKEN_URL`. Set `ODIP_WORKER_BINDING_PREFIX` to that prefix as non-secret configuration. Rotate the binding at least every 90 days and use the platform's adoption/revocation process.
 
 Provision VEF's separate approved read-only service binding using the shared kit's service-request and approval inputs. VEF owns its credentials and result database. ODIP and VEF never share database access.
