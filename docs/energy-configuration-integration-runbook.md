@@ -289,13 +289,35 @@ Supported publications retain their bytes, provenance, reports, and lineage. A p
 
 ## Deployed handoff and remaining gates
 
-After provisioning and publication, run the read-only deployed verifier with VEF's approved reader binding available in the environment:
+After both reference versions are `PUBLISHED`, confirm that VEF's separate service-access request is active and grant its stable principal `READ` on the energy dataset alone. VEF must exercise authenticated retrieval, integrity checks, and denial of the non-energy dataset through its own deployed integration tests; publication and grants alone do not establish those results.
 
-```bash
-uv run --project workers/data-worker --locked python scripts/verify-deployed-publication.py \
-  --api-url https://<odip-ingress-host> --binding-prefix <reader-binding-prefix>
-```
+### Handoff values for VEF
 
-It checks authenticated canonical retrieval, ETags, all artifact digests, schema/profile validation, denial of forged identity headers, denial of another dataset, and write denial. It does not provision identities or modify publications.
+Record these values from the **deployed revision and published data**. The pinned fixture values below provide an exact comparison target; do not substitute the repository's current `HEAD` for the revision actually running.
 
-Record the kit version/checksum, ODIP revision, resolved image digests, fixture digests, endpoint, and sanitized acceptance results for VEF. The deployed gates still require actual token rotation/revocation, direct-backend and unrelated-egress denial, platform outage behavior, retained-log reads, and platform backup restoration. VEF's independent validation, cache, numerical results, and AI release remain its responsibilities. Local verification and container builds do not claim those gates are complete.
+| Field | Value or source |
+| --- | --- |
+| Contract kit | `0.4.0`; SHA-256 of `contracts/vendor/contract-kit-v0.4.0.tar.gz`: `884e3590614328c2adafa457153e11575dc1be09b9f53d7b0f53704fe39d02b0`, as pinned in `scripts/verify-contract-kit.py`. |
+| ODIP application revision and images | Record the deployed 40-character Git revision and the **resolved OCI digests** for both `docker.io/eseidinger/odip-platform` and `docker.io/eseidinger/odip-data-worker` from the active deployment/registry; a mutable tag alone is insufficient. |
+| Consumer endpoint and identity | `https://web-odip.apps.eseidinger.de`; record VEF's approved service-access resource, stable principal ID, reader group ID, and non-secret binding prefix. Keep client ID/secret, token, and operator cookies out of the handoff. |
+| Energy publication | Public dataset ID `energy-reference-wasserburg-am-inn-2024`, version `1.0.0`, `schemaRef` `urn:portfolio:energy-configuration-input:v1`, manifest SHA-256 `252b90b18b594a764a2744ba133a8db56b233e9e375301befc7616e9c18c1715`. The five artifact IDs and digests are in its pinned manifest; record or link that manifest as the authoritative list. |
+| Reference input | Pinned PVGIS source-byte SHA-256 `d82aff39f867cb3cd77f7f355ec164b2d43c19d27bb86b13e87306885d082f29`; deployed raw-artifact ID and run ID come from the actual publication lineage. |
+| Domain-neutral control | Non-energy dataset `non-energy-mobility-counts-2024`, version `1.0.0`, manifest SHA-256 `f0d4f6b882c1a05154fb43283166953fda7a0dba7f2ed435dd7f46088663bbff`. VEF's reader identity must receive `403` for it. |
+| Acceptance evidence | Record UTC timestamps, the deployed revisions, and links/IDs for VEF's authenticated retrieval, integrity, dataset-scope, and write-denial tests and the separate gate evidence below. Leave unrun checks open; record failures without credential-bearing request/response bodies. |
+
+The two manifest digests and the raw-source digest are pinned in [the fixture index](../contracts/vendor/contract-kit-v0.4.0/contract-kit/fixtures/index.json). The manifest and its artifact digests are the data contract VEF consumes; the internal dataset UUID and raw-artifact UUID are lineage evidence, not substitutes for the public ID/version.
+
+### Remaining deployed acceptance gates
+
+These are deployed acceptance checks from [the pinned integration plan](https://github.com/eseidinger/energy-system-configuration/blob/contract-kit-v0.4.0/energy-configuration-integration-plan.md#4-ordered-integration-steps), especially Gates 4 and 5. Record a result and evidence reference for each; leave an unrun check open.
+
+| Gate | Responsible boundary | Passing evidence |
+| --- | --- | --- |
+| Service identity lifecycle | Developer Platform and VEF | Exercise a real replacement reader binding, confirm VEF adopts it without changing its stable dataset grant, and verify the old client loses access after confirmation or revocation. Normal overlap is at most 24 hours; include an emergency revocation case, issued-token denial, and an owner for the at-least-every-90-days rotation schedule. |
+| Network and backend isolation | Developer Platform | VEF reaches ODIP only through approved HTTPS and its token endpoint; a direct request to ODIP's private backend, including from another same-project component, and an unrelated outbound destination are denied. Record the applied DNS/address pins and any reapply after DNS changes. |
+| Access dependency failure | Developer Platform, ODIP, and VEF | Verify protected routes fail closed during platform authorization unavailability; distinguish a boundary `503` from ODIP readiness or an application error. VEF may reuse only a previously verified cached version when ODIP is unavailable. |
+| Monitoring and retained logs | Developer Platform and application owners | Observe the protected boundary probe separately from Kubernetes readiness; emit an opaque correlation ID, read its minimized event through project-authorized retained-log access, deny a foreign-project read, and verify retained readback after pod retirement/restart. Treat `state: unavailable` as failure even if the log API returns HTTP `200`; seven-day expiry and compactor behavior need elapsed evidence. |
+| Restart and actual restoration | ODIP, VEF, and Developer Platform | After restart and a real platform backup restore, retrieve identical manifest/artifact bytes and lineage, restore VEF's verified input/result, and reconcile access catalog, service credentials, grants, and revocation state before protected routes reopen. A local dump/restore or pod restart alone is not this gate. |
+| Cross-project use-case suite | ODIP and VEF | Run the shared energy and non-energy fixtures through deployed ODIP, then verify VEF's independent import/cache, exact feasible set and numerical results, tamper/unit/missing-hour/unsupported-schema denials, `1.0.0` versus corrected `1.0.1` isolation, and reproducibility after outage and restore. VEF's later AI proposal and explanation acceptance belongs to Gate 6. |
+
+The handoff values, local verification, and container builds do not close these deployed gates.
