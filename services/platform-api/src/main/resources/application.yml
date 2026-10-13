@@ -20,5 +20,7 @@ management:
           include: readinessState,db
 
 odip:
+  source-policy:
+    hosts: ${ODIP_SOURCE_HOSTS:jsonplaceholder.typicode.com,ec.europa.eu,re.jrc.ec.europa.eu}
   raw-artifact:
     max-payload-bytes: ${ODIP_RAW_ARTIFACT_MAX_PAYLOAD_BYTES:10485760}
