@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/contracts/vendor/contract-kit-v0.4.0/contract-kit/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/workers/data-worker/.venv" />
     </content>
     <orderEntry type="inheritedJdk" />
