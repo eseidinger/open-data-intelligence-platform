@@ -48,7 +48,20 @@ jobs:
             --file "$RUNNER_TEMP/application.json" --output json > "$RUNNER_TEMP/accepted.json"
           operation_id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["operation_id"])' "$RUNNER_TEMP/accepted.json")
           if ! devplat operations watch "$operation_id" --output json; then
-            devplat operations get "$operation_id" --output json || true
+            for attempt in {1..60}; do
+              devplat operations get "$operation_id" --output json > "$RUNNER_TEMP/operation.json"
+              state=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["state"])' "$RUNNER_TEMP/operation.json")
+              if [ "$state" = succeeded ]; then
+                cat "$RUNNER_TEMP/operation.json"
+                exit 0
+              fi
+              if [ "$state" = failed ]; then
+                cat "$RUNNER_TEMP/operation.json"
+                exit 1
+              fi
+              sleep 5
+            done
+            cat "$RUNNER_TEMP/operation.json"
             exit 1
           fi
         env:

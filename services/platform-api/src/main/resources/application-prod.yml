@@ -19,6 +19,10 @@ server:
   forward-headers-strategy: framework
 
 management:
+  otlp:
+    metrics:
+      export:
+        enabled: false
   endpoints:
     web:
       exposure:
