@@ -22,7 +22,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: [services/proxy]
-    resourceNames: [web]
+    resourceNames: ["http:web:http"]
     verbs: [get]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -56,7 +56,7 @@ rules:
   # Kubernetes requires a Role's author to hold every permission it grants.
   - apiGroups: [""]
     resources: [services/proxy]
-    resourceNames: [web]
+    resourceNames: ["http:web:http"]
     verbs: [get]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
