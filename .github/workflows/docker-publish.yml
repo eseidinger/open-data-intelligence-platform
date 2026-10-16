@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -20,7 +22,7 @@ jobs:
   publish:
     name: Publish Docker Hub images
     needs: verify
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,6 +40,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=sha,format=long,prefix=
+            type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
       - uses: docker/build-push-action@v6
         with:
@@ -57,6 +60,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=sha,format=long,prefix=
+            type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
       - uses: docker/build-push-action@v6
         with:

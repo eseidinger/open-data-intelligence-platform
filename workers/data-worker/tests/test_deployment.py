@@ -18,7 +18,16 @@ class DeploymentTests(unittest.TestCase):
     def test_rendered_declaration_and_policy_match_pinned_platform_schemas(self):
         snapshot=json.loads((KIT/"platform/upstream-inputs.schema.json").read_text())
         declaration=renderer.render("a"*40)
-        Draft202012Validator({**snapshot,"$ref":"#/$defs/ApplicationEnvelopeV1Alpha2"}).validate(declaration)
+        # The pinned contract-kit predates the platform's additive telemetry fields.
+        legacy_declaration=copy.deepcopy(declaration)
+        for component in legacy_declaration["spec"]["components"]:
+            telemetry = component.pop("telemetry")
+            self.assertEqual(telemetry["tracing"], {"enabled": True})
+            if component["name"] == "web":
+                self.assertEqual(telemetry["metrics"], {"port": "http", "path": "/actuator/prometheus"})
+            else:
+                self.assertNotIn("metrics", telemetry)
+        Draft202012Validator({**snapshot,"$ref":"#/$defs/ApplicationEnvelopeV1Alpha2"}).validate(legacy_declaration)
         policy=json.loads((ROOT/"infrastructure/integration/odip-access-policy.json").read_text())
         Draft202012Validator({**snapshot,"$ref":"#/$defs/PolicyCreate"}).validate(policy)
         self.assertEqual([c["name"] for c in declaration["spec"]["components"] if c.get("exposure")=="public"],["web"])

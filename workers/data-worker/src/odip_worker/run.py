@@ -10,6 +10,7 @@ from odip_worker.transformation import transform
 from odip_worker.validation import validate_payload
 from odip_worker.retrieval import download
 from odip_worker.publication import claim_and_validate
+from odip_worker.tracing import configure, span
 
 def claim_next(base_url):
     for attempt in range(24):
@@ -23,6 +24,15 @@ def claim_next(base_url):
             time.sleep(5)
 
 def main():
+    provider = configure()
+    try:
+        with span("odip.worker.run"):
+            run()
+    finally:
+        if provider is not None:
+            provider.shutdown()
+
+def run():
     parser = argparse.ArgumentParser()
     selection = parser.add_mutually_exclusive_group(required=True)
     selection.add_argument("--run-id")
@@ -47,9 +57,12 @@ def main():
         job["claimToken"] = started.json()["claimToken"]
     run_id = job["runId"]
     try:
-        payload, content_type, source_version = download(job["location"])
-        validation = validate_payload(payload, content_type)
-        transformation = transform(payload, job.get("normalizer"))
+        with span("odip.ingestion.download"):
+            payload, content_type, source_version = download(job["location"])
+        with span("odip.ingestion.validate"):
+            validation = validate_payload(payload, content_type)
+        with span("odip.ingestion.transform"):
+            transformation = transform(payload, job.get("normalizer"))
         complete = {"payload": base64.b64encode(payload).decode("ascii"), "contentType": content_type, "contentLength": len(payload),
                     "checksumSha256": hashlib.sha256(payload).hexdigest(), "sourceVersion": source_version,
                     "validation": validation, "transformation": transformation, "claimToken": job.get("claimToken")}

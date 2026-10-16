@@ -7,6 +7,11 @@ spring:
     open-in-view: false
 
 management:
+  tracing:
+    export:
+      enabled: false
+    propagation:
+      type: w3c
   endpoints:
     web:
       exposure:

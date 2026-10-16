@@ -21,7 +21,7 @@
         "type": "service",
         "runtime": {
           "type": "container",
-          "image": "docker.io/eseidinger/odip-platform:integration-0.4.0"
+          "image": "docker.io/eseidinger/odip-platform:0.4.1"
         },
         "ports": [
           {
@@ -41,6 +41,15 @@
           }
         },
         "exposure": "public",
+        "telemetry": {
+          "metrics": {
+            "port": "http",
+            "path": "/actuator/prometheus"
+          },
+          "tracing": {
+            "enabled": true
+          }
+        },
         "health": {
           "readiness": {
             "path": "/actuator/health/readiness"
@@ -52,12 +61,17 @@
         "type": "scheduled",
         "runtime": {
           "type": "container",
-          "image": "docker.io/eseidinger/odip-data-worker:integration-0.4.0",
+          "image": "docker.io/eseidinger/odip-data-worker:0.4.1",
           "args": [
             "--claim-next"
           ]
         },
         "schedule": "* * * * *",
+        "telemetry": {
+          "tracing": {
+            "enabled": true
+          }
+        },
         "concurrencyPolicy": "Forbid",
         "retryLimit": 0,
         "maxRunSeconds": 300,

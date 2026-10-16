@@ -3,6 +3,7 @@ import os
 import time
 from urllib.parse import urlsplit
 import requests
+from odip_worker.tracing import span, traceparent_header
 
 _cached_token = None
 _expires_at = 0.0
@@ -54,7 +55,12 @@ def api_url(value):
     return value.rstrip("/")
 
 def call(method, url, **kwargs):
-    response = getattr(requests, method)(url, headers=headers(), timeout=(10, 60), allow_redirects=False, **kwargs)
-    if 300 <= response.status_code < 400:
-        raise DependencyError("API redirects are prohibited")
-    return response
+    with span("odip.api.request") as current:
+        current.set_attribute("http.request.method", method.upper())
+        request_headers = headers()
+        request_headers.update(traceparent_header())
+        response = getattr(requests, method)(url, headers=request_headers, timeout=(10, 60), allow_redirects=False, **kwargs)
+        current.set_attribute("http.response.status_code", response.status_code)
+        if 300 <= response.status_code < 400:
+            raise DependencyError("API redirects are prohibited")
+        return response

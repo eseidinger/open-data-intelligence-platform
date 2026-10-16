@@ -18,6 +18,15 @@ spring:
 server:
   forward-headers-strategy: framework
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  tracing:
+    export:
+      enabled: true
+
 odip:
   authorization:
     strict-principal-format: true
