@@ -43,9 +43,14 @@ jobs:
           python3 scripts/render-integration.py --image-tag "$IMAGE_TAG"
           > "$RUNNER_TEMP/application.json"
       - name: Deploy and wait for readiness
-        run: >-
-          devplat deploy apply --project odip
-          --file "$RUNNER_TEMP/application.json" --wait --output json
+        run: |
+          devplat deploy apply --project odip \
+            --file "$RUNNER_TEMP/application.json" --output json > "$RUNNER_TEMP/accepted.json"
+          operation_id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["operation_id"])' "$RUNNER_TEMP/accepted.json")
+          if ! devplat operations watch "$operation_id" --output json; then
+            devplat operations get "$operation_id" --output json || true
+            exit 1
+          fi
         env:
           PLATFORM_API_URL: ${{ vars.PLATFORM_API_URL }}
           PLATFORM_TOKEN_ENDPOINT: ${{ vars.PLATFORM_TOKEN_ENDPOINT }}
