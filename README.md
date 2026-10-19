@@ -22,7 +22,7 @@ Specialized search, graph, vector, document, and streaming technologies are opti
 
 ## Documentation
 
-The [documentation index](docs/README.md) is the authoritative entry point for the detailed project material.
+The [documentation index](docs/README.md) is the authoritative entry point for the detailed project material. To deploy a new test or production installation, follow the [bootstrap runbook](docs/bootstrap.md).
 
 | Document | Purpose |
 | --- | --- |

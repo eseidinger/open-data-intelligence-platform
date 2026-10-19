@@ -48,6 +48,12 @@ class FakeCLI:
         self.calls.append(("groups", project, {}))
         return {"items": self.group_items}
 
+    def group_create(self, project, group):
+        self.calls.append(("group create", project, {"body": group}))
+        created = deepcopy(next(g for g in GROUPS if g["name"] == group["name"]))
+        self.group_items.append(created)
+        return created
+
     def policy_get(self, project):
         self.calls.append(("policy get", project, {}))
         return self.existing
@@ -168,7 +174,7 @@ class AccessPolicyTests(unittest.TestCase):
                 elif change == "eligible": cli.context_document["eligible"] = False
                 elif change == "manage": cli.context_document["permissions"]["manage"] = False
                 elif change == "project": cli.context_document["project"] = "other"
-                else: cli.group_items = []
+                else: cli.group_items.append(deepcopy(cli.group_items[0]))
                 with self.assertRaises(script.PolicyError):
                     script.configure(cli, "odip", apply=True, output=lambda _: None)
                 self.assertTrue(all(command != "policy apply" for command, _, _ in cli.calls))
@@ -238,6 +244,60 @@ class AccessPolicyTests(unittest.TestCase):
         self.assertNotIn("shell", run.call_args.kwargs)
         self.assertEqual(run.call_args.kwargs["env"]["PLATFORM_ACCESS_TOKEN"], "sensitive-token")
 
+    def test_preview_lists_missing_groups_without_writes_or_invented_ids(self):
+        cli = FakeCLI()
+        cli.group_items = []
+        output = []
+        script.configure(cli, "odip", output=output.append)
+        plan = json.loads(output[0])
+        self.assertEqual({g["name"] for g in plan["groupsToCreate"]}, {g["name"] for g in GROUPS})
+        self.assertFalse(plan["policyGroupsResolved"])
+        self.assertEqual(plan["policy"], TEMPLATE)
+        self.assertFalse(any(command in ("group create", "policy apply") for command, _, _ in cli.calls))
+
+    def test_apply_creates_only_missing_groups_before_resolving_policy_for_either_project(self):
+        for project in ("odip", "odip-test"):
+            cli = FakeCLI()
+            cli.context_document.update(project=project, application=project)
+            cli.group_items = deepcopy(GROUPS[:1])
+            script.configure(cli, project, apply=True, output=lambda _: None)
+            created = [(target, kw["body"]["name"]) for command, target, kw in cli.calls if command == "group create"]
+            self.assertEqual(created, [(project, "dataset-readers"), (project, "ingestion-workers")])
+            writes = [kw for command, _, kw in cli.calls if command == "policy apply"]
+            self.assertEqual(writes[0]["body"], POLICY)
+            cli.calls.clear()
+            script.configure(cli, project, apply=True, output=lambda _: None)
+            self.assertFalse(any(command in ("group create", "policy apply") for command, _, _ in cli.calls))
+
+    def test_failed_group_creation_is_not_retried_and_blocks_policy_apply(self):
+        cli = FakeCLI()
+        cli.group_items = []
+        cli.group_create = Mock(side_effect=script.PolicyError("Creation failed", 8))
+        with self.assertRaises(script.PolicyError):
+            script.configure(cli, "odip", apply=True, output=lambda _: None)
+        cli.group_create.assert_called_once()
+        self.assertFalse(any(command == "policy apply" for command, _, _ in cli.calls))
+
+    def test_invalid_existing_group_blocks_all_group_and_policy_writes(self):
+        cli = FakeCLI()
+        cli.group_items = [deepcopy(GROUPS[0])]
+        cli.group_items[0]["state"] = "revoked"
+        with self.assertRaises(script.PolicyError):
+            script.configure(cli, "odip", apply=True, output=lambda _: None)
+        self.assertFalse(any(command in ("group create", "policy apply") for command, _, _ in cli.calls))
+
+    def test_group_creation_uses_json_stdin_and_project_specific_idempotency(self):
+        cli = script.PlatformCLI("https://platform.test", environment={})
+        group = {"name": "dataset-operators", "displayName": "ODIP dataset operators"}
+        for project in ("odip", "odip-test"):
+            with patch.object(script.subprocess, "run", return_value=completed(GROUPS[0])) as run:
+                cli.group_create(project, group)
+            command = run.call_args.args[0]
+            self.assertEqual(command[command.index("--file") + 1], "-")
+            self.assertEqual(command[command.index("--project") + 1], project)
+            self.assertEqual(command[command.index("--idempotency-key") + 1], project + "-dataset-operators")
+            self.assertEqual(json.loads(run.call_args.kwargs["input"]), group)
+
     def test_apply_passes_policy_via_stdin_and_delegates_wait_and_etag(self):
         cli = script.PlatformCLI("https://platform.test", environment={})
         for etag in (None, '"3"'):
@@ -286,25 +346,25 @@ class AccessPolicyTests(unittest.TestCase):
 
     def test_prepare_checks_reviewed_version_and_delegates_authentication(self):
         cli = script.PlatformCLI("https://platform.test", "lab", environment={})
-        with patch.object(script.subprocess, "run", side_effect=[completed(stdout="0.2.0\n"), completed({"source": "human-profile-session", "persistent": True})]) as run:
+        with patch.object(script.subprocess, "run", side_effect=[completed(stdout="0.3.0\n"), completed({"source": "human-profile-session", "persistent": True})]) as run:
             cli.prepare()
         self.assertEqual(run.call_args_list[0].args[0], ["devplat", "--version"])
         self.assertEqual(run.call_args_list[1].args[0][-2:], ["auth", "status"])
         with patch.object(script.subprocess, "run", return_value=completed(stdout="0.1.0\n")) as run:
-            with self.assertRaisesRegex(script.PolicyError, "v0.2.0"): cli.prepare()
+            with self.assertRaisesRegex(script.PolicyError, "v0.3.0"): cli.prepare()
             run.assert_called_once()
 
     def test_prepare_uses_profile_origin_and_rejects_missing_session_or_deployment_auth(self):
         cli = script.PlatformCLI(profile="lab", environment={})
-        with patch.object(script.subprocess, "run", side_effect=[completed(stdout="0.2.0\n"), completed({"api_url": "https://platform.test"}), completed({"source": "access-token-environment"})]):
+        with patch.object(script.subprocess, "run", side_effect=[completed(stdout="0.3.0\n"), completed({"api_url": "https://platform.test"}), completed({"source": "access-token-environment"})]):
             cli.prepare()
         self.assertEqual(cli.origin, "https://platform.test")
         for auth in ({"source": "deployment-credential-environment"}, {"source": "human-profile-session", "persistent": False}, {"source": "unknown"}):
             cli = script.PlatformCLI("https://platform.test", environment={})
-            with patch.object(script.subprocess, "run", side_effect=[completed(stdout="0.2.0\n"), completed(auth)]):
+            with patch.object(script.subprocess, "run", side_effect=[completed(stdout="0.3.0\n"), completed(auth)]):
                 with self.assertRaises(script.PolicyError): cli.prepare()
         cli = script.PlatformCLI(environment={})
-        with patch.object(script.subprocess, "run", side_effect=[completed(stdout="0.2.0\n"), completed({"api_url": "http://platform.test"})]) as run:
+        with patch.object(script.subprocess, "run", side_effect=[completed(stdout="0.3.0\n"), completed({"api_url": "http://platform.test"})]) as run:
             with self.assertRaises(script.PolicyError): cli.prepare()
             self.assertEqual(run.call_count, 2)
 

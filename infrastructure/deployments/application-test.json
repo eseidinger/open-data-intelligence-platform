@@ -2,17 +2,17 @@
   "apiVersion": "platform.example/v1alpha2",
   "kind": "Application",
   "metadata": {
-    "name": "odip",
-    "project": "odip",
+    "name": "odip-test",
+    "project": "odip-test",
     "environment": "default"
   },
   "spec": {
     "configuration": {
       "values": {
-        "ODIP_API_URL": "https://web-odip.apps.eseidinger.de",
+        "ODIP_API_URL": "https://web-odip-test.apps.eseidinger.de",
         "ODIP_IDENTITY_MODE": "platform",
         "ODIP_SOURCE_HOSTS": "jsonplaceholder.typicode.com,ec.europa.eu,re.jrc.ec.europa.eu,github.com",
-        "ODIP_WORKER_BINDING_PREFIX": "ACCESS_BCC37E90DE10"
+        "ODIP_WORKER_BINDING_PREFIX": "ACCESS_367961294744"
       }
     },
     "components": [
@@ -21,7 +21,7 @@
         "type": "service",
         "runtime": {
           "type": "container",
-          "image": "docker.io/eseidinger/odip-platform:0.4.1"
+          "image": "docker.io/eseidinger/odip-platform:latest"
         },
         "ports": [
           {
@@ -54,14 +54,20 @@
           "readiness": {
             "path": "/actuator/health/readiness"
           }
-        }
+        },
+        "bindings": [
+          {
+            "bindingId": "e87b203a-8768-49db-9ee3-fee237877635",
+            "envPrefix": ""
+          }
+        ]
       },
       {
         "name": "ingestion-worker",
         "type": "scheduled",
         "runtime": {
           "type": "container",
-          "image": "docker.io/eseidinger/odip-data-worker:0.4.1",
+          "image": "docker.io/eseidinger/odip-data-worker:latest",
           "args": [
             "--claim-next"
           ]
@@ -77,7 +83,7 @@
         "maxRunSeconds": 300,
         "outbound": [
           {
-            "dns": "web-odip.apps.eseidinger.de",
+            "dns": "web-odip-test.apps.eseidinger.de",
             "port": 443
           },
           {
@@ -107,14 +113,6 @@
             "memory": "512Mi"
           }
         }
-      }
-    ],
-    "resources": [
-      {
-        "name": "database",
-        "type": "postgres",
-        "profile": "shared-dev",
-        "deletionPolicy": "retain"
       }
     ]
   }

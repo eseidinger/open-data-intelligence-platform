@@ -1,15 +1,15 @@
 name: Deploy to Developer Platform
 
 on:
-  workflow_run:
-    workflows:
-      - Build and publish Docker images
-    types:
-      - completed
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      image_tag:
-        description: Docker image tag to deploy
+      project:
+        required: true
+        type: string
+      descriptor:
+        required: true
+        type: string
+      environment:
         required: true
         type: string
 
@@ -17,40 +17,53 @@ permissions:
   contents: read
 
 concurrency:
-  group: platform-production
+  group: platform-${{ inputs.project }}
   cancel-in-progress: false
 
 jobs:
   deploy:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
-    environment: production
+    environment: ${{ inputs.environment }}
     env:
-      IMAGE_TAG: ${{ inputs.image_tag || github.event.workflow_run.head_sha }}
+      PROJECT: ${{ inputs.project }}
+      DESCRIPTOR: ${{ inputs.descriptor }}
     steps:
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-      - uses: actions/setup-python@v7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 -m pip install developer-platform-cli
-      - name: Create deployment declaration
-        run: >-
-          python3 scripts/render-integration.py --image-tag "$IMAGE_TAG"
-          > "$RUNNER_TEMP/application.json"
+      - run: bash scripts/upgrade-devplat.sh python3
+      - name: Check deployment descriptor
+        run: |
+          case "$PROJECT:$DESCRIPTOR:$GITHUB_REF" in
+            odip-test:infrastructure/deployments/application-test.json:refs/heads/main) expected_version=latest ;;
+            odip:infrastructure/deployments/application.json:refs/tags/v*)
+              expected_version="${GITHUB_REF#refs/tags/v}"
+              python3 scripts/render-release.py --version "$expected_version" --file "$DESCRIPTOR" \
+                > "$RUNNER_TEMP/application-release.json"
+              DESCRIPTOR="$RUNNER_TEMP/application-release.json"
+              echo "DESCRIPTOR=$DESCRIPTOR" >> "$GITHUB_ENV"
+              ;;
+            *) echo 'Deployment target does not match the Git ref'; exit 1 ;;
+          esac
+          jq -e --arg project "$PROJECT" --arg version "$expected_version" '
+            .metadata.name == $project and .metadata.project == $project and
+            (.spec.components | all(.runtime.image | endswith(":" + $version))) and
+            (.spec.components[] | select(.name == "web") | .bindings |
+              length == 1 and .[0].envPrefix == "" and
+              (.[0].bindingId | test("^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"))) and
+            (.spec.configuration.values.ODIP_WORKER_BINDING_PREFIX |
+              test("^ACCESS_[A-Z0-9_]+$"))
+          ' "$DESCRIPTOR" > /dev/null
       - name: Deploy and wait for readiness
         run: |
-          devplat deploy apply --project odip \
-            --file "$RUNNER_TEMP/application.json" --output json > "$RUNNER_TEMP/accepted.json"
-          operation_id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["operation_id"])' "$RUNNER_TEMP/accepted.json")
+          devplat deploy apply --project "$PROJECT" \
+            --file "$DESCRIPTOR" --output json > "$RUNNER_TEMP/accepted.json"
+          operation_id=$(jq -r '.operation_id' "$RUNNER_TEMP/accepted.json")
           if ! devplat operations watch "$operation_id" --output json; then
             for attempt in {1..60}; do
               devplat operations get "$operation_id" --output json > "$RUNNER_TEMP/operation.json"
-              state=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["state"])' "$RUNNER_TEMP/operation.json")
+              state=$(jq -r '.state' "$RUNNER_TEMP/operation.json")
               if [ "$state" = succeeded ]; then
                 cat "$RUNNER_TEMP/operation.json"
                 exit 0
@@ -67,5 +80,5 @@ jobs:
         env:
           PLATFORM_API_URL: ${{ vars.PLATFORM_API_URL }}
           PLATFORM_TOKEN_ENDPOINT: ${{ vars.PLATFORM_TOKEN_ENDPOINT }}
-          PLATFORM_CLIENT_ID: ${{ secrets.PLATFORM_CLIENT_ID }}
-          PLATFORM_CLIENT_SECRET: ${{ secrets.PLATFORM_CLIENT_SECRET }}
+          PLATFORM_CLIENT_ID: ${{ secrets[inputs.project == 'odip-test' && 'PLATFORM_CLIENT_ID_TEST' || 'PLATFORM_CLIENT_ID'] }}
+          PLATFORM_CLIENT_SECRET: ${{ secrets[inputs.project == 'odip-test' && 'PLATFORM_CLIENT_SECRET_TEST' || 'PLATFORM_CLIENT_SECRET'] }}

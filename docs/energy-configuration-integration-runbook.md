@@ -2,6 +2,8 @@
 
 ODIP implements the contract kit 0.4.0 publication milestone. The reference fixture is Wasserburg am Inn, region `DE-BY-09187182`, with 8,784 hourly UTC intervals on the 2024 calendar. Its PV profile derives from pinned PVGIS 2023 data; the leap day, tariffs, load shape, and catalog follow the shared decisions. It is a regional demonstration rather than observed 2024 building production or a commercial offer.
 
+For a new test or production installation, start with [Bootstrap environments](bootstrap.md). It covers the web-only first deployment, shared setup scripts and CI prerequisites in dependency order.
+
 ## Verify the repository
 
 From the repository root:
@@ -36,15 +38,15 @@ The harness creates its own PostgreSQL container and temporary files. It ingests
 
 Use [ADR0001](architecture/adr/0001-energy-configuration-integration.md) and the shared DEC-01 through DEC-06 as the accepted implementation decisions.
 
-The [integration inputs](../infrastructure/integration/) include application groups, a disjoint access policy, governance, and the ODIP worker service request and approval. Provision the groups through the platform, record their stable IDs, then apply the policy to the `web` component. Approve human operator membership explicitly. The consumer reader group has only bearer GET access; operator routes use browser sessions and CSRF; worker job routes use bearer authentication. No anonymous or combined session/bearer route is declared.
+The [integration inputs](../infrastructure/integration/) include application groups, a disjoint access policy, governance, and the ODIP worker service request and approval. The policy configuration script creates missing groups and resolves their stable IDs before applying the policy to the `web` component. Approve human operator membership explicitly. The consumer reader group has only bearer GET access; operator routes use browser sessions and CSRF; worker job routes use bearer authentication. No anonymous or combined session/bearer route is declared.
 
 ### Configure the access policy
 
-After deploying an eligible application with public component `web` and creating the active `dataset-operators`, `dataset-readers`, and `ingestion-workers` groups, use the [policy configuration script](../scripts/configure-access-policy.py). It invokes the reviewed [Developer Platform CLI v0.2.0](https://github.com/eseidinger/developer-platform/tree/cli-v0.2.0) for every platform operation; it has no HTTP client or token prompt. Install that release with Python 3.12 or newer and put `devplat` on PATH:
+After deploying an eligible application with public component `web`, use the [policy configuration script](../scripts/configure-access-policy.py). It invokes the reviewed [Developer Platform CLI v0.3.0](https://github.com/eseidinger/developer-platform/tree/cli-v0.3.0) for every platform operation; it has no HTTP client or token prompt. Install that release with Python 3.12 or newer and put `devplat` on PATH:
 
 ```bash
 uv tool install --python 3.12 \
-  'git+https://github.com/eseidinger/developer-platform.git@cli-v0.2.0#subdirectory=platform/cli'
+  'git+https://github.com/eseidinger/developer-platform.git@cli-v0.3.0#subdirectory=platform/cli'
 devplat --version
 ```
 
@@ -110,7 +112,7 @@ python3 scripts/configure-access-policy.py \
   --profile odip-lab --project odip
 ```
 
-The script checks the CLI version and authentication source, then uses `devplat access context`, `access groups list`, and `access policy get` with JSON output to validate eligibility, resolve group IDs, and preview the policy. `--platform-url` overrides the CLI profile's API origin when needed; otherwise the active or selected profile supplies it. HTTPS is required, and the script never requests insecure TLS. The CLI honors `PLATFORM_CA_BUNDLE` or the profile's CA bundle.
+The script checks the CLI version and authentication source, then uses `devplat access context`, `access groups list`, and `access policy get` with JSON output to validate eligibility and preview the policy. The preview lists missing groups under `groupsToCreate` without creating them; policy group references remain names until all stable IDs exist. With `--apply`, it creates missing `dataset-operators`, `dataset-readers`, and `ingestion-workers` groups from `infrastructure/integration/groups.json`, using project-specific idempotency keys, then reads back their active IDs before applying the policy. Existing active groups are reused; duplicate, inactive or malformed groups stop the operation. Group creation failures stop policy application and are never automatically retried. Select either `--project odip` or `--project odip-test`. `--platform-url` overrides the CLI profile's API origin when needed; otherwise the active or selected profile supplies it. HTTPS is required, and the script never requests insecure TLS. The CLI honors `PLATFORM_CA_BUNDLE` or the profile's CA bundle.
 
 Review the preview, then apply it:
 
@@ -119,9 +121,9 @@ python3 scripts/configure-access-policy.py \
   --profile odip-lab --project odip --apply
 ```
 
-`--apply` creates or **replaces the entire access policy**, including any manually added rules. It sends non-secret policy JSON through stdin to `devplat access policy apply --file - --wait`. Existing-policy updates pass the exact quoted CLI ETag through `--if-match`; initial creation uses CLI v0.2.0's native version handling because that release rejects the zero-version ETag. Do not run concurrent initial policy creation from another administrator or automation. The CLI owns HTTPS transport, redirect rejection, authentication, and operation watching. The wrapper does not print raw CLI errors or credentials, preserves CLI failure exit codes, and never retries a write. It neither creates groups nor changes governance, membership, service approval, or dataset grants.
+`--apply` creates missing groups and creates or **replaces the entire access policy**, including any manually added rules. It sends non-secret policy JSON through stdin to `devplat access policy apply --file - --wait`. Existing-policy updates pass the exact quoted CLI ETag through `--if-match`; initial creation uses CLI v0.3.0's native version handling because that release rejects the zero-version ETag. Do not run concurrent initial policy creation from another administrator or automation. The CLI owns HTTPS transport, redirect rejection, authentication, and operation watching. The wrapper does not print raw CLI errors or credentials, preserves CLI failure exit codes, and never retries a write. It does not change existing groups, governance, membership, service approval, or dataset grants.
 
-CLI v0.2.0 redacts the entire `authorization` block of each policy rule, including its non-secret group assignments. The preview reports `currentGroupsRedacted`; it cannot establish equality with the desired policy from that incomplete response. An explicit apply therefore replaces a redacted policy even when its other fields look unchanged. After the CLI confirms operation success and activation, the script checks the visible fields and reports that independent group read-back is unavailable. Verify group selections in the portal and through allowed/denied access tests. A fully readable, identical active policy would cause no write.
+CLI v0.3.0 redacts the entire `authorization` block of each policy rule, including its non-secret group assignments. The preview reports `currentGroupsRedacted`; it cannot establish equality with the desired policy from that incomplete response. An explicit apply therefore replaces a redacted policy even when its other fields look unchanged. After the CLI confirms operation success and activation, the script checks the visible fields and reports that independent group read-back is unavailable. Verify group selections in the portal and through allowed/denied access tests. A fully readable, identical active policy would cause no write.
 
 The activation timeout defaults to 120 seconds; `--wait-seconds` accepts 1–600 and is passed to the CLI's `--timeout`, with bounded subprocess overhead. An already pending, unchanged policy is observed through CLI reads without resubmission. A timeout or interrupted run does not cancel a submitted operation. Inspect **Application access → Policy / Operations** or rerun the preview before proceeding. A failed, unchanged policy requires an explicit operation retry through the platform. Once active, open ODIP, sign in, and approve the pending human request with `dataset-operators`; creating groups and applying policy does not grant membership.
 
@@ -137,32 +139,86 @@ In the Publications page, grant the worker READ, INGEST, and VALIDATE on assigne
 
 Require platform network isolation that prevents direct backend access, including from another component in the same project. Header validation alone is not authentication. The worker calls ODIP through the protected public HTTPS origin rather than its former private DNS endpoint.
 
-## Render the deployment
+## Deployment descriptors and automatic releases
 
-Build API/UI and worker images from the repository root:
+Two checked-in descriptors define the applications:
+
+| Descriptor | Project | Image tags | Deployment trigger |
+| --- | --- | --- | --- |
+| `infrastructure/deployments/application-test.json` | `odip-test` | `latest` for both images | Successful build and publication on `main` |
+| `infrastructure/deployments/application.json` | `odip` | `__VERSION__` placeholders filled from the release tag | Successful build and publication on matching `v*` tags |
+
+`infrastructure/deployments/application-test.json` is deployed directly. Production uses the
+`__VERSION__` image-tag placeholder in `infrastructure/deployments/application.json`.
+`scripts/render-release.py --version v0.4.1` replaces that placeholder in both
+images with `0.4.1`, writes JSON to stdout, and leaves the template unchanged.
+The version-tag workflow validates the template before publishing, then renders
+it to a temporary file and deploys that file after publication. No per-release
+version edits to the template are needed. The renderer accepts release versions
+with an optional leading `v` and optional prerelease suffix; floating tags and
+build metadata are rejected. Release builds do not update `latest`.
+The build workflow calls the reusable deployment workflow after both images have
+published. A manual build on `main` or a version tag follows the same routing.
+
+Configure the GitHub environments `test` and `production` separately. Each needs
+variables `PLATFORM_API_URL` and `PLATFORM_TOKEN_ENDPOINT`. Test uses secrets
+`PLATFORM_CLIENT_ID_TEST` and `PLATFORM_CLIENT_SECRET_TEST`; production uses
+`PLATFORM_CLIENT_ID` and `PLATFORM_CLIENT_SECRET`. Test never falls back to the
+production secrets. The test deployment credential
+must target `odip-test`, and the production credential must target `odip`.
+The build uses repository secret `DOCKERHUB_TOKEN`. PostgreSQL binding UUIDs and
+worker managed prefixes are non-secret installation configuration in the
+descriptors, rather than GitHub variables. Provision them before enabling automatic
+deployment and commit the updated descriptor. The workflow rejects an empty
+PostgreSQL binding or a missing worker prefix.
+
+## Provision application storage
+
+The platform rejects legacy `spec.resources` / `shared-dev` / `retain` declarations.
+Provision the independently managed PostgreSQL resource and its read-write binding
+for component `web` before deploying `odip`:
 
 ```bash
-docker build --target platform --tag odip-platform:<commit-sha> .
-docker build --file workers/data-worker/Dockerfile --tag odip-data-worker:<commit-sha> .
+# Upgrade the Python environment that owns devplat, if needed.
+bash scripts/upgrade-devplat.sh /path/to/venv/bin/python
+python scripts/setup-storage.py --profile odip-lab --project odip
+python scripts/setup-storage.py --profile odip-lab --project odip --apply \
+  --update-descriptor infrastructure/deployments/application.json
 ```
 
-The worker installs from its frozen lock and bundles the pinned kit. The API bundles the shared schemas and production UI. Both images run as non-root users.
-
-The root `application.json` declares this installation's protected ODIP origin (`https://web-odip.apps.eseidinger.de`) and the worker's HTTPS egress to ODIP, identity (`identity.eseidinger.de`), and approved reference sources. The token endpoint URL itself comes from the managed worker binding. For another installation, edit `spec.configuration.values.ODIP_API_URL` and the worker's `outbound` DNS rules together; its API and token endpoint hosts must both be allowed. Source registration policy is declared by `ODIP_SOURCE_HOSTS` separately from network egress.
-
-The descriptor sets `ODIP_WORKER_BINDING_PREFIX` to this installation's managed prefix, `ACCESS_BCC37E90DE10`. This is a non-secret reference; client credentials remain in the platform's managed secret. For another installation, use its approved worker binding's `spec.secretPrefix`.
-
-Render the descriptor using the published 40-character commit image tag:
+The template `infrastructure/integration/odip-postgresql.json` requests a 1 GiB
+resource named `database`. Use the same `--quota-bytes` allocation for preview and
+apply. Existing resource configuration and bindings must match; the script never
+changes quotas, migrates data or retries a failed write. `--update-descriptor`
+saves the approved binding UUID in `web.bindings` with an empty `envPrefix`.
+For test storage, use the same shared script with the test project and descriptor:
 
 ```bash
-python scripts/render-integration.py --image-tag <commit-sha>
+python scripts/setup-storage.py --profile odip-lab --project odip-test --apply \
+  --update-descriptor infrastructure/deployments/application-test.json
 ```
 
-The renderer writes JSON to stdout and does not deploy. It preserves the descriptor's installation configuration, binding prefix, and network rules and pins both images. Use `--file <descriptor-path>` to render an alternative installation descriptor or `--worker-secret-prefix <managed-prefix>` to override the declared prefix. The root `application.json` still needs rendering because its image tags are placeholders. The rendered declaration keeps one public API/UI component and one scheduled worker and declares retained PostgreSQL storage. Supply the PostgreSQL resource and credentials through the platform.
+The selected project must already exist. Provision its groups, access policy and
+worker service binding through the earlier CLI workflow, selecting `odip-test`
+for test resources. Save the test worker's own managed prefix in the test
+descriptor. Review and commit the descriptor changes before automatic deployment.
 
-The existing deployment workflow uses this renderer and reads the hostnames and binding prefix from the descriptor; it needs no `ODIP_HOST`, `IDENTITY_HOST`, or `ODIP_WORKER_BINDING_PREFIX` GitHub variables. Keep the control-plane variables `PLATFORM_API_URL` and `PLATFORM_TOKEN_ENDPOINT` and secrets `PLATFORM_CLIENT_ID` and `PLATFORM_CLIENT_SECRET` configured separately. Group IDs are managed in the platform access policy, not injected into application configuration. Applying governance, groups, access policy, and approved service access remains an explicit provisioning step.
+Only `web` receives injected `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER` and
+`PGPASSWORD` variables and private database egress. Spring's production
+configuration already consumes them. Remove stale `ODIP_DATABASE_*` overrides
+when switching to managed storage. The worker must have no database binding.
+Provision its separate service identity and set `ODIP_WORKER_BINDING_PREFIX` in
+the production descriptor. Access policy, groups and governance use the earlier
+provisioning workflow. Existing database data needs an explicitly verified
+migration before switching to a new resource.
 
-After merging a workflow fix, start a new deployment workflow on `main` with an already-published commit image tag, or let a new successful image publication trigger it. Re-running an old failed run uses its old workflow revision and does not pick up the fix.
+For manual deployment after provisioning, apply the test descriptor directly or render the production release first:
+
+```bash
+devplat --profile odip-lab deploy apply --project odip-test --file infrastructure/deployments/application-test.json --wait
+python scripts/render-release.py --version v0.4.1 > /tmp/odip-release.json
+devplat --profile odip-lab deploy apply --project odip --file /tmp/odip-release.json --wait
+```
 
 The API checks source host policy on registration; the worker additionally pins validated public addresses, validates each redirect and TLS hostname, rejects unsupported content and compression, and enforces limits while downloading. Source egress is separate from identity and API egress. DNS rules pin addresses at apply time and must be reapplied when approved addresses change.
 

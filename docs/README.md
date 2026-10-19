@@ -14,8 +14,11 @@ The ODIP publication implementation is available locally. Use the [integration r
 
 ## Operating the platform
 
+- [Bootstrap environments](bootstrap.md) — complete first deployment of test and production, including storage, access and worker setup.
+
 - [Data lifecycle and governance](data-lifecycle-and-governance.md) — data states, provenance, quality, retention, and access controls.
 - [Experiment framework](experiment-framework.md) — how technology comparisons become reproducible evidence.
+- [Deployment setup](energy-configuration-integration-runbook.md#deployment-descriptors-and-automatic-releases) — production and test descriptors, storage provisioning and automatic releases.
 
 ## Documentation conventions
 

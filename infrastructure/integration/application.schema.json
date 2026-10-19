@@ -1,0 +1,611 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Extracted without semantic changes from developer-platform docs/api/openapi.json at 8a1f63361fa437836b30cca1bf90e02f95577de8 (2026-10-19). Source: https://github.com/eseidinger/developer-platform/blob/8a1f63361fa437836b30cca1bf90e02f95577de8/docs/api/openapi.json",
+  "$ref": "#/$defs/ApplicationEnvelopeV1Alpha2",
+  "$defs": {
+    "ApplicationEnvelopeV1Alpha2": {
+      "additionalProperties": false,
+      "properties": {
+        "apiVersion": {
+          "const": "platform.example/v1alpha2",
+          "title": "Apiversion",
+          "type": "string"
+        },
+        "kind": {
+          "const": "Application",
+          "title": "Kind",
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "$ref": "#/$defs/ComponentSpec"
+        }
+      },
+      "required": [
+        "apiVersion",
+        "kind",
+        "metadata",
+        "spec"
+      ],
+      "title": "ApplicationEnvelopeV1Alpha2",
+      "type": "object"
+    },
+    "Metadata": {
+      "additionalProperties": false,
+      "properties": {
+        "environment": {
+          "anyOf": [
+            {
+              "const": "default",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Environment"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Project"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Metadata",
+      "type": "object"
+    },
+    "ComponentSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ServiceComponent"
+              },
+              {
+                "$ref": "#/$defs/ScheduledComponent"
+              }
+            ]
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Components",
+          "type": "array"
+        },
+        "configuration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Configuration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "components"
+      ],
+      "title": "ComponentSpec",
+      "type": "object"
+    },
+    "ServiceComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "bindings": {
+          "items": {
+            "$ref": "#/$defs/ResourceBinding"
+          },
+          "maxItems": 8,
+          "title": "Bindings",
+          "type": "array"
+        },
+        "exposure": {
+          "default": "private",
+          "enum": [
+            "private",
+            "public"
+          ],
+          "title": "Exposure",
+          "type": "string"
+        },
+        "health": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Health"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "outbound": {
+          "items": {
+            "$ref": "#/$defs/OutboundDestination"
+          },
+          "maxItems": 5,
+          "title": "Outbound",
+          "type": "array"
+        },
+        "ports": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/InternalPort"
+              },
+              "maxItems": 10,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ports"
+        },
+        "replicas": {
+          "default": 1,
+          "maximum": 5.0,
+          "minimum": 1.0,
+          "title": "Replicas",
+          "type": "integer"
+        },
+        "resources": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resources"
+        },
+        "runtime": {
+          "$ref": "#/$defs/ComponentRuntime"
+        },
+        "telemetry": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ServiceTelemetry"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": {
+          "const": "service",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "runtime",
+        "type"
+      ],
+      "title": "ServiceComponent",
+      "type": "object"
+    },
+    "ResourceBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "bindingId": {
+          "format": "uuid",
+          "title": "Bindingid",
+          "type": "string"
+        },
+        "envPrefix": {
+          "default": "",
+          "maxLength": 32,
+          "pattern": "^([A-Z][A-Z0-9_]*_)?$",
+          "title": "Envprefix",
+          "type": "string"
+        }
+      },
+      "required": [
+        "bindingId"
+      ],
+      "title": "ResourceBinding",
+      "type": "object"
+    },
+    "Health": {
+      "additionalProperties": false,
+      "properties": {
+        "readiness": {
+          "$ref": "#/$defs/Readiness"
+        }
+      },
+      "required": [
+        "readiness"
+      ],
+      "title": "Health",
+      "type": "object"
+    },
+    "Readiness": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^/[A-Za-z0-9._~!$&'()*+,;=:@%/-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Path"
+        },
+        "port": {
+          "anyOf": [
+            {
+              "maximum": 65535.0,
+              "minimum": 1024.0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Port"
+        },
+        "profile": {
+          "anyOf": [
+            {
+              "enum": [
+                "status",
+                "hello-world"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Profile"
+        }
+      },
+      "title": "Readiness",
+      "type": "object"
+    },
+    "OutboundDestination": {
+      "additionalProperties": false,
+      "description": "One operator-approved TCP egress exception for any component.",
+      "properties": {
+        "cidr": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Cidr"
+        },
+        "dns": {
+          "anyOf": [
+            {
+              "maxLength": 253,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Dns"
+        },
+        "port": {
+          "maximum": 65535.0,
+          "minimum": 1.0,
+          "title": "Port",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "title": "OutboundDestination",
+      "type": "object"
+    },
+    "InternalPort": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "pattern": "^[a-z][a-z0-9-]{0,14}$",
+          "title": "Name",
+          "type": "string"
+        },
+        "port": {
+          "maximum": 65535.0,
+          "minimum": 1024.0,
+          "title": "Port",
+          "type": "integer"
+        },
+        "protocol": {
+          "const": "http",
+          "title": "Protocol",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "protocol",
+        "port"
+      ],
+      "title": "InternalPort",
+      "type": "object"
+    },
+    "ComponentRuntime": {
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 50,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Args"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 20,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Command"
+        },
+        "image": {
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9./_:@-]+$",
+          "title": "Image",
+          "type": "string"
+        },
+        "type": {
+          "const": "container",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "image"
+      ],
+      "title": "ComponentRuntime",
+      "type": "object"
+    },
+    "ServiceTelemetry": {
+      "additionalProperties": false,
+      "properties": {
+        "metrics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MetricsDeclaration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tracing": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TracingDeclaration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "title": "ServiceTelemetry",
+      "type": "object"
+    },
+    "MetricsDeclaration": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^/[A-Za-z0-9._~/-]*$",
+          "title": "Path",
+          "type": "string"
+        },
+        "port": {
+          "pattern": "^[a-z][a-z0-9-]{0,14}$",
+          "title": "Port",
+          "type": "string"
+        }
+      },
+      "required": [
+        "port",
+        "path"
+      ],
+      "title": "MetricsDeclaration",
+      "type": "object"
+    },
+    "TracingDeclaration": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        }
+      },
+      "title": "TracingDeclaration",
+      "type": "object"
+    },
+    "ScheduledComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "bindings": {
+          "items": {
+            "$ref": "#/$defs/ResourceBinding"
+          },
+          "maxItems": 8,
+          "title": "Bindings",
+          "type": "array"
+        },
+        "concurrencyPolicy": {
+          "const": "Forbid",
+          "default": "Forbid",
+          "title": "Concurrencypolicy",
+          "type": "string"
+        },
+        "maxRunSeconds": {
+          "anyOf": [
+            {
+              "maximum": 86400.0,
+              "minimum": 60.0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Maxrunseconds"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "outbound": {
+          "items": {
+            "$ref": "#/$defs/OutboundDestination"
+          },
+          "maxItems": 5,
+          "title": "Outbound",
+          "type": "array"
+        },
+        "resources": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resources"
+        },
+        "retryLimit": {
+          "default": 6,
+          "maximum": 10.0,
+          "minimum": 0.0,
+          "title": "Retrylimit",
+          "type": "integer"
+        },
+        "runtime": {
+          "$ref": "#/$defs/ComponentRuntime"
+        },
+        "schedule": {
+          "title": "Schedule",
+          "type": "string"
+        },
+        "telemetry": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScheduledTelemetry"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "timeZone": {
+          "const": "UTC",
+          "default": "UTC",
+          "title": "Timezone",
+          "type": "string"
+        },
+        "type": {
+          "const": "scheduled",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "runtime",
+        "type",
+        "schedule"
+      ],
+      "title": "ScheduledComponent",
+      "type": "object"
+    },
+    "ScheduledTelemetry": {
+      "additionalProperties": false,
+      "properties": {
+        "tracing": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TracingDeclaration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "title": "ScheduledTelemetry",
+      "type": "object"
+    },
+    "Configuration": {
+      "additionalProperties": false,
+      "properties": {
+        "values": {
+          "additionalProperties": true,
+          "title": "Values",
+          "type": "object"
+        }
+      },
+      "required": [
+        "values"
+      ],
+      "title": "Configuration",
+      "type": "object"
+    }
+  }
+}

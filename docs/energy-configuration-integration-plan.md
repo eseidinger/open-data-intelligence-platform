@@ -27,7 +27,7 @@ The baseline is repository revision `912ed42794af552965ab055d6e9bc18735ffe74c`. 
 | Domain boundary | `IngestionService` and its completion request directly reference energy curation. The Python normalizer supports one annual Eurostat observation. | Introduce a generic transformation interface and isolate energy profile processing in an adapter. |
 | Authorization | Principal headers and user/guest groups control broad API access. | Authenticate the caller and enforce dataset and operation grants. |
 | Source retrieval | The worker downloads configured URLs and buffers responses before the API checks payload limits. | Validate destinations and redirects, and stop oversized downloads before buffering or uploading them. |
-| Deployment | The application declaration uses `latest` images and a smoke-test source destination. | Pin release images and declare the selected data sources and consumer route. |
+| Deployment | Separate production and test declarations use explicit release versions and `latest`, respectively, with approved source egress. | Pin release images and declare the selected data sources and consumer route. |
 
 ## Accepted integration decisions
 
@@ -121,7 +121,7 @@ Acceptance: API integration tests with authorization enabled reject forged ident
 
 Extend `web/src/app/core/api/` and the dataset page with publication history, schema, artifacts, quality results, and provenance. Separate curated observations from published versions, expose validation failures, and restrict publication actions to permitted operators. Display source metadata as untrusted text.
 
-Update `application.json`, deployment documentation, and image workflows to pin release versions, declare approved source egress, and support the agreed consumer connection. Verify that database unavailability removes the API from readiness while liveness retains its process-health purpose.
+Update `infrastructure/deployments/application.json`, deployment documentation, and image workflows to pin release versions, declare approved source egress, and support the agreed consumer connection. Verify that database unavailability removes the API from readiness while liveness retains its process-health purpose.
 
 Use the current database job queue and scheduled worker. Add ownership and idempotency for publication preparation and define recovery for runs abandoned after a worker crash. A reconciliation process must not blindly repeat terminal callbacks. Add publication duration/failure and retrieval metrics, audit events, and correlation by dataset, version, and pipeline run. Preserve a consumer run correlation ID when supplied without collecting customer inputs or tokens.
 

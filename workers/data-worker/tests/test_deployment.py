@@ -1,135 +1,62 @@
-import copy
-import importlib.util
 import json
-from pathlib import Path
-import subprocess
+import importlib.util
 import sys
-import tempfile
+from pathlib import Path
+import re
 import unittest
+import os
+import subprocess
+import tempfile
+import textwrap
 from jsonschema import Draft202012Validator
 from odip_worker.contract import KIT
 
-ROOT=Path(__file__).resolve().parents[3]
-spec=importlib.util.spec_from_file_location("render_integration",ROOT/"scripts/render-integration.py")
-renderer=importlib.util.module_from_spec(spec)
-spec.loader.exec_module(renderer)
+ROOT = Path(__file__).resolve().parents[3]
+spec = importlib.util.spec_from_file_location("render_release", ROOT / "scripts/render-release.py")
+release = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(release)
+
 
 class DeploymentTests(unittest.TestCase):
-    def test_rendered_declaration_and_policy_match_pinned_platform_schemas(self):
-        snapshot=json.loads((KIT/"platform/upstream-inputs.schema.json").read_text())
-        declaration=renderer.render("a"*40)
-        # The pinned contract-kit predates the platform's additive telemetry fields.
-        legacy_declaration=copy.deepcopy(declaration)
-        for component in legacy_declaration["spec"]["components"]:
-            telemetry = component.pop("telemetry")
-            self.assertEqual(telemetry["tracing"], {"enabled": True})
-            if component["name"] == "web":
-                self.assertEqual(telemetry["metrics"], {"port": "http", "path": "/actuator/prometheus"})
-            else:
-                self.assertNotIn("metrics", telemetry)
-        Draft202012Validator({**snapshot,"$ref":"#/$defs/ApplicationEnvelopeV1Alpha2"}).validate(legacy_declaration)
-        policy=json.loads((ROOT/"infrastructure/integration/odip-access-policy.json").read_text())
-        Draft202012Validator({**snapshot,"$ref":"#/$defs/PolicyCreate"}).validate(policy)
-        self.assertEqual([c["name"] for c in declaration["spec"]["components"] if c.get("exposure")=="public"],["web"])
-        self.assertEqual(policy["component"],"web")
-        self.assertTrue(all(":latest" not in c["runtime"]["image"] for c in declaration["spec"]["components"]))
-        self.assertEqual(declaration["spec"]["configuration"]["values"]["ODIP_API_URL"],"https://web-odip.apps.eseidinger.de")
-        self.assertEqual(declaration["spec"]["configuration"]["values"]["ODIP_WORKER_BINDING_PREFIX"],"ACCESS_BCC37E90DE10")
-        self.assertTrue(all(c["runtime"]["image"].endswith(":" + "a"*40) for c in declaration["spec"]["components"]))
-        worker = next(c for c in declaration["spec"]["components"] if c["name"] == "ingestion-worker")
-        self.assertEqual({(rule["dns"], rule["port"]) for rule in worker["outbound"]}, {
-            ("web-odip.apps.eseidinger.de", 443), ("identity.eseidinger.de", 443),
-            ("jsonplaceholder.typicode.com", 443), ("ec.europa.eu", 443), ("re.jrc.ec.europa.eu", 443),
-        })
-        self.assertNotIn("ODIP_GROUP_IDS_USERS", declaration["spec"]["configuration"]["values"])
-        self.assertNotIn("ODIP_GROUP_IDS_GUESTS", declaration["spec"]["configuration"]["values"])
-        # Platform configuration refuses secret-like names even for harmless values.
-        import re
-        self.assertFalse(any(re.search(r"PASS|SECRET|TOKEN|CREDENTIAL|PRIVATE|API_?KEY|AUTH",key,re.I) for key in declaration["spec"]["configuration"]["values"]))
-        def contains(match,path):
-            return path==match["path"] if "path" in match else path==match["pathPrefix"] or path.startswith(match["pathPrefix"].rstrip("/")+"/")
-        for index,left in enumerate(policy["routes"]):
-            for right in policy["routes"][index+1:]:
+    def test_descriptors_match_platform_schema_and_target_separate_projects(self):
+        schema = json.loads((ROOT / "infrastructure/integration/application.schema.json").read_text())
+        for filename, project, tag in (("infrastructure/deployments/application.json", "odip", "0.4.1"), ("infrastructure/deployments/application-test.json", "odip-test", "latest")):
+            with self.subTest(filename=filename):
+                declaration = json.loads((ROOT / filename).read_text())
+                if project == "odip":
+                    declaration = release.render(declaration, tag)
+                Draft202012Validator(schema).validate(declaration)
+                self.assertEqual(declaration["metadata"]["name"], project)
+                self.assertEqual(declaration["metadata"]["project"], project)
+                values = declaration["spec"]["configuration"]["values"]
+                origin = f"https://web-{project}.apps.eseidinger.de"
+                self.assertEqual(values["ODIP_API_URL"], origin)
+                web, worker = declaration["spec"]["components"]
+                self.assertEqual([c["name"] for c in (web, worker) if c.get("exposure") == "public"], ["web"])
+                self.assertTrue(all(c["runtime"]["image"].endswith(":" + tag) for c in (web, worker)))
+                self.assertNotIn("resources", declaration["spec"])
+                self.assertNotIn("bindings", worker)
+                self.assertIn({"dns": origin.removeprefix("https://"), "port": 443}, worker["outbound"])
+                self.assertEqual(web["telemetry"]["metrics"], {"port": "http", "path": "/actuator/prometheus"})
+                self.assertEqual(web["health"]["readiness"]["path"], "/actuator/health/readiness")
+                self.assertEqual(worker["retryLimit"], 0)
+                self.assertEqual(worker["concurrencyPolicy"], "Forbid")
+                for c in (web, worker):
+                    self.assertEqual(c["telemetry"]["tracing"], {"enabled": True})
+                self.assertFalse(any(re.search(r"PASS|SECRET|TOKEN|CREDENTIAL|PRIVATE|API_?KEY|AUTH", key, re.I) for key in values))
+
+    def test_policy_matches_pinned_schema_and_has_disjoint_routes(self):
+        snapshot = json.loads((KIT / "platform/upstream-inputs.schema.json").read_text())
+        policy = json.loads((ROOT / "infrastructure/integration/odip-access-policy.json").read_text())
+        Draft202012Validator({**snapshot, "$ref": "#/$defs/PolicyCreate"}).validate(policy)
+        def contains(match, path):
+            return path == match["path"] if "path" in match else path == match["pathPrefix"] or path.startswith(match["pathPrefix"].rstrip("/") + "/")
+        for index, left in enumerate(policy["routes"]):
+            for right in policy["routes"][index + 1:]:
                 if set(left["match"]["methods"]) & set(right["match"]["methods"]):
-                    lp=left["match"].get("path",left["match"].get("pathPrefix"))
-                    rp=right["match"].get("path",right["match"].get("pathPrefix"))
-                    self.assertFalse(contains(left["match"],rp) or contains(right["match"],lp))
-    def test_renderer_rejects_floating_tags_and_missing_bindings(self):
-        for tag, prefix in [("latest", "APP_BINDING"), ("a"*40, "bad-prefix"), ("a"*40, ""), ("a"*40, "RENDER_REQUIRED")]:
-            with self.subTest(tag=tag, prefix=prefix), self.assertRaises(ValueError):
-                renderer.render(tag, prefix)
-
-    def test_renderer_preserves_installation_configuration_and_other_components(self):
-        application = json.loads((ROOT / "application.json").read_text())
-        values = application["spec"]["configuration"]["values"]
-        values["ODIP_API_URL"] = "https://web.odip.test"
-        values["ODIP_SOURCE_HOSTS"] = "source.odip.test"
-        worker = application["spec"]["components"][1]
-        worker["outbound"] = [{"dns": host, "port": 443} for host in ("web.odip.test", "identity.odip.test", "source.odip.test")]
-        application["spec"]["components"].append({"name": "other", "runtime": {"image": "example/other:fixed"}})
-        original = copy.deepcopy(application)
-        declaration = renderer.render("a"*40, "APP_WORKER", application=application)
-        expected = copy.deepcopy(original)
-        expected["spec"]["configuration"]["values"]["ODIP_WORKER_BINDING_PREFIX"] = "APP_WORKER"
-        expected["spec"]["components"][0]["runtime"]["image"] = "docker.io/eseidinger/odip-platform:" + "a"*40
-        expected["spec"]["components"][1]["runtime"]["image"] = "docker.io/eseidinger/odip-data-worker:" + "a"*40
-        self.assertEqual(declaration, expected)
-        self.assertEqual(application, original)
-
-    def test_renderer_rejects_invalid_descriptor_origins(self):
-        for origin in ("", "https://example.invalid", "http://web.odip.test", "https://user:password@web.odip.test", "https://web.odip.test/api", "https://web.odip.test?query=value", "https://web.odip.test#fragment", "https://web.odip.test:8443", "https://bad..test"):
-            application = json.loads((ROOT / "application.json").read_text())
-            application["spec"]["configuration"]["values"]["ODIP_API_URL"] = origin
-            with self.subTest(origin=origin), self.assertRaises(ValueError):
-                renderer.render("a"*40, "APP_WORKER", application=application)
-
-    def test_renderer_requires_api_egress_and_rejects_placeholder_egress(self):
-        for outbound in ([], [{"dns": "web-odip.apps.eseidinger.de", "port": 80}], [{"dns": "web-odip.apps.eseidinger.de", "port": 443}, {"dns": "identity.example.invalid", "port": 443}]):
-            application = json.loads((ROOT / "application.json").read_text())
-            application["spec"]["components"][1]["outbound"] = outbound
-            with self.subTest(outbound=outbound), self.assertRaises(ValueError):
-                renderer.render("a"*40, "APP_WORKER", application=application)
-
-    def test_workflow_renderer_uses_descriptor_hosts_and_binding(self):
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/render-integration.py"), "--image-tag", "a"*40], capture_output=True, text=True, check=True)
-        declaration = json.loads(result.stdout)
-        self.assertEqual(declaration, renderer.render("a"*40))
-        self.assertEqual(declaration["spec"]["configuration"]["values"]["ODIP_WORKER_BINDING_PREFIX"], "ACCESS_BCC37E90DE10")
-        workflow = (ROOT / ".github/workflows/platform-deploy.yml").read_text()
-        for obsolete_input in ("ODIP_HOST", "IDENTITY_HOST", "--odip-host", "--identity-host", "vars.ODIP_WORKER_BINDING_PREFIX", "--worker-secret-prefix"):
-            self.assertNotIn(obsolete_input, workflow)
-
-    def test_renderer_rejects_missing_or_invalid_descriptor_bindings(self):
-        for prefix in (None, "", "RENDER_REQUIRED", "bad-prefix", 123):
-            application = json.loads((ROOT / "application.json").read_text())
-            values = application["spec"]["configuration"]["values"]
-            if prefix is None:
-                values.pop("ODIP_WORKER_BINDING_PREFIX")
-            else:
-                values["ODIP_WORKER_BINDING_PREFIX"] = prefix
-            with self.subTest(prefix=prefix), self.assertRaises(ValueError):
-                renderer.render("a"*40, application=application)
-
-    def test_cli_accepts_installation_descriptor_file(self):
-        application = json.loads((ROOT / "application.json").read_text())
-        application["spec"]["configuration"]["values"]["ODIP_SOURCE_HOSTS"] = "jsonplaceholder.typicode.com"
-        application["spec"]["configuration"]["values"]["ODIP_WORKER_BINDING_PREFIX"] = "ACCESS_OTHER_INSTALLATION"
-        with tempfile.TemporaryDirectory() as directory:
-            descriptor = Path(directory) / "application.json"
-            descriptor.write_text(json.dumps(application))
-            result = subprocess.run([sys.executable, str(ROOT / "scripts/render-integration.py"), "--file", str(descriptor), "--image-tag", "a"*40], capture_output=True, text=True, check=True)
-        self.assertEqual(json.loads(result.stdout), renderer.render("a"*40, application=application))
-
-    def test_cli_binding_override_takes_precedence(self):
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/render-integration.py"), "--image-tag", "a"*40, "--worker-secret-prefix", "APP_WORKER"], capture_output=True, text=True, check=True)
-        self.assertEqual(json.loads(result.stdout), renderer.render("a"*40, "APP_WORKER"))
-
-    def test_cli_missing_binding_has_actionable_error_without_json_output(self):
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/render-integration.py"), "--image-tag", "a"*40, "--worker-secret-prefix", ""], capture_output=True, text=True)
-        self.assertEqual(result.returncode, 2)
-        self.assertEqual(result.stdout, "")
-        self.assertIn("Set ODIP_WORKER_BINDING_PREFIX", result.stderr)
-        self.assertNotIn("Traceback", result.stderr)
+                    lp = left["match"].get("path", left["match"].get("pathPrefix"))
+                    rp = right["match"].get("path", right["match"].get("pathPrefix"))
+                    self.assertFalse(contains(left["match"], rp) or contains(right["match"], lp))
 
     def test_platform_policy_owns_role_checks_and_keeps_administration_separate(self):
         policy = json.loads((ROOT / "infrastructure/integration/odip-access-policy.json").read_text())
@@ -152,3 +79,65 @@ class DeploymentTests(unittest.TestCase):
         for route in policy["routes"]:
             if route["authentication"]["mode"] == "browser-session":
                 self.assertEqual(route["authorization"]["anyOfGroups"], ["dataset-operators"])
+
+
+    def test_workflow_guard_accepts_only_matching_ref_project_and_images(self):
+        workflow = (ROOT / ".github/workflows/platform-deploy.yml").read_text()
+        guard = workflow.split("      - name: Check deployment descriptor\n        run: |\n", 1)[1].split("      - name:", 1)[0]
+        guard = textwrap.dedent(guard)
+        with tempfile.TemporaryDirectory() as directory:
+            scripts = Path(directory) / "scripts"
+            scripts.mkdir()
+            (scripts / "render-release.py").write_bytes((ROOT / "scripts/render-release.py").read_bytes())
+            for filename in ("infrastructure/deployments/application.json", "infrastructure/deployments/application-test.json"):
+                declaration = json.loads((ROOT / filename).read_text())
+                declaration["spec"]["components"][0]["bindings"] = [{"bindingId": "94983c92-41c2-439c-887b-3a6b59509633", "envPrefix": ""}]
+                declaration["spec"]["configuration"]["values"]["ODIP_WORKER_BINDING_PREFIX"] = "ACCESS_TEST"
+                (Path(directory) / filename).parent.mkdir(parents=True, exist_ok=True)
+                (Path(directory) / filename).write_text(json.dumps(declaration))
+            version = "0.4.1"
+            for project, filename, ref, passes in (
+                ("odip-test", "infrastructure/deployments/application-test.json", "refs/heads/main", True),
+                ("odip", "infrastructure/deployments/application.json", "refs/tags/v" + version, True),
+                ("odip", "infrastructure/deployments/application.json", "refs/heads/main", False),
+                ("odip-test", "infrastructure/deployments/application-test.json", "refs/tags/v" + version, False),
+                ("odip", "infrastructure/deployments/application.json", "refs/tags/vlatest", False),
+                ("odip-test", "infrastructure/deployments/application.json", "refs/heads/main", False),
+            ):
+                with self.subTest(project=project, ref=ref, filename=filename):
+                    env = dict(os.environ, PROJECT=project, DESCRIPTOR=filename, GITHUB_REF=ref, RUNNER_TEMP=directory, GITHUB_ENV=str(Path(directory) / "github-env"))
+                    result = subprocess.run(["bash", "-e", "-c", guard], cwd=directory, env=env, capture_output=True, text=True)
+                    self.assertEqual(result.returncode == 0, passes, result.stderr)
+
+    def test_release_renderer_changes_only_image_versions(self):
+        source = json.loads((ROOT / "infrastructure/deployments/application.json").read_text())
+        original = json.loads(json.dumps(source))
+        for version in ("0.4.1", "v1.2.3", "v2.0.0-rc.1"):
+            with self.subTest(version=version):
+                declaration = release.render(source, version)
+                expected = json.loads(json.dumps(source))
+                for component in expected["spec"]["components"]:
+                    component["runtime"]["image"] = component["runtime"]["image"].replace("__VERSION__", version.removeprefix("v"))
+                self.assertEqual(declaration, expected)
+                self.assertEqual(source, original)
+
+    def test_release_renderer_rejects_invalid_versions_and_wrong_templates(self):
+        source = json.loads((ROOT / "infrastructure/deployments/application.json").read_text())
+        for version in ("latest", "main", "", "v1.2", "01.2.3", "1.2.3-01", "1.2.3+build", "1.2.3;id", "1.2.3-" + "x" * 128):
+            with self.subTest(version=version), self.assertRaises(ValueError):
+                release.render(source, version)
+        source["spec"]["components"][0]["runtime"]["image"] = "example/web:latest"
+        with self.assertRaises(ValueError):
+            release.render(source, "0.4.1")
+        with self.assertRaises(ValueError):
+            release.render(json.loads((ROOT / "infrastructure/deployments/application-test.json").read_text()), "0.4.1")
+
+    def test_release_cli_emits_only_valid_json_and_preserves_template(self):
+        path = ROOT / "infrastructure/deployments/application.json"
+        before = path.read_bytes()
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/render-release.py"), "--version", "v0.4.1"], capture_output=True, text=True, check=True)
+        self.assertEqual(json.loads(result.stdout), release.render(json.loads(before), "0.4.1"))
+        self.assertEqual(path.read_bytes(), before)
+        result = subprocess.run([sys.executable, str(ROOT / "scripts/render-release.py"), "--version", "latest"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout, "")

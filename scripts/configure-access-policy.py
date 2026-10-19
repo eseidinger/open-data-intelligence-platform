@@ -1,7 +1,8 @@
-"""Preview or apply ODIP's access policy through devplat CLI v0.2.0.
+"""Preview or apply ODIP's access policy through devplat CLI v0.3.0.
 
 The CLI owns authentication and HTTP. No platform writes occur without --apply.
-This script never creates groups, approves access, or deploys applications.
+Apply creates missing policy groups before saving the policy. It never approves
+membership/service access or deploys applications.
 """
 from __future__ import annotations
 
@@ -18,8 +19,9 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "infrastructure/integration/odip-access-policy.json"
+GROUPS = ROOT / "infrastructure/integration/groups.json"
 POLICY_FIELDS = ("component", "defaultDecision", "identityAttributes", "routes")
-CLI_VERSION = "0.2.0"
+CLI_VERSION = "0.3.0"
 MAX_OUTPUT_BYTES = 8 * 1024 * 1024
 
 
@@ -72,7 +74,7 @@ class PlatformCLI:
                 timeout=timeout, check=False,
             )
         except FileNotFoundError:
-            raise PolicyError("Install developer-platform-cli v0.2.0 and put devplat on PATH.", 2) from None
+            raise PolicyError("Install developer-platform-cli v0.3.0 and put devplat on PATH.", 2) from None
         except subprocess.TimeoutExpired:
             raise PolicyError("The CLI timed out. Any submitted operation continues; inspect the policy before retrying.", 10) from None
         except (OSError, UnicodeError):
@@ -117,7 +119,7 @@ class PlatformCLI:
 
     def prepare(self):
         if self._run([self.executable, "--version"], version=True) != CLI_VERSION:
-            raise PolicyError("This script requires devplat CLI v0.2.0; install the reviewed release.", 2)
+            raise PolicyError("This script requires devplat CLI v0.3.0; install the reviewed release.", 2)
         if self.origin is None:
             profile = self.invoke(["profiles", "show"])
             self.origin = platform_origin(profile.get("api_url", ""))
@@ -135,6 +137,10 @@ class PlatformCLI:
     def groups(self, project):
         return self.invoke(["access", "groups", "list", "--project", project])
 
+    def group_create(self, project, group):
+        return self.invoke(["access", "groups", "create", "--project", project,
+                            "--file", "-", "--idempotency-key", f"{project}-{group['name']}"], body=group)
+
     def policy_get(self, project):
         return self.invoke(["access", "policy", "get", "--project", project, "--application", project], missing_policy=True)
 
@@ -143,7 +149,7 @@ class PlatformCLI:
                      "--file", "-", "--wait", "--timeout", str(timeout), "--poll-interval", "2"]
         if etag is not None:
             arguments += ["--if-match", etag]
-        # CLI v0.2.0 rejects "0". For creation use its native version handling.
+        # CLI v0.3.0 rejects "0". For creation use its native version handling.
         # Send only non-secret policy JSON via stdin; never persist a temp file.
         return self.invoke(arguments, body=policy, timeout=timeout + 45)
 
@@ -167,6 +173,22 @@ def resolve_policy(template: dict, groups: list) -> dict:
     return policy
 
 
+def plan_groups(template, groups):
+    definitions = json.loads(GROUPS.read_text())
+    required = {name for route in template["routes"] for name in route["authorization"]["anyOfGroups"]}
+    missing = []
+    for name in sorted(required):
+        matches = [group for group in groups if group.get("name") == name]
+        if not matches:
+            definitions_for_name = [group for group in definitions if group.get("name") == name]
+            if len(definitions_for_name) != 1:
+                raise PolicyError(f"Expected exactly one group definition for {name}.")
+            missing.append(definitions_for_name[0])
+        elif len(matches) != 1 or matches[0].get("state") != "active" or not re.fullmatch(r"grp_[0-9a-f]{32}", matches[0].get("id", "")):
+            raise PolicyError(f"Existing application group {name} is duplicate, inactive, or has an invalid stable ID.")
+    return missing
+
+
 def authorization_redacted(resource: dict | None) -> bool:
     return resource is not None and any(
         route.get("authorization") == "[REDACTED]" for route in resource.get("spec", {}).get("routes", [])
@@ -184,7 +206,7 @@ def policy_matches(resource: dict, policy: dict, *, allow_redacted=False) -> boo
     spec = resource.get("spec", {})
     observed = deepcopy({field: spec.get(field) for field in POLICY_FIELDS})
     if allow_redacted and isinstance(observed.get("routes"), list):
-        # CLI v0.2.0 masks the entire authorization object as if it were a
+        # CLI v0.3.0 masks the entire authorization object as if it were a
         # credential. After a successful apply, compare only observable fields.
         # Never use this partial comparison to skip an update or infer equality.
         for route, desired in zip(observed["routes"], policy["routes"]):
@@ -224,19 +246,32 @@ def configure(cli, project, *, apply=False, timeout=120, output=print):
     listed = cli.groups(project)
     if not isinstance(listed.get("items"), list) or any(not isinstance(g, dict) for g in listed["items"]):
         raise PolicyError("The CLI returned an invalid group list.")
-    policy = resolve_policy(template, listed["items"])
+    missing = plan_groups(template, listed["items"])
+    # Preview retains names for groups that have not been created; never invent IDs.
+    policy = deepcopy(template) if missing else resolve_policy(template, listed["items"])
     existing = cli.policy_get(project)
     etag = existing.get("etag") if existing is not None else None
     if existing is not None and (not isinstance(etag, str) or not re.fullmatch(r'"[1-9][0-9]*"', etag)):
         raise PolicyError("The current policy has no valid CLI ETag; refusing an unguarded update.")
-    unchanged = existing is not None and policy_matches(existing, policy)
+    unchanged = not missing and existing is not None and policy_matches(existing, policy)
     action = "unchanged" if unchanged else "replace" if existing is not None else "create"
     output(json.dumps({"platform": getattr(cli, "origin", None), "project": project, "action": action,
                        "currentVersion": etag, "currentState": existing.get("state") if existing else None,
-                       "currentGroupsRedacted": authorization_redacted(existing), "policy": policy}, indent=2))
+                       "currentGroupsRedacted": authorization_redacted(existing),
+                       "groupsToCreate": missing, "policyGroupsResolved": not missing, "policy": policy}, indent=2))
     if not apply:
-        output("Preview only: no platform writes. Use --apply to save this complete policy.")
+        output("Preview only: no platform writes. Use --apply to create missing groups and save this complete policy.")
         return
+    if not unchanged and existing is not None and existing.get("state") not in ("active", "failed"):
+        raise PolicyError("Wait for the pending policy operation before replacing it.")
+    if missing:
+        for group in missing:
+            output(f"Creating application group {group['name']} through devplat.")
+            cli.group_create(project, group)
+        listed = cli.groups(project)
+        if not isinstance(listed.get("items"), list) or any(not isinstance(g, dict) for g in listed["items"]):
+            raise PolicyError("The CLI returned an invalid group list after creation.")
+        policy = resolve_policy(template, listed["items"])
     if unchanged:
         if existing.get("state") == "active":
             output("Policy is already active and unchanged; no write made.")
@@ -253,7 +288,7 @@ def configure(cli, project, *, apply=False, timeout=120, output=print):
             raise PolicyError("The CLI did not confirm the requested policy as active. Inspect it before proceeding.")
     output(f"Policy active: {len(policy['routes'])} routes, resource version {resource.get('version')}.")
     if authorization_redacted(resource):
-        output("CLI v0.2.0 redacts group assignments. Apply succeeded and visible fields match, but group assignments cannot be independently verified through CLI read-back.")
+        output("CLI v0.3.0 redacts group assignments. Apply succeeded and visible fields match, but group assignments cannot be independently verified through CLI read-back.")
 
 
 def main(argv=None):
@@ -262,7 +297,7 @@ def main(argv=None):
     parser.add_argument("--profile", help="Existing devplat profile; otherwise use its active profile/environment authentication")
     parser.add_argument("--project", default="odip")
     mode = parser.add_mutually_exclusive_group()
-    mode.add_argument("--apply", action="store_true", help="Replace the COMPLETE policy through devplat and wait for activation")
+    mode.add_argument("--apply", action="store_true", help="Create missing groups, replace the COMPLETE policy and wait for activation")
     mode.add_argument("--dry-run", action="store_true", help="Authenticated preview only (the default)")
     parser.add_argument("--wait-seconds", type=int, default=120)
     args = parser.parse_args(argv)
