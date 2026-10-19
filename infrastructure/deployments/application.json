@@ -55,7 +55,12 @@
             "path": "/actuator/health/readiness"
           }
         },
-        "bindings": []
+        "bindings": [
+          {
+            "bindingId": "04af9bcd-0986-493a-b123-db68edba0183",
+            "envPrefix": ""
+          }
+        ]
       },
       {
         "name": "ingestion-worker",
