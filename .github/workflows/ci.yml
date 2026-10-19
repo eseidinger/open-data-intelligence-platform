@@ -2,6 +2,10 @@ name: Verify
 
 on:
   pull_request:
+    paths:
+      - 'services/**'
+      - 'workers/**'
+      - 'web/**'
   workflow_dispatch:
   workflow_call:
 

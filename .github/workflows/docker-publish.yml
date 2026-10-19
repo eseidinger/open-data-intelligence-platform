@@ -6,6 +6,17 @@ on:
       - main
     tags:
       - 'v*'
+    paths:
+      - 'services/**'
+      - 'workers/**'
+      - 'web/**'
+      - 'contracts/**'
+      - 'scripts/**'
+      - 'infrastructure/**'
+      - '.github/workflows/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - '.gitattributes'
   workflow_dispatch:
 
 permissions:

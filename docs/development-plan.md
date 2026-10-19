@@ -2,10 +2,10 @@
 
 Delivery is organized around working vertical slices. A phase is complete only when its exit criteria are met, not merely when its components exist.
 
-## Next delivery milestone
+## Publication milestone and next delivery
 
-The ODIP publication implementation is complete locally: the pinned contract, API, adapter, permissions, operator interface, and recovery tooling are available. The next integration step is platform provisioning and the deployed VEF handoff in the [runbook](energy-configuration-integration-runbook.md). The exit criteria below still govern deployed acceptance.
-Implement the [energy configuration integration plan](energy-configuration-integration-plan.md): a generic immutable publication API, an isolated energy adapter, dataset-scoped authorization, and a verified handoff to the Variability Engineering Framework. Build on the existing catalog, ingestion, curation, and dataset browser. Complete the publication milestone before the Parquet/DuckDB analytical comparison.
+The ODIP publication implementation and deployed energy configuration handoff are complete by maintainer confirmation on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0. The [integration completion record](energy-configuration-integration-plan.md#completion-criteria) distinguishes this acceptance from independently retained execution evidence. The [runbook](energy-configuration-integration-runbook.md) and exit criteria below remain the regression baseline. Gate 6 AI work remains with VEF and the cross-project owners; ODIP can proceed to Phase 2.
+The accepted [energy configuration integration](energy-configuration-integration-plan.md) provides a generic immutable publication API, an isolated energy adapter, dataset-scoped authorization, and the handoff to the Variability Engineering Framework. The next ODIP delivery work is the Phase 2 storage and Parquet/DuckDB analytical comparison described below.
 
 Exit criteria: a clean authorized client can discover a published version, retrieve its manifest and artifacts, and verify their integrity through the pinned contract. Energy and non-energy fixtures use the same core publication path; failed validation prevents publication; corrected versions preserve earlier bytes; restart and backup restoration retain the evidence.
 
@@ -61,5 +61,5 @@ Exit criteria: every AI-generated artifact has provenance, a review status, and 
 2. Catalog with source and dataset registration.
 3. One raw-to-curated energy pipeline with run history.
 4. Dataset browser with lineage and quality summary.
-5. Generic dataset publication and the [energy configuration integration](energy-configuration-integration-plan.md) handoff as the next delivery milestone.
+5. Generic dataset publication and the [energy configuration integration](energy-configuration-integration-plan.md) handoff, accepted by maintainer confirmation on October 19, 2026.
 6. Parquet/DuckDB analytical comparison with a published result.

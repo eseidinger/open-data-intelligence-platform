@@ -343,7 +343,9 @@ Metrics include publication outcomes, duration, and retrieval count. Application
 
 Supported publications retain their bytes, provenance, reports, and lineage. A protected operator can record a future support-end date at `PUT /api/v1/publication-retention`; expiration is permitted only after the additional one-year grace period. The scheduled cleanup removes expired publication outputs and retains raw inputs. Application audit rows expire after 180 days. Backups are governed separately by platform retention and can contain expired rows until the backup itself expires.
 
-## Deployed handoff and remaining gates
+## Deployed handoff and regression gates
+
+The maintainer confirmed all remaining ODIP handoff items complete on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0. See the [completion record](energy-configuration-integration-plan.md#completion-criteria) for the acceptance scope and evidence limits. The instructions and checks below remain applicable to new installations and release regression; Gate 6 AI acceptance remains separate.
 
 After both reference versions are `PUBLISHED`, confirm that VEF's separate service-access request is active and grant its stable principal `READ` on the energy dataset alone. VEF must exercise authenticated retrieval, integrity checks, and denial of the non-energy dataset through its own deployed integration tests; publication and grants alone do not establish those results.
 
@@ -363,7 +365,7 @@ Record these values from the **deployed revision and published data**. The pinne
 
 The two manifest digests and the raw-source digest are pinned in [the fixture index](../contracts/vendor/contract-kit-v0.5.0/contract-kit/fixtures/index.json). The manifest and its artifact digests are the data contract VEF consumes; the internal dataset UUID and raw-artifact UUID are lineage evidence, not substitutes for the public ID/version.
 
-### Remaining deployed acceptance gates
+### Deployed acceptance regression gates
 
 Gate 5 was accepted by maintainer direction on October 17, 2026 in the [upstream acceptance record](https://github.com/eseidinger/energy-system-configuration/blob/contract-kit-v0.5.0/reviews/2026-10-17-gate-5-acceptance.md). That decision did not add new deployment digests or test reports. The following checks remain the regression/evidence checklist for new deployments and the Gate 6 AI increment; they do not reopen that accepted progression.
 

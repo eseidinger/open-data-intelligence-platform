@@ -1,6 +1,6 @@
 # Energy Configuration Integration Plan
 
-Status: Deterministic 0.4.0 workflow accepted upstream at Gate 5 by maintainer direction on October 17, 2026. ODIP now consumes additive kit 0.5.0; Gate 6 AI implementation and release acceptance remain with VEF and the cross-project owners. Decisions are recorded in [ADR0001](architecture/adr/0001-energy-configuration-integration.md); verification and deployment are described in the [runbook](energy-configuration-integration-runbook.md).
+Status: ODIP's energy configuration integration handoff is complete by maintainer confirmation on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0. The deterministic 0.4.0 workflow was accepted upstream at Gate 5 on October 17, 2026. Gate 6 AI implementation and cross-project release acceptance remain with VEF and the cross-project owners. Decisions are recorded in [ADR0001](architecture/adr/0001-energy-configuration-integration.md); verification and deployment are described in the [runbook](energy-configuration-integration-runbook.md).
 Updated: 2026-10-19
 
 ODIP publishes complete, validated dataset versions that the Variability Engineering Framework (VEF) retrieves and verifies through an application API. The implemented publication path uses the Kotlin API, Python worker, PostgreSQL storage, and Angular operator interface. The next cross-project milestone is the VEF AI-assistance increment, with the deterministic publication path retained as its regression baseline.
@@ -148,6 +148,8 @@ Introduce source restrictions as soon as retrieval is changed; their final deplo
 
 ## Completion criteria
 
-The next ODIP milestone is complete when a clean client can retrieve and verify an authorized, complete publication using only the pinned contract. Both energy and non-energy fixtures must pass, failed drafts must remain unavailable, and correcting a dataset must preserve earlier publication bytes. Restart and backup restoration must retain manifests, artifacts, validation evidence, and lineage.
+On October 19, 2026, the maintainer confirmed all remaining ODIP handoff items: production publication and grants, deployed VEF retrieval and checksum verification, access denials, captured raw inputs and pipeline lineage, restart and actual backup restoration, resolution of the worker telemetry issue with Developer Platform, and the handoff record. This records the maintainer's acceptance; no new automated execution, deployment inspection, image digests, final publication version, or external test reports were supplied with that confirmation.
+
+The accepted criteria are that a clean client can retrieve and verify an authorized, complete publication using only the pinned contract. Both energy and non-energy fixtures must pass, failed drafts must remain unavailable, and correcting a dataset must preserve earlier publication bytes. Restart and backup restoration must retain manifests, artifacts, validation evidence, and lineage. These criteria remain the regression baseline for subsequent releases.
 
 Record the contract-kit release, ODIP revision, images, fixture digests, configuration, and acceptance results with the handoff. Update this plan and the development roadmap when those conditions are met. Broader analytics and the Phase 2 storage migration then proceed against the established publication interface.
