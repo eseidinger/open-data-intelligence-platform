@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "energy-ai-explanation/v1",
+  "runId": "run-example-0001",
+  "claims": [
+    {
+      "text": "Run run-example-0001 uses energy-reference-wasserburg-am-inn-2024 version 1.0.0, energy-model/1.0.0 and energy-simulation/1.0.0.",
+      "category": "CALCULATED_OUTPUT",
+      "citations": [
+        {
+          "source": "result",
+          "pointer": "/runId",
+          "value": "run-example-0001"
+        },
+        {
+          "source": "result",
+          "pointer": "/dataset/datasetId",
+          "value": "energy-reference-wasserburg-am-inn-2024"
+        },
+        {
+          "source": "result",
+          "pointer": "/dataset/version",
+          "value": "1.0.0"
+        },
+        {
+          "source": "result",
+          "pointer": "/modelVersion",
+          "value": "energy-model/1.0.0"
+        },
+        {
+          "source": "result",
+          "pointer": "/simulationVersion",
+          "value": "energy-simulation/1.0.0"
+        }
+      ]
+    },
+    {
+      "text": "The recorded recommendation is cfg-pv10-inv1-bat1; the optimizer reports PROVEN_OPTIMAL.",
+      "category": "CALCULATED_OUTPUT",
+      "citations": [
+        {
+          "source": "result",
+          "pointer": "/recommendedConfigurationId",
+          "value": "cfg-pv10-inv1-bat1"
+        },
+        {
+          "source": "result",
+          "pointer": "/optimalityStatus",
+          "value": "PROVEN_OPTIMAL"
+        }
+      ]
+    },
+    {
+      "text": "The illustrative candidate has an annualized cost of EUR 1234.56 and self-sufficiency of 60%.",
+      "category": "CALCULATED_OUTPUT",
+      "citations": [
+        {
+          "source": "candidate",
+          "pointer": "/metrics/annualizedCostEUR",
+          "value": 1234.56
+        },
+        {
+          "source": "candidate",
+          "pointer": "/metrics/selfSufficiency",
+          "value": 0.6
+        }
+      ]
+    },
+    {
+      "text": "The recorded roof-area check passes: 20 m2 against a limit of 35 m2.",
+      "category": "CALCULATED_OUTPUT",
+      "citations": [
+        {
+          "source": "candidate",
+          "pointer": "/constraints/0",
+          "value": {
+            "code": "roof_area",
+            "status": "PASS",
+            "actual": 20,
+            "limit": 35,
+            "unit": "m2"
+          }
+        }
+      ]
+    },
+    {
+      "text": "The customer supplied annual demand of 4500 kWh.",
+      "category": "CUSTOMER_INPUT",
+      "citations": [
+        {
+          "source": "request",
+          "pointer": "/site/annualDemandKWh",
+          "value": 4500
+        }
+      ]
+    },
+    {
+      "text": "The analysis assumes 20 years and a discount rate of 4%.",
+      "category": "MODEL_ASSUMPTION",
+      "citations": [
+        {
+          "source": "assumptions",
+          "pointer": "/analysisYears",
+          "value": 20
+        },
+        {
+          "source": "assumptions",
+          "pointer": "/discountRate",
+          "value": 0.04
+        }
+      ]
+    }
+  ],
+  "missingEvidence": [
+    "This compact example supplies no measured site consumption or reference-profile source evidence."
+  ]
+}

@@ -36,3 +36,15 @@ Local tests establish publication, authorization logic, concurrency, semantic qu
 ## Evidence
 
 See the [integration runbook](../../energy-configuration-integration-runbook.md), pinned shared [decisions](https://github.com/eseidinger/energy-system-configuration/tree/contract-kit-v0.4.0/decisions), and API/worker tests.
+
+## Contract kit 0.5.0 adoption
+
+On October 19, 2026, upgrade the consumer pin to the released
+`contract-kit-v0.5.0` archive, SHA-256
+`ae4edaf6799d4b57510d14d2004c5b65ff6b05f3b225e96bbd5971b30ce8832b`.
+This supersedes the archive pin above while preserving the accepted 0.4.0 domain
+and identity decisions. The additive release includes VEF AI proposal/explanation
+schemas and semantic citation checks; ODIP APIs, energy fixtures and numerical
+oracles are unchanged. Vendor the exact published archive and verify it against
+the lock in CI. Gate 6 implementation/acceptance remains separate from this pin
+upgrade; no application AI feature is introduced in ODIP.

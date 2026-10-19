@@ -32,7 +32,7 @@ The current code has two related derivation paths:
 - The older curation path creates integer-numbered `dataset_version` rows and, for the implemented Eurostat renewable-share adapter, relational `energy_observation` rows.
 - The publication path creates a contract-defined manifest and named artifacts in a draft. A worker validates them before the API exposes a published version identified by a public dataset ID and semantic version, such as `1.0.0`. A `dataset_publication` is a separate record and contract from an internal `dataset_version`.
 
-The publication reference contract is pinned at **contract kit 0.4.0**. The consumer API and manifest have their own **v1** versioning; those numbers describe different things. Raw and publication artifact bytes currently live in PostgreSQL. Object storage, Parquet projections, general analytical queries, and AI tools appear in broader architecture plans, but are not part of the implemented publication path.
+The publication reference contract is pinned at **contract kit 0.5.0**. The consumer API and manifest have their own **v1** versioning; those numbers describe different things. Raw and publication artifact bytes currently live in PostgreSQL. Object storage, Parquet projections, general analytical queries, and AI tools appear in broader architecture plans, but are not part of the implemented publication path.
 
 ## Component responsibilities and trust boundary
 

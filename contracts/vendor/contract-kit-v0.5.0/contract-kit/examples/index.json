@@ -54,5 +54,17 @@
   {
     "document": "platform-operational-envelope.json",
     "schema": "urn:portfolio:platform:operational-envelope:v1"
+  },
+  {
+    "document": "ai-request-proposal.json",
+    "schema": "urn:portfolio:energy:ai-request-proposal:v1"
+  },
+  {
+    "document": "ai-request-clarification.json",
+    "schema": "urn:portfolio:energy:ai-request-proposal:v1"
+  },
+  {
+    "document": "ai-explanation.json",
+    "schema": "urn:portfolio:energy:ai-explanation:v1"
   }
 ]

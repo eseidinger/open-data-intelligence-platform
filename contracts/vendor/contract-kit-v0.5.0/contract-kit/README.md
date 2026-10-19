@@ -1,6 +1,15 @@
 # Energy System Configuration Contract Kit
 
-Version `0.4.0` reconciles the integration-contract baseline with Developer
+Version `0.5.0` adds the [VEF AI assistance contract](ai/README.md), request
+proposal and explanation schemas, cited-evidence examples, semantic citation
+validation, and consumer acceptance cases for Gate 6. This is an additive
+implementation handoff for VEF, not Gate 6 acceptance. The
+[versioned release page](https://github.com/eseidinger/energy-system-configuration/releases/tag/contract-kit-v0.5.0)
+is the publication record for the archive and checksum.
+ODIP APIs and the numerical fixtures remain unchanged. See the
+[compatibility notes](ai/README.md#version-and-release-handoff).
+
+The accepted `0.4.0` baseline reconciles the integration contract with Developer
 Platform revision `b360ddee34444748c95705c597aa7b17491cd05b`. It retains the
 `0.3.0` identity changes and adds the platform operational log emission profile
 and component-monitoring semantics. Energy schemas, fixtures, and numerical oracles
@@ -16,6 +25,8 @@ the version and archive checksum.
 - `expected-results/` contains reviewed simulation and optimization outputs.
 - `platform/` contains the pinned upstream input-schema snapshot and deployment,
   access-policy, service-request, governance, and observability compatibility notes.
+- `ai/` contains the normative VEF AI profile, approved-evidence example, and
+  workflow acceptance cases to execute in VEF.
 - `contractkit/` contains the repository-neutral validation utilities.
 - `tests/` validates schemas, APIs, examples, canonical serialization, and
   fixture integrity.
@@ -39,6 +50,13 @@ The semantic validator checks the energy publication as one unit after JSON
 Schema validation. It enforces the five required roles, canonical artifact
 digests, aligned and complete hourly intervals, load-shape normalization, and
 catalog identity and model-count rules.
+
+After validating AI envelopes with JSON Schema, call
+`contractkit.ai.validate_explanation(explanation, sources)` against VEF's trusted
+evidence snapshot. It checks citation resolution, copied values, classification,
+and required evidence coverage. Free-text claim accuracy, confirmation enforcement,
+and prompt-injection resistance require the VEF acceptance tests; they are not
+established by this static kit suite.
 
 Build the deterministic release archive and `SHA256SUMS` file under `dist/`:
 

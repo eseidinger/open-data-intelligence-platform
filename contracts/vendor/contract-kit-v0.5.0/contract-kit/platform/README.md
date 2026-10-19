@@ -23,8 +23,13 @@ an installation's running control plane.
 Energy schema majors, artifact bytes and digests, canonicalization, simulations,
 optimization results, and the reviewed `0.2.0` numerical oracle are unchanged.
 Consumers must upgrade the security/deployment integration when pinning the new
-kit. Existing tags or release artifacts must not be overwritten. Kit `0.4.0`
-still needs maintainer review, immutable publication, and consumer CI pins.
+kit. Kit `0.4.0` is implemented and published under the annotated
+[`contract-kit-v0.4.0` tag](https://github.com/eseidinger/energy-system-configuration/releases/tag/contract-kit-v0.4.0),
+with archive SHA-256
+`884e3590614328c2adafa457153e11575dc1be09b9f53d7b0f53704fe39d02b0`.
+Existing tags and release artifacts must not be overwritten. ODIP and VEF still
+pin that version and checksum in their CI, as recorded in the
+[cross-project acceptance](../../reviews/2026-10-14-contract-kit-0.4.0-cross-project-acceptance.md).
 
 ## Additions since `0.3.0`
 

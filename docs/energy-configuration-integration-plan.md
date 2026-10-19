@@ -1,23 +1,23 @@
 # Energy Configuration Integration Plan
 
-Status: Implemented and verified locally. Deployed cross-project acceptance remains open. Decisions are recorded in [ADR0001](architecture/adr/0001-energy-configuration-integration.md); verification and deployment are described in the [runbook](energy-configuration-integration-runbook.md).
-Date: 2026-10-12
+Status: Deterministic 0.4.0 workflow accepted upstream at Gate 5 by maintainer direction on October 17, 2026. ODIP now consumes additive kit 0.5.0; Gate 6 AI implementation and release acceptance remain with VEF and the cross-project owners. Decisions are recorded in [ADR0001](architecture/adr/0001-energy-configuration-integration.md); verification and deployment are described in the [runbook](energy-configuration-integration-runbook.md).
+Updated: 2026-10-19
 
-ODIP will publish complete, validated dataset versions that the Variability Engineering Framework (VEF) can retrieve and verify through an application API. The next milestone is a working publication path using the existing Kotlin API, Python worker, PostgreSQL storage, and Angular operator interface.
+ODIP publishes complete, validated dataset versions that the Variability Engineering Framework (VEF) retrieves and verifies through an application API. The implemented publication path uses the Kotlin API, Python worker, PostgreSQL storage, and Angular operator interface. The next cross-project milestone is the VEF AI-assistance increment, with the deterministic publication path retained as its regression baseline.
 
 ODIP supplies reference data and provenance. VEF owns customer inputs, component compatibility, simulation, optimization, and AI explanations. The Developer Platform provides deployment, identity facilities, routing, and application databases. The first integration uses a bounded reference region, calendar year, and component catalog; synthetic fixtures can establish the initial flow. These boundaries follow the proposed [energy configuration use case](https://github.com/eseidinger/energy-system-configuration/blob/main/energy-configuration-use-case.md).
 
 ## Relationship to the roadmap
 
-Complete this publication milestone after the existing ingestion and curation foundation and before the Parquet/DuckDB analytical comparison. It closes publication, quality, and authorization gaps needed by an external consumer without requiring the full analytics platform.
+This publication milestone follows the ingestion and curation foundation and precedes the Parquet/DuckDB analytical comparison. It closes publication, quality, and authorization gaps needed by an external consumer without requiring the full analytics platform.
 
 Use bounded PostgreSQL storage for the first publication fixture behind an artifact storage interface. Phase 2 still introduces S3-compatible storage and Parquet as specified in the [development plan](development-plan.md) and [architecture decisions](architecture/decisions.md). Publication access must remain stable when storage changes.
 
-The implementation pins released contract kit 0.4.0 and its [reconciled integration contract](https://github.com/eseidinger/energy-system-configuration/blob/contract-kit-v0.4.0/energy-configuration-integration-contract.md), dated 2026-10-11. The shared decisions are resolved in that release. The [integration plan](https://github.com/eseidinger/energy-system-configuration/blob/contract-kit-v0.4.0/energy-configuration-integration-plan.md) defines the remaining deployed gates. Local verification does not itself accept the cross-project contract.
+The implementation pins released contract kit 0.5.0 and its [reconciled integration contract](https://github.com/eseidinger/energy-system-configuration/blob/contract-kit-v0.5.0/energy-configuration-integration-contract.md), dated 2026-10-11. Kit 0.5.0 adds VEF AI-assistance contracts without changing ODIP publication APIs, fixtures or numerical results. The shared decisions remain resolved. The [integration plan](https://github.com/eseidinger/energy-system-configuration/blob/contract-kit-v0.5.0/energy-configuration-integration-plan.md) records Gate 5 acceptance and the Gate 6 AI milestone. Acceptance by maintainer direction does not constitute a new execution of the suite; retain the historical local evidence and rerun deployed regression for the AI increment.
 
 ## Current implementation and gaps
 
-The baseline is repository revision `912ed42794af552965ab055d6e9bc18735ffe74c`. Source registration, ingestion jobs, PostgreSQL raw payload storage, checksum verification, validation metadata, energy curation, dataset version listing, and the dataset browser already exist.
+The table below records the original implementation baseline and required changes, delivered by the accepted deterministic workflow. The original baseline is repository revision `912ed42794af552965ab055d6e9bc18735ffe74c`. Source registration, ingestion jobs, PostgreSQL raw payload storage, checksum verification, validation metadata, energy curation, dataset version listing, and the dataset browser already exist.
 
 | Area | Current behavior | Required change |
 | --- | --- | --- |
@@ -41,7 +41,7 @@ ADR0001 records the local workflow and deployment choices. The shared release re
 | DEC-03 Connectivity | Public HTTPS through the managed access boundary and explicitly declared egress. |
 | DEC-04 Identity | Platform-managed clients and project-wide bindings; normalized context and local stable-principal grants. |
 | DEC-05 Limits and retention | 1 MiB manifest, 10 MiB artifact, 50 MiB bundle; five-minute claims; support lifetime plus one year and 180-day application audit. |
-| DEC-06 Contract ownership | The shared repository owns the released kit; ODIP pins version 0.4.0 and its archive checksum. |
+| DEC-06 Contract ownership | The shared repository owns the released kit; ODIP pins version 0.5.0 and its archive checksum. |
 
 Public dataset slugs bind to existing catalog UUIDs, and publication versions use semantic version labels. Numeric curated versions remain intact. Legacy data becomes a publication only through explicit draft preparation and validation; unsupported profiles produce structured errors.
 

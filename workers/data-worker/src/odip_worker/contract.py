@@ -5,7 +5,7 @@ from pathlib import Path
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
-KIT = Path(os.environ.get("ODIP_CONTRACT_KIT", Path(__file__).resolve().parents[4] / "contracts/vendor/contract-kit-v0.4.0/contract-kit"))
+KIT = Path(os.environ.get("ODIP_CONTRACT_KIT", Path(__file__).resolve().parents[4] / "contracts/vendor/contract-kit-v0.5.0/contract-kit"))
 sys.path.insert(0, str(KIT))
 from contractkit.canonical import canonical_bytes, load_json
 from contractkit.validation import validate_energy_publication

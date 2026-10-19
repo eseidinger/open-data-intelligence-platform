@@ -12,7 +12,7 @@ import org.springframework.core.env.SystemEnvironmentPropertySource
 import org.springframework.core.io.FileSystemResource
 
 class SourcePolicyConfigurationTests {
-    private val fixtureUrl = "https://github.com/eseidinger/energy-system-configuration/releases/tag/contract-kit-v0.4.0"
+    private val fixtureUrl = "https://github.com/eseidinger/energy-system-configuration/releases/tag/contract-kit-v0.5.0"
 
     private fun runner(hosts: String? = null) = ApplicationContextRunner()
         .withInitializer { context ->

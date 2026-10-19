@@ -1,11 +1,13 @@
 # ODIP Contracts
 
-The consumer publication API, publication manifest, energy schemas, fixtures, and numerical oracles are supplied by the immutable [contract kit](vendor/contract-kit-v0.4.0/contract-kit/README.md). Its version and archive checksum are recorded in [contract-kit.lock.json](contract-kit.lock.json). Run `python scripts/verify-contract-kit.py` from the repository root to verify both the archive and every extracted file.
+The consumer publication API, publication manifest, energy schemas, fixtures, and numerical oracles are supplied by the immutable [contract kit](vendor/contract-kit-v0.5.0/contract-kit/README.md). Its version and archive checksum are recorded in [contract-kit.lock.json](contract-kit.lock.json). Run `python scripts/verify-contract-kit.py` from the repository root to verify both the archive and every extracted file.
+
+Kit 0.5.0 adds VEF AI proposal/explanation schemas and citation validation. ODIP's publication API, energy profile, fixture bytes and numerical oracles are unchanged from the accepted 0.4.0 baseline. This pin does not claim Gate 6 acceptance.
 
 Do not edit vendored files. Upgrade by accepting a new released archive and checksum, updating the lock, and rerunning the shared suite and consumer tests.
 
-- [Consumer publication API](vendor/contract-kit-v0.4.0/contract-kit/openapi/odip-publication-v1.yaml) defines discovery, manifests, artifact retrieval, ETags, and errors.
-- [Publication manifest schema](vendor/contract-kit-v0.4.0/contract-kit/schemas/dataset-publication-v1.schema.json) defines the bytes exchanged with VEF.
+- [Consumer publication API](vendor/contract-kit-v0.5.0/contract-kit/openapi/odip-publication-v1.yaml) defines discovery, manifests, artifact retrieval, ETags, and errors.
+- [Publication manifest schema](vendor/contract-kit-v0.5.0/contract-kit/schemas/dataset-publication-v1.schema.json) defines the bytes exchanged with VEF.
 - [Operator and worker API](openapi/publication-operations.json) defines draft preparation, publication jobs, dataset grants, and retention.
 - [Legacy ingestion API](openapi/ingestions.yaml) remains available for the annual observation adapter and raw ingestion.
 

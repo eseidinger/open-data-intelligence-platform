@@ -1,0 +1,104 @@
+{
+  "request": {
+    "category": "CUSTOMER_INPUT",
+    "document": {
+      "schemaVersion": "energy-optimization-request/v1",
+      "dataset": {
+        "datasetId": "energy-reference-wasserburg-am-inn-2024",
+        "version": "1.0.0",
+        "schemaRef": "urn:portfolio:energy-configuration-input:v1"
+      },
+      "site": {
+        "regionCode": "DE-BY-09187182",
+        "usableRoofAreaM2": 35,
+        "annualDemandKWh": 4500,
+        "existingComponentIds": []
+      },
+      "constraints": {
+        "maxInitialInvestmentEUR": 18000,
+        "minSelfSufficiency": 0.55
+      },
+      "objective": "MIN_ANNUALIZED_COST"
+    }
+  },
+  "assumptions": {
+    "category": "MODEL_ASSUMPTION",
+    "document": {
+      "analysisYears": 20,
+      "discountRate": 0.04
+    }
+  },
+  "result": {
+    "category": "CALCULATED_OUTPUT",
+    "document": {
+      "schemaVersion": "energy-optimization-result/v1",
+      "runId": "run-example-0001",
+      "status": "SUCCEEDED",
+      "dataset": {
+        "datasetId": "energy-reference-wasserburg-am-inn-2024",
+        "version": "1.0.0",
+        "schemaRef": "urn:portfolio:energy-configuration-input:v1",
+        "manifestSha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      "modelVersion": "energy-model/1.0.0",
+      "simulationVersion": "energy-simulation/1.0.0",
+      "optimizerVersion": "energy-optimizer/1.0.0",
+      "optimalityStatus": "PROVEN_OPTIMAL",
+      "evaluatedCandidateCount": 120,
+      "feasibleCandidateCount": 8,
+      "recommendedConfigurationId": "cfg-pv10-inv1-bat1",
+      "warnings": [],
+      "createdAt": "2026-10-10T10:00:00Z",
+      "completedAt": "2026-10-10T10:00:01Z"
+    }
+  },
+  "candidate": {
+    "category": "CALCULATED_OUTPUT",
+    "document": {
+      "schemaVersion": "energy-candidate/v1",
+      "configurationId": "cfg-pv10-inv1-bat1",
+      "components": [
+        {
+          "componentId": "pv-demo-400",
+          "type": "PV_MODULE",
+          "quantity": 10,
+          "existing": false
+        },
+        {
+          "componentId": "inverter-demo-5",
+          "type": "INVERTER",
+          "quantity": 1,
+          "existing": false
+        },
+        {
+          "componentId": "battery-demo-5",
+          "type": "BATTERY",
+          "quantity": 1,
+          "existing": false
+        }
+      ],
+      "feasible": true,
+      "constraints": [
+        {
+          "code": "roof_area",
+          "status": "PASS",
+          "actual": 20,
+          "limit": 35,
+          "unit": "m2"
+        }
+      ],
+      "metrics": {
+        "initialInvestmentEUR": 5700,
+        "annualizedCostEUR": 1234.56,
+        "selfSufficiency": 0.6,
+        "annualDemandKWh": 4500,
+        "gridImportKWh": 1800,
+        "gridExportKWh": 500,
+        "onSiteSolarUseKWh": 2700,
+        "unmetDemandKWh": 0,
+        "inverterClippingKWh": 10,
+        "terminalDiscardedEnergyKWh": 0
+      }
+    }
+  }
+}

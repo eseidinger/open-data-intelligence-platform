@@ -55,7 +55,7 @@ def publish_fixture(base_url, folder, session, *, version=None, mutate=None):
         attribution = manifest["provenance"][0]
         source = operation(session,base_url,"POST","/api/data-sources",json={
             "name":manifest["datasetId"],"sourceType":"API",
-            "location":"https://github.com/eseidinger/energy-system-configuration/releases/tag/contract-kit-v0.4.0",
+            "location":"https://github.com/eseidinger/energy-system-configuration/releases/tag/contract-kit-v0.5.0",
             "owner":attribution["sourceOwner"],"license":attribution["license"],
         })
         source_id=source["id"]
@@ -69,7 +69,7 @@ def publish_fixture(base_url, folder, session, *, version=None, mutate=None):
     else:
         captured=operation(session,base_url,"POST","/api/v1/reference-inputs",json={"sourceId":source_id,"input":{
             "payload":base64.b64encode(raw).decode(),"contentLength":len(raw),"contentType":"application/json",
-            "checksumSha256":hashlib.sha256(raw).hexdigest(),"sourceVersion":"contract-kit/0.4.0",
+            "checksumSha256":hashlib.sha256(raw).hexdigest(),"sourceVersion":"contract-kit/0.5.0",
             "validation":{"status":"VALID","detectedFormat":"JSON","recordCount":1},
         }})
         draft=operation(session,base_url,"POST","/api/v1/publication-drafts",headers={"Idempotency-Key":manifest["datasetId"]+"/"+manifest["version"]},json={"datasetId":dataset_id,"manifest":manifest,"rawArtifactIds":[captured["rawArtifactId"]]})
