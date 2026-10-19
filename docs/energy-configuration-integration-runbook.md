@@ -341,6 +341,8 @@ Readiness includes PostgreSQL; liveness retains process-health semantics. Expire
 
 Metrics include publication outcomes, duration, and retrieval count. Application audit records associate dataset/publication actions with stable principals and opaque correlation IDs. Central logs contain only compact platform operational envelopes. Customer details, domain IDs, and credentials do not enter those envelopes.
 
+The API console uses Spring Boot's Logstash JSON format, with the text startup banner disabled. Existing request envelopes retain their minimized JSON shape for platform collection. The ingestion worker emits one JSON object per log line, including library messages and job lifecycle events. Worker failures report the exception type and a fixed diagnostic without exception messages or raw tracebacks. The image passes its temporary-directory JVM option directly to Java to avoid the plain-text `JAVA_TOOL_OPTIONS` startup announcement.
+
 Supported publications retain their bytes, provenance, reports, and lineage. A protected operator can record a future support-end date at `PUT /api/v1/publication-retention`; expiration is permitted only after the additional one-year grace period. The scheduled cleanup removes expired publication outputs and retains raw inputs. Application audit rows expire after 180 days. Backups are governed separately by platform retention and can contain expired rows until the backup itself expires.
 
 ## Deployed handoff and regression gates

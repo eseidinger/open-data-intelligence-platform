@@ -1,7 +1,7 @@
 import argparse
 import base64
 import hashlib
-import sys
+import logging
 import time
 import os
 import requests
@@ -11,6 +11,7 @@ from odip_worker.validation import validate_payload
 from odip_worker.retrieval import download
 from odip_worker.publication import claim_and_validate
 from odip_worker.tracing import configure, span
+from odip_worker.logging import configure_logging
 
 def claim_next(base_url):
     for attempt in range(24):
@@ -24,13 +25,22 @@ def claim_next(base_url):
             time.sleep(5)
 
 def main():
-    provider = configure()
+    configure_logging()
+    logger = logging.getLogger(__name__)
     try:
-        with span("odip.worker.run"):
-            run()
-    finally:
-        if provider is not None:
-            provider.shutdown()
+        provider = configure()
+        try:
+            logger.info("Worker started", extra={"event": "job.started"})
+            with span("odip.worker.run"):
+                run()
+            logger.info("Worker completed", extra={"event": "job.completed"})
+        finally:
+            if provider is not None:
+                provider.shutdown()
+    except Exception as error:
+        logger.error("Worker failed; inspect the run status and configuration",
+                     extra={"event": "job.failed", "error_type": type(error).__name__})
+        raise SystemExit(1) from None
 
 def run():
     parser = argparse.ArgumentParser()
@@ -80,7 +90,4 @@ def run():
             raise RuntimeError("Ingestion failed; see the run's safe diagnostic") from None
 
 if __name__ == "__main__":
-    try: main()
-    except Exception:
-        print("Worker failed; inspect the run status and configuration", file=sys.stderr)
-        sys.exit(1)
+    main()

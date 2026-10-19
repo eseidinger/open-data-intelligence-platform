@@ -1,10 +1,17 @@
 spring:
+  main:
+    banner-mode: "off"
   application:
     name: platform-api
   profiles:
     default: dev
   jpa:
     open-in-view: false
+
+logging:
+  structured:
+    format:
+      console: logstash
 
 management:
   tracing:
