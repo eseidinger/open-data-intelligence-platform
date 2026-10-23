@@ -1,4 +1,4 @@
-"""Preview or provision the worker service binding for odip or odip-test.
+"""Preview or provision the worker service binding for odip, odip-test or odip-test-local.
 
 Apply requests missing service access, approves only ingestion-workers, waits for
 activation and saves its non-secret prefix in the selected deployment descriptor.
@@ -94,10 +94,12 @@ def configure(cli, project, *, apply=False, timeout=120, clock=time.monotonic, s
     prefix = service["spec"].get("secretPrefix", "")
     if service["spec"].get("groups") != [group_id] or not re.fullmatch(r"ACCESS_[A-Z0-9_]+", prefix):
         raise storage.StorageError("Active worker access has an unexpected group or managed prefix.")
-    other = "odip" if project == "odip-test" else "odip-test"
-    other_prefix = bootstrap.read_descriptor(other)["spec"]["configuration"]["values"].get("ODIP_WORKER_BINDING_PREFIX")
-    if prefix == other_prefix:
-        raise storage.StorageError("Worker identities for production and test must use different managed prefixes.")
+    for other in bootstrap.DESCRIPTORS:
+        if other == project:
+            continue
+        other_prefix = bootstrap.read_descriptor(other)["spec"]["configuration"]["values"].get("ODIP_WORKER_BINDING_PREFIX")
+        if prefix == other_prefix:
+            raise storage.StorageError("Worker identities for different environments must use different managed prefixes.")
     path = bootstrap.descriptor_path(project)
     # Reload so configuration edits made during activation are preserved.
     application = bootstrap.read_descriptor(project)
@@ -110,7 +112,7 @@ def configure(cli, project, *, apply=False, timeout=120, clock=time.monotonic, s
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--project", required=True, choices=("odip", "odip-test"))
+    parser.add_argument("--project", required=True, choices=tuple(bootstrap.DESCRIPTORS))
     parser.add_argument("--profile")
     parser.add_argument("--apply", action="store_true", help="Request/approve worker access and save its prefix; otherwise preview")
     parser.add_argument("--wait-seconds", type=int, default=120)

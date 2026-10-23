@@ -29,6 +29,12 @@ already in Git is not proof that a binding exists in a new installation. Run sto
 and worker setup against the actual project to obtain its own references. Never
 copy production credentials or bindings to the test project.
 
+The examples below target the remote Developer Platform. Local deployment uses
+project `odip-test-local`, profile `odip-local`, descriptor
+`infrastructure/deployments/application-test-local.json`, and origin
+`https://web-odip-test-local.apps.localhost`. Follow the local notes alongside each step;
+the remote test and production descriptors remain the inputs for CI.
+
 ## Prepare tools and authentication
 
 Use Python 3.12 or newer and Developer Platform CLI 0.3.0. Upgrade the Python
@@ -51,8 +57,10 @@ An existing profile can be reused for both projects: every setup command below
 passes `--project` explicitly. Environment authentication takes precedence over a
 profile login. Unset stale `PLATFORM_ACCESS_TOKEN`, `PLATFORM_TOKEN_ENDPOINT`,
 `PLATFORM_CLIENT_ID` and `PLATFORM_CLIENT_SECRET` variables when using human login.
-Headless sessions can use a securely supplied administrator `PLATFORM_ACCESS_TOKEN`
-and `PLATFORM_API_URL`; see [administrator token setup](energy-configuration-integration-runbook.md#supply-an-administrator-access-token).
+Use a desktop terminal with access to the secure OS keyring for human login.
+Follow the verification URL and user code printed by `auth login`. See the
+[integration runbook](energy-configuration-integration-runbook.md#configure-the-access-policy)
+for session and permission checks.
 CI deployment credentials cannot administer groups, policies or worker access.
 
 The platform operator must enable named PostgreSQL resources, provide sufficient
@@ -63,6 +71,39 @@ images; production uses both images at the same chosen release version.
 The [container build guide](container-builds.md) describes manual image builds.
 An initial CI run can publish images and then fail deployment while installation
 bindings are incomplete; finish bootstrap before retrying that deployment.
+
+For a local platform, first ensure the host resolver can resolve the application,
+platform and identity names. Add missing entries to `/etc/hosts` using `sudoedit`:
+
+```text
+127.0.0.1 platform.localhost identity.localhost web-odip-test-local.apps.localhost
+```
+
+Trust the platform's public local CA in your browser and configure the CLI:
+
+```bash
+export PLATFORM_CA_BUNDLE="$HOME/dev/developer-platform/.runtime/trust/local-ca.pem"
+devplat profiles create odip-local --api-url https://platform.localhost \
+  --issuer https://identity.localhost/realms/platform --project odip-test-local \
+  --ca-bundle "$PLATFORM_CA_BUNDLE"
+devplat --profile odip-local auth login
+```
+
+Adjust the CA path to your Developer Platform checkout. Reuse an existing profile.
+Use `--profile odip-local --project odip-test-local` in the remaining local setup commands.
+Clear stale `PLATFORM_API_URL` overrides when switching installations.
+
+In the Developer Platform checkout, enable `LOCAL_APPLICATION_HTTPS_ENABLED=true`
+and configure an unused, reserved `LOCAL_APPLICATION_EDGE_IP` in `PLATFORM_SUBNET`.
+Keep `APPS_DOMAIN=apps.localhost` and `IDENTITY_DOMAIN=identity.localhost`. Run
+`python3 scripts/setup/configure-platform.py --check` and `bash scripts/up.sh`
+there to prepare the worker's managed local DNS, routing and TLS trust.
+
+External source destinations also require `ALLOWED_EGRESS_PORTS=443` and approved
+`ALLOWED_EGRESS_CIDRS` covering every resolved source address. Empty allowlists
+reject the external outbound entries with HTTP 422 / `policy_denied`. Local HTTPS
+destinations use the managed gateway exception; do not add the platform subnet
+to the general egress allowlist.
 
 ## Create the projects
 
@@ -107,6 +148,33 @@ Only `web` receives `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER` and `PGPASSWORD`.
 The production Spring profile consumes these variables directly. Remove stale
 `ODIP_DATABASE_*` overrides, which would take precedence. The worker receives no
 PostgreSQL binding or credentials. Do not add database credentials to GitHub or Git.
+
+For local storage, save the binding to `application-test-local.json` with
+`--profile odip-local --project odip-test-local --update-descriptor
+infrastructure/deployments/application-test-local.json`. Existing binding IDs in
+that file must be replaced with the local installation's actual binding.
+
+The bootstrap and worker-access helpers accept `--project odip-test-local` and
+select `application-test-local.json` automatically. Storage and policy setup also
+accept that project. Create it first, then use the local profile for every step:
+
+```bash
+devplat --profile odip-local projects create --project odip-test-local
+python scripts/setup-storage.py --profile odip-local --project odip-test-local --apply \
+  --update-descriptor infrastructure/deployments/application-test-local.json
+python scripts/bootstrap-deployment.py --profile odip-local --project odip-test-local --apply
+python scripts/configure-access-policy.py --profile odip-local --project odip-test-local --apply
+python scripts/configure-worker-access.py --profile odip-local --project odip-test-local --apply
+```
+
+Run the governance and human-approval steps below with the same local project and
+profile. This is a separate project from any existing local `odip-test`; its
+storage, worker access and human approval must be provisioned independently.
+
+The local descriptor must set `ODIP_API_URL` to
+`https://web-odip-test-local.apps.localhost` and worker outbound DNS to that same host
+and `identity.localhost`. Retain `ODIP_IDENTITY_MODE=platform`; local deployment
+uses the production authentication boundary.
 
 ## Bootstrap the web component
 
@@ -220,6 +288,18 @@ python scripts/render-release.py --version v0.4.1 > /tmp/odip-release.json
 devplat --profile odip-lab deploy apply --project odip --file /tmp/odip-release.json --wait
 ```
 
+For local deployment, apply the local descriptor manually after saving its own
+storage binding and worker prefix:
+
+```bash
+devplat --profile odip-local deploy apply --project odip-test-local \
+  --file infrastructure/deployments/application-test-local.json --wait
+```
+
+The remote GitHub Actions workflows continue to deploy the remote descriptors.
+For a rejected local declaration, add `--debug --output json` before `deploy`
+to inspect the HTTP status and policy error code.
+
 ## Approve humans and verify ingestion
 
 Open the selected application's public origin and complete first login. An
@@ -254,8 +334,8 @@ for dataset grants, publication verification and the VEF handoff.
 
 ## Recover interrupted setup
 
-Exit code 3 means authentication failed: sign in again, or replace/unset an expired
-`PLATFORM_ACCESS_TOKEN`. Exit code 4 means the selected identity lacks permission.
+Exit code 3 means authentication failed: unset stale authentication environment
+variables and run `devplat --profile odip-lab auth login` again. Exit code 4 means the selected identity lacks permission.
 A timeout does not cancel an accepted platform operation. Inspect operations and
 resource state before rerunning; helpers never automatically retry uncertain
 writes. Storage and worker setup discover matching resources on the next run.

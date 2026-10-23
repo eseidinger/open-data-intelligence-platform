@@ -1,4 +1,4 @@
-"""Preview or deploy web alone while bootstrapping odip or odip-test.
+"""Preview or deploy web alone while bootstrapping odip, odip-test or odip-test-local.
 
 The saved descriptor is never changed. Apply refuses to remove an already
 declared ingestion worker; use the normal deployment workflow after bootstrap.
@@ -24,11 +24,17 @@ storage = load_script("setup-storage")
 release = load_script("render-release")
 
 
+DESCRIPTORS = {
+    "odip": "application.json",
+    "odip-test": "application-test.json",
+    "odip-test-local": "application-test-local.json",
+}
+
+
 def descriptor_path(project):
-    if project not in ("odip", "odip-test"):
-        raise storage.StorageError("Select project odip or odip-test.")
-    filename = "application.json" if project == "odip" else "application-test.json"
-    return ROOT / "infrastructure/deployments" / filename
+    if project not in DESCRIPTORS:
+        raise storage.StorageError("Select project " + ", ".join(DESCRIPTORS) + ".")
+    return ROOT / "infrastructure/deployments" / DESCRIPTORS[project]
 
 
 def read_descriptor(project):
@@ -51,7 +57,7 @@ def declaration(project, version=None):
             raise storage.StorageError("Production bootstrap requires --version for an already published release.")
         application = release.render(application, version)
     elif version:
-        raise storage.StorageError("odip-test uses latest images; omit --version.")
+        raise storage.StorageError(f"{project} uses latest images; omit --version.")
     elif any(not c["runtime"]["image"].endswith(":latest") for c in application["spec"]["components"]):
         raise storage.StorageError("The test descriptor must use latest images.")
     web = [c for c in application["spec"]["components"] if c.get("name") == "web" and c.get("type") == "service" and c.get("exposure") == "public"]
@@ -81,7 +87,7 @@ def deploy(cli, project, application, timeout):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--project", required=True, choices=("odip", "odip-test"))
+    parser.add_argument("--project", required=True, choices=tuple(DESCRIPTORS))
     parser.add_argument("--profile")
     parser.add_argument("--version", help="Already published production release, e.g. v0.4.1")
     parser.add_argument("--apply", action="store_true", help="Deploy web and wait for readiness; otherwise print the declaration")

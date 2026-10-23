@@ -58,50 +58,24 @@ devplat profiles create odip-lab --api-url https://platform.eseidinger.de \
 devplat --profile odip-lab auth login
 ```
 
-If `odip-lab` already exists, inspect it with `devplat profiles show odip-lab` and reuse it rather than recreating it. Human login uses the CLI's device flow and secure OS keyring. Clear `PLATFORM_ACCESS_TOKEN`, `PLATFORM_TOKEN_ENDPOINT`, `PLATFORM_CLIENT_ID`, and `PLATFORM_CLIENT_SECRET` when using profile login: environment authentication takes precedence. On headless systems without a secure keyring, securely supply a short-lived administrator token in `PLATFORM_ACCESS_TOKEN` and set `PLATFORM_API_URL`. Tokens and credentials never belong in command-line arguments or source control. A deployment credential or hosted ODIP token cannot administer access policy.
+If `odip-lab` already exists, inspect it with `devplat profiles show odip-lab` and reuse it rather than recreating it. Human login uses the CLI's device flow and secure OS keyring. Run the commands from a desktop terminal with access to the OS keyring. Follow the verification URL and user code printed by `auth login` and sign in as a project administrator.
 
-#### Supply an administrator access token
-
-Use this alternative on a headless host without a secure keyring. Obtain a short-lived Platform API access token for a human administrator of project `odip` through your installation's approved authentication process. For a manual session, you can copy it from your own authenticated Developer Platform portal: open browser developer tools, select the Network panel, and inspect a successful Platform API request, such as `GET /v1/projects/odip/application-access-context`. Copy only the token after `Bearer ` in its `Authorization` request header. Do not copy an ODIP application token, browser cookie, ID token, refresh token, or deployment client secret.
-
-In an interactive Bash or WSL terminal, disable shell tracing and enter the token at a hidden prompt rather than putting its literal value in an `export` command:
+Environment authentication takes precedence over profile login. Clear stale authentication variables and API overrides before signing in with the selected profile:
 
 ```bash
-set +x
-unset PLATFORM_ACCESS_TOKEN PLATFORM_TOKEN_ENDPOINT PLATFORM_CLIENT_ID PLATFORM_CLIENT_SECRET
-export PLATFORM_API_URL="https://platform.eseidinger.de"
-read -r -s -p 'Platform administrator access token: ' PLATFORM_ACCESS_TOKEN
-printf '\n'
-: "${PLATFORM_ACCESS_TOKEN:?An administrator access token is required}"
-export PLATFORM_ACCESS_TOKEN
+unset PLATFORM_ACCESS_TOKEN PLATFORM_TOKEN_ENDPOINT PLATFORM_CLIENT_ID PLATFORM_CLIENT_SECRET PLATFORM_API_URL
 
-devplat --output json auth status
-devplat --output json access context --project odip
+devplat --profile odip-lab auth login
+devplat --profile odip-lab --output json auth status
+devplat --profile odip-lab --output json access context --project odip
 ```
 
-The authentication source should be `access-token-environment`. `auth status` reports the selected source without validating the token against the server; `access context` makes an authenticated read and lets you check project eligibility and access-policy administration permissions. If the token has expired, obtain a fresh one and repeat the hidden prompt. Supplying an environment token does not create a renewable keyring session. For non-interactive automation, have the approved secret mechanism inject `PLATFORM_ACCESS_TOKEN` and `PLATFORM_API_URL` into the process environment instead of using the prompt.
+The authentication source should be `human-profile-session`. `auth status` reports the selected source without validating the session against the server; `access context` makes an authenticated read and lets you check project eligibility and access-policy administration permissions. If authentication fails, run `devplat --profile odip-lab auth login` again. A deployment credential or hosted ODIP session cannot administer platform access policy.
 
-The hidden Bash prompt has the same terminal line-length limit described in [cookie file setup](#create-the-operator-cookie-file). For a token of 4,095 characters or more, use approved secret injection instead of pasting into that prompt. In WSL, another option is to run the following commands, copy only the fresh token from the browser while the prompt waits, and then press Enter without pasting. Keep shell tracing disabled:
-
-```bash
-set +x
-read -r -s -p 'Copy the Platform API token now, then press Enter without pasting: '
-printf '\n'
-PLATFORM_ACCESS_TOKEN="$(powershell.exe -NoProfile -NonInteractive -Command 'Get-Clipboard -Raw' | tr -d '\r\n')"
-: "${PLATFORM_ACCESS_TOKEN:?An administrator access token is required}"
-export PLATFORM_ACCESS_TOKEN
-devplat --output json auth status
-devplat --output json access context --project odip
-```
-
-For the preview and apply commands below, replace `--profile odip-lab` with `--platform-url "$PLATFORM_API_URL"`. No CLI profile or `auth login` is required for this token path. For example, the read-only preview is:
-
-```bash
-python3 scripts/configure-access-policy.py \
-  --platform-url "$PLATFORM_API_URL" --project odip
-```
-
-Keep using the same terminal for the reviewed apply. Do not print the token, store it in a profile or `.env` file, commit it, or share it in chat. Keep shell tracing disabled while it is in use, and clear it with `unset PLATFORM_ACCESS_TOKEN` after completing policy configuration or before switching back to profile login. Clear the copied token from your clipboard as well.
+For the local Developer Platform, follow the [local authentication and network
+notes](bootstrap.md#prepare-tools-and-authentication). Substitute profile
+`odip-local` and project `odip-test-local` in policy, service-access and permission
+checks below. Continue using `devplat auth login` with the local profile.
 
 #### Preview and apply the policy
 
@@ -220,6 +194,13 @@ python scripts/render-release.py --version v0.4.1 > /tmp/odip-release.json
 devplat --profile odip-lab deploy apply --project odip --file /tmp/odip-release.json --wait
 ```
 
+For local deployment, use `--profile odip-local --project odip-test-local` and
+`--file infrastructure/deployments/application-test-local.json` in the manual
+apply command. See [local descriptor setup](bootstrap.md#provision-postgresql)
+for project-specific descriptor selection and installation-owned bindings.
+The remote descriptors and release workflow above continue to target the remote
+Developer Platform.
+
 The API checks source host policy on registration; the worker additionally pins validated public addresses, validates each redirect and TLS hostname, rejects unsupported content and compression, and enforces limits while downloading. Source egress is separate from identity and API egress. DNS rules pin addresses at apply time and must be reapplied when approved addresses change.
 
 ## Publish the reference fixtures
@@ -244,49 +225,19 @@ export ODIP_API_URL="https://web-odip.apps.eseidinger.de"
 export ODIP_IDENTITY_MODE=platform
 export ODIP_OPERATOR_COOKIE_FILE="$(mktemp /tmp/odip-operator-cookies.XXXXXX)"
 
-python3 - <<'PY'
-import os
-import subprocess
-from getpass import getpass
-from http.cookies import SimpleCookie
-from urllib.parse import urlsplit
-
-getpass("Copy the fresh browser Cookie value now, then press Enter without pasting: ")
-try:
-    raw = subprocess.check_output(
-        ["powershell.exe", "-NoProfile", "-NonInteractive",
-         "-Command", "Get-Clipboard -Raw"],
-        text=True, stderr=subprocess.DEVNULL,
-    ).strip()
-except (OSError, subprocess.CalledProcessError):
-    raise SystemExit("Windows clipboard access failed. Check WSL PowerShell availability.") from None
-if any(character in raw for character in "\r\n\t"):
-    raise SystemExit("Clipboard must contain only the single-line Cookie header value.")
-cookies = SimpleCookie()
-cookies.load(raw)
-required = {
-    "__Host-platform-session",
-    "__Host-platform-activity",
-    "__Host-platform-csrf",
-}
-if not required.issubset(cookies) or any(not cookies[name].value for name in required):
-    raise SystemExit("Missing platform cookies. Copy from an authenticated ODIP request.")
-
-host = urlsplit(os.environ["ODIP_API_URL"]).hostname
-lines = ["# Netscape HTTP Cookie File"]
-for name, cookie in cookies.items():
-    if name.startswith("__Host-platform-"):
-        lines.append("\t".join(
-            (host, "FALSE", "/", "TRUE", "", name, cookie.coded_value)
-        ))
-
-with open(os.environ["ODIP_OPERATOR_COOKIE_FILE"], "w", encoding="utf-8") as output:
-    output.write("\n".join(lines) + "\n")
-print("Cookie file created; captured header bytes:", len(raw.encode("utf-8")))
-PY
+python3 scripts/capture-operator-session.py
 ```
 
-`mktemp` creates an owner-only file with mode `600`. The empty expiry column represents session cookies; it does not extend the platform's session lifetime. Only the header length is displayed, not its contents. Keep using the same terminal so the environment variables remain available, and clear the copied cookie value from your clipboard after creating the file.
+Run these commands from the repository root. The [capture script](../scripts/capture-operator-session.py) reads the Windows clipboard through `powershell.exe`, validates the three required platform cookies and the publisher's cookie-file format, and saves the file with owner-only permissions (`600`). It never prints cookie values. The empty expiry column represents session cookies; it does not extend the platform's session lifetime. Keep using the same terminal so the environment variables remain available, and clear the copied cookie value from your clipboard after creating the file.
+
+For the local Developer Platform installation, use `https://web-odip-test-local.apps.localhost` for both browser URLs above and set the following variables before capturing the session:
+
+```bash
+export ODIP_API_URL="https://web-odip-test-local.apps.localhost"
+export REQUESTS_CA_BUNDLE="$HOME/dev/developer-platform/.runtime/trust/local-ca.pem"
+```
+
+Adjust the CA path to your Developer Platform checkout. Retain `ODIP_IDENTITY_MODE=platform` for this deployed local installation. If the session expires, rerun the capture script with fresh browser cookies, then repeat the session check below.
 
 ### Check the operator session
 
@@ -323,6 +274,17 @@ uv run --project workers/data-worker --locked python -m odip_worker.fixtures \
 ```
 
 The publisher captures raw inputs through the operator API, derives the energy artifacts from the pinned source, attaches canonical bytes, and records publication lineage. It reuses existing identical drafts on retries. Consumer discovery and downloads use the pinned [read contract](../contracts/vendor/contract-kit-v0.5.0/contract-kit/openapi/odip-publication-v1.yaml); draft and validation operations use the [operator contract](../contracts/openapi/publication-operations.json).
+
+Use `--fixture energy` to publish only the energy reference dataset. The publisher
+uses bundled pinned source bytes and registers their GitHub provenance URL;
+`github.com` must be included in `ODIP_SOURCE_HOSTS`. This fixture upload does not
+require the worker to download the PVGIS source over the network. External
+outbound entries still undergo platform policy validation when declared.
+
+For local worker grants, inspect `devplat --profile odip-local --output json access
+services list --project odip-test-local`, find `odip-test-local-worker`, and use its
+`spec.principalId` in Publications → Dataset access. The service request ID and
+managed secret prefix are separate values.
 
 For a new catalog, the publisher registers both datasets before queueing validation. In Publications, grant the approved worker principal READ, INGEST, and VALIDATE on those datasets so the scheduled worker can process them. The optional `--validate` flag instead consumes validation jobs locally and requires the worker's managed binding variables on that host; it is not needed for the deployed-worker path above.
 

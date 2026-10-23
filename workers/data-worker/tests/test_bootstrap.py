@@ -33,7 +33,7 @@ class FakeCLI:
         self.current_components = []
         self.policy_state = "active"
         self.manage = True
-        self.prefix = "ACCESS_TEST" if project == "odip-test" else "ACCESS_PROD"
+        self.prefix = {"odip-test": "ACCESS_TEST", "odip": "ACCESS_PROD", "odip-test-local": "ACCESS_LOCAL"}[project]
 
     def invoke(self, args, body=None, **kwargs):
         self.calls.append((args, copy.deepcopy(body)))
@@ -74,7 +74,7 @@ class BootstrapTests(unittest.TestCase):
         self.root = Path(directory.name)
         destination = self.root / "infrastructure/deployments"
         destination.mkdir(parents=True)
-        for filename in ("application.json", "application-test.json"):
+        for filename in tuple(bootstrap.DESCRIPTORS.values()):
             declaration = json.loads((ROOT / "infrastructure/deployments" / filename).read_text())
             declaration["spec"]["components"][0]["bindings"] = [{"bindingId": DB, "envPrefix": ""}]
             declaration["spec"]["configuration"]["values"]["ODIP_WORKER_BINDING_PREFIX"] = "SETUP_REQUIRED"
@@ -86,7 +86,7 @@ class BootstrapTests(unittest.TestCase):
 
     def test_bootstrap_both_environments_preserves_saved_descriptors(self):
         schema = json.loads((ROOT / "infrastructure/integration/application.schema.json").read_text())
-        for project, version in (("odip-test", None), ("odip", "v0.4.1")):
+        for project, version in (("odip-test", None), ("odip-test-local", None), ("odip", "v0.4.1")):
             path = bootstrap.descriptor_path(project)
             before = path.read_bytes()
             declaration = bootstrap.declaration(project, version)
@@ -130,7 +130,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(path.read_bytes(), before)
 
     def test_worker_setup_and_repeat_run_for_both_projects(self):
-        for project in ("odip-test", "odip"):
+        for project in bootstrap.DESCRIPTORS:
             cli = FakeCLI(project)
             path = worker.bootstrap.descriptor_path(project)
             expected = json.loads(path.read_text())

@@ -1,0 +1,113 @@
+{
+  "apiVersion": "platform.example/v1alpha2",
+  "kind": "Application",
+  "metadata": {
+    "name": "odip-test-local",
+    "project": "odip-test-local",
+    "environment": "default"
+  },
+  "spec": {
+    "configuration": {
+      "values": {
+        "ODIP_API_URL": "https://web-odip-test-local.apps.localhost",
+        "ODIP_IDENTITY_MODE": "platform",
+        "ODIP_SOURCE_HOSTS": "jsonplaceholder.typicode.com,ec.europa.eu,re.jrc.ec.europa.eu,github.com"
+      }
+    },
+    "components": [
+      {
+        "name": "web",
+        "type": "service",
+        "runtime": {
+          "type": "container",
+          "image": "docker.io/eseidinger/odip-platform:latest"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "protocol": "http",
+            "port": 8080
+          }
+        ],
+        "resources": {
+          "requests": {
+            "cpu": "250m",
+            "memory": "256Mi"
+          },
+          "limits": {
+            "cpu": "500m",
+            "memory": "512Mi"
+          }
+        },
+        "exposure": "public",
+        "telemetry": {
+          "metrics": {
+            "port": "http",
+            "path": "/actuator/prometheus"
+          },
+          "tracing": {
+            "enabled": true
+          }
+        },
+        "health": {
+          "readiness": {
+            "path": "/actuator/health/readiness"
+          }
+        },
+        "bindings": []
+      },
+      {
+        "name": "ingestion-worker",
+        "type": "scheduled",
+        "runtime": {
+          "type": "container",
+          "image": "docker.io/eseidinger/odip-data-worker:latest",
+          "args": [
+            "--claim-next"
+          ]
+        },
+        "schedule": "* * * * *",
+        "telemetry": {
+          "tracing": {
+            "enabled": true
+          }
+        },
+        "concurrencyPolicy": "Forbid",
+        "retryLimit": 0,
+        "maxRunSeconds": 300,
+        "outbound": [
+          {
+            "dns": "web-odip-test-local.apps.localhost",
+            "port": 443
+          },
+          {
+            "dns": "identity.localhost",
+            "port": 443
+          },
+          {
+            "dns": "re.jrc.ec.europa.eu",
+            "port": 443
+          },
+          {
+            "dns": "ec.europa.eu",
+            "port": 443
+          },
+          {
+            "dns": "jsonplaceholder.typicode.com",
+            "port": 443
+          }
+        ],
+        "resources": {
+          "requests": {
+            "cpu": "250m",
+            "memory": "256Mi"
+          },
+          "limits": {
+            "cpu": "500m",
+            "memory": "512Mi"
+          }
+        }
+      }
+    ]
+  }
+}
