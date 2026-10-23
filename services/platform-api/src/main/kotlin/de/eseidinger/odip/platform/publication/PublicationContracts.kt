@@ -46,7 +46,9 @@ class PublicationContracts {
                     val parts = ref.split('#', limit = 2)
                     val target = if (parts[0].isEmpty()) context else namesById[parts[0]] ?: error("Unregistered schema reference")
                     result.put(key, "#/\$defs/schemas/$target" + if (parts.size == 2) parts[1] else "")
-                } else result.set<JsonNode>(key, rewrite(value, context))
+                } else {
+                    result.set<JsonNode>(key, rewrite(value, context))
+                }
             }
         }
         return result
@@ -54,14 +56,20 @@ class PublicationContracts {
 
     fun parse(bytes: ByteArray): JsonNode = try {
         mapper.readTree(bytes) ?: reject(400, "invalid_json", "A JSON object is required")
-    } catch (error: PublicationError) { throw error
-    } catch (_: Exception) { reject(400, "invalid_json", "Malformed JSON, duplicate keys, or invalid numeric value") }
+    } catch (error: PublicationError) {
+        throw error
+    } catch (_: Exception) {
+        reject(400, "invalid_json", "Malformed JSON, duplicate keys, or invalid numeric value")
+    }
 
     fun canonical(bytes: ByteArray): ByteArray = try {
         parse(bytes)
         JsonCanonicalizer(bytes).encodedUTF8
-    } catch (error: PublicationError) { throw error
-    } catch (_: Exception) { reject(400, "invalid_json", "JSON cannot be represented by RFC 8785") }
+    } catch (error: PublicationError) {
+        throw error
+    } catch (_: Exception) {
+        reject(400, "invalid_json", "JSON cannot be represented by RFC 8785")
+    }
 
     fun validate(name: String, document: JsonNode) {
         val errors = compiled[name]?.validate(document) ?: reject(422, "unsupported_schema", "Schema is not registered")

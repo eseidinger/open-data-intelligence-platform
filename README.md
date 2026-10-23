@@ -49,3 +49,21 @@ ODIP is licensed under the [Apache License 2.0](LICENSE).
 3. Prefer a small operable baseline over premature platform complexity.
 4. Constrain AI through explicit tools; retain human review of generated engineering artifacts.
 5. Use recorded experiments rather than anecdotal benchmarks for architecture decisions.
+
+## Linting and logging
+
+Run these checks before submitting changes:
+
+```sh
+# services/platform-api
+./gradlew ktlintCheck
+# web
+npm run lint
+# workers/data-worker (also checks repository Python scripts)
+uv sync --locked
+uv run --locked ruff check src tests ../../scripts
+```
+
+Use `./gradlew ktlintFormat`, `npm run lint:fix`, or Ruff's `--fix` option for safe fixes, then review the changes. Python formatting is available with `uv run --locked ruff format src tests ../../scripts`. CI runs all three linters; vendored contract kits are excluded.
+
+API request envelopes include correlation ID, status, severity, and elapsed milliseconds. Correlation is also available to downstream API logs through MDC and is restored after each request. Worker ingestion and publication validation events include opaque run/publication IDs and elapsed milliseconds; logs emitted in an active trace include trace and span IDs. Payloads, credentials, source URLs, and raw exception details must stay out of logs. See [AGENTS.md](AGENTS.md) for contribution rules.

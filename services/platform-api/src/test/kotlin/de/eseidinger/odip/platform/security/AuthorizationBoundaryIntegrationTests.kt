@@ -17,8 +17,13 @@ import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
@@ -151,8 +156,13 @@ class AuthorizationBoundaryIntegrationTests(
         val unrelatedGroup = "grp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         mvc.perform(auth(get("/api/v1/operator-capabilities"), group = unrelatedGroup))
             .andExpect(status().isOk).andExpect(jsonPath("$.manageGrants").value(true)).andExpect(jsonPath("$.writableDatasetIds.length()").value(0))
-        mvc.perform(auth(put("/api/v1/dataset-grants/${dataset.id}").contentType(MediaType.APPLICATION_JSON)
-            .content("""{"principalId":"reader","permission":"READ"}"""), group = unrelatedGroup)).andExpect(status().isNoContent)
+        mvc.perform(
+            auth(
+                put("/api/v1/dataset-grants/${dataset.id}").contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"principalId":"reader","permission":"READ"}"""),
+                group = unrelatedGroup,
+            ),
+        ).andExpect(status().isNoContent)
         mvc.perform(auth(get("/api/datasets"), "reader", unrelatedGroup)).andExpect(jsonPath("$[0].id").value(dataset.id.toString()))
         mvc.perform(get("/api/v1/dataset-grants/${dataset.id}")).andExpect(status().isUnauthorized)
     }

@@ -10,9 +10,15 @@ import java.util.UUID
 class AnnualObservationAdapter(private val curation: EnergyCurationService) : ArtifactTransformation {
     override val id = "eurostat-renewable-share/v1"
     override fun apply(rawArtifactId: UUID, data: Map<String, Any?>) {
-        curation.curate(rawArtifactId, CreateEnergyObservationRequest(
-            data.getValue("indicatorCode").toString(), data.getValue("geoCode").toString(),
-            data.getValue("observationYear").toString().toInt(), data.getValue("unitCode").toString(),
-            BigDecimal(data.getValue("observationValue").toString())))
+        curation.curate(
+            rawArtifactId,
+            CreateEnergyObservationRequest(
+                data.getValue("indicatorCode").toString(),
+                data.getValue("geoCode").toString(),
+                data.getValue("observationYear").toString().toInt(),
+                data.getValue("unitCode").toString(),
+                BigDecimal(data.getValue("observationValue").toString()),
+            ),
+        )
     }
 }

@@ -45,10 +45,10 @@ class PlatformPrincipalAuthorizationInterceptor(
     }
 
     private fun hasValidPrincipalContext(request: HttpServletRequest): Boolean {
-        val names = listOf("Id","Kind","Issuer","Subject","Group-Ids") + if (request.getHeader("X-Platform-Principal-Kind") == "service") listOf("Client-Id") else emptyList()
+        val names = listOf("Id", "Kind", "Issuer", "Subject", "Group-Ids") + if (request.getHeader("X-Platform-Principal-Kind") == "service") listOf("Client-Id") else emptyList()
         if (names.any { request.getHeaders("X-Platform-Principal-$it").toList().size != 1 }) return false
-        if (listOf("Id","Issuer","Subject").any { request.getHeader("X-Platform-Principal-$it").isNullOrBlank() }) return false
-        if (request.getHeader("X-Platform-Principal-Kind") !in setOf("user","service")) return false
+        if (listOf("Id", "Issuer", "Subject").any { request.getHeader("X-Platform-Principal-$it").isNullOrBlank() }) return false
+        if (request.getHeader("X-Platform-Principal-Kind") !in setOf("user", "service")) return false
         if (request.getHeader("X-Platform-Principal-Kind") == "service" && request.getHeader("X-Platform-Principal-Client-Id").isNullOrBlank()) return false
         if (!properties.strictPrincipalFormat) return true
         return Regex("^prn_[0-9a-f]{32}$").matches(request.getHeader("X-Platform-Principal-Id")) &&

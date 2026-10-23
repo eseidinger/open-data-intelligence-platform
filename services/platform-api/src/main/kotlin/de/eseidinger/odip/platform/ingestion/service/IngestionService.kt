@@ -9,19 +9,19 @@ import de.eseidinger.odip.platform.ingestion.persistence.PipelineRunRepository
 import de.eseidinger.odip.platform.ingestion.persistence.RawArtifactRepository
 import de.eseidinger.odip.platform.ingestion.persistence.RawArtifactValidationRepository
 import de.eseidinger.odip.platform.ingestion.web.CompleteRunRequest
-import java.time.Instant
-import java.util.UUID
-import java.security.MessageDigest
-import org.springframework.http.HttpStatus
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.server.ResponseStatusException
 import de.eseidinger.odip.platform.publication.DatasetAccess
 import de.eseidinger.odip.platform.publication.checkPublication
 import jakarta.servlet.http.HttpServletRequest
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
+import java.security.MessageDigest
+import java.time.Instant
+import java.util.UUID
 
 @Service
 class IngestionService(
@@ -78,7 +78,7 @@ class IngestionService(
 
     @Transactional
     fun start(runId: UUID): PipelineRunEntity {
-        val run = run(runId,true)
+        val run = run(runId, true)
         access.requireSource(request, requireNotNull(run.source).id, "INGEST")
         requireStatus(run, PipelineRunStatus.QUEUED)
         run.status = PipelineRunStatus.RUNNING
@@ -90,7 +90,7 @@ class IngestionService(
 
     @Transactional
     fun complete(runId: UUID, request: CompleteRunRequest): PipelineRunEntity {
-        val run = run(runId,true)
+        val run = run(runId, true)
         access.requireSource(this.request, requireNotNull(run.source).id, "INGEST")
         checkPublication(run.ownerPrincipal == access.principal(this.request), "forbidden", "Only the owning worker may complete the run", 403)
         checkPublication(request.claimToken != null && request.claimToken == run.claimToken, "stale_claim", "The ingestion claim is no longer current", 409)
@@ -122,7 +122,7 @@ class IngestionService(
 
     @Transactional
     fun fail(runId: UUID, reason: String): PipelineRunEntity {
-        val run = run(runId,true)
+        val run = run(runId, true)
         access.requireSource(request, requireNotNull(run.source).id, "INGEST")
         checkPublication(run.ownerPrincipal == access.principal(request), "forbidden", "Only the owning worker may fail the run", 403)
         if (run.status !in setOf(PipelineRunStatus.QUEUED, PipelineRunStatus.RUNNING)) throw invalidState(run)
@@ -139,10 +139,14 @@ class IngestionService(
         return artifact
     }
 
-    private fun run(id: UUID, lock: Boolean = false): PipelineRunEntity =
-        if (lock) pipelineRunRepository.locked(id) ?: throw notFound("Pipeline run",id)
-        else pipelineRunRepository.findById(id).orElseThrow { notFound("Pipeline run", id) }
-    private fun requireStatus(run: PipelineRunEntity, status: PipelineRunStatus) { if (run.status != status) throw invalidState(run) }
+    private fun run(id: UUID, lock: Boolean = false): PipelineRunEntity = if (lock) {
+        pipelineRunRepository.locked(id) ?: throw notFound("Pipeline run", id)
+    } else {
+        pipelineRunRepository.findById(id).orElseThrow { notFound("Pipeline run", id) }
+    }
+    private fun requireStatus(run: PipelineRunEntity, status: PipelineRunStatus) {
+        if (run.status != status) throw invalidState(run)
+    }
     private fun invalidState(run: PipelineRunEntity) = ResponseStatusException(HttpStatus.CONFLICT, "Pipeline run ${run.id} is ${run.status}")
     private fun notFound(type: String, id: UUID) = ResponseStatusException(HttpStatus.NOT_FOUND, "$type $id was not found")
 

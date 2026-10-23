@@ -1,10 +1,10 @@
 package de.eseidinger.odip.platform.security
 
+import org.springframework.mock.web.MockHttpServletRequest
+import org.springframework.mock.web.MockHttpServletResponse
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.springframework.mock.web.MockHttpServletRequest
-import org.springframework.mock.web.MockHttpServletResponse
 
 class PlatformPrincipalAuthorizationInterceptorTests {
     private val interceptor = PlatformPrincipalAuthorizationInterceptor(PlatformAuthorizationProperties())
@@ -38,20 +38,20 @@ class PlatformPrincipalAuthorizationInterceptorTests {
     @Test
     fun `malformed duplicate and incomplete service context is denied`() {
         for (mutation in listOf<(MockHttpServletRequest) -> Unit>(
-            { it.addHeader("X-Platform-Principal-Id","prn_duplicate") },
+            { it.addHeader("X-Platform-Principal-Id", "prn_duplicate") },
             { it.removeHeader("X-Platform-Principal-Group-Ids") },
-            { it.addHeader("X-Platform-Principal-Kind","service") },
+            { it.addHeader("X-Platform-Principal-Kind", "service") },
         )) {
-            val request=MockHttpServletRequest("GET","/api/v1/datasets")
-            request.addHeader("X-Platform-Principal-Id","prn_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            request.addHeader("X-Platform-Principal-Kind","user")
-            request.addHeader("X-Platform-Principal-Issuer","https://identity.test")
-            request.addHeader("X-Platform-Principal-Subject","subject")
-            request.addHeader("X-Platform-Principal-Group-Ids","grp_e2987e192a0a41b4a0273c71c14fef47")
+            val request = MockHttpServletRequest("GET", "/api/v1/datasets")
+            request.addHeader("X-Platform-Principal-Id", "prn_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+            request.addHeader("X-Platform-Principal-Kind", "user")
+            request.addHeader("X-Platform-Principal-Issuer", "https://identity.test")
+            request.addHeader("X-Platform-Principal-Subject", "subject")
+            request.addHeader("X-Platform-Principal-Group-Ids", "grp_e2987e192a0a41b4a0273c71c14fef47")
             mutation(request)
-            val response=MockHttpServletResponse()
-            assertFalse(interceptor.preHandle(request,response,Any()))
-            kotlin.test.assertEquals(401,response.status)
+            val response = MockHttpServletResponse()
+            assertFalse(interceptor.preHandle(request, response, Any()))
+            kotlin.test.assertEquals(401, response.status)
         }
     }
 

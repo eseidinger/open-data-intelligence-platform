@@ -3,14 +3,11 @@ package de.eseidinger.odip.platform.curation.web
 import de.eseidinger.odip.platform.curation.domain.EnergyObservationEntity
 import de.eseidinger.odip.platform.curation.service.EnergyCurationService
 import jakarta.validation.Valid
-import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.PositiveOrZero
-import java.math.BigDecimal
-import java.time.Instant
-import java.util.UUID
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -19,6 +16,9 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.math.BigDecimal
+import java.time.Instant
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api")

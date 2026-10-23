@@ -3,10 +3,10 @@ package de.eseidinger.odip.platform.catalog.service
 import de.eseidinger.odip.platform.catalog.domain.DataSourceEntity
 import de.eseidinger.odip.platform.catalog.persistence.DataSourceRepository
 import de.eseidinger.odip.platform.catalog.web.CreateDataSourceRequest
+import de.eseidinger.odip.platform.security.SourcePolicy
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
-import de.eseidinger.odip.platform.security.SourcePolicy
 
 @Service
 class DataSourceService(

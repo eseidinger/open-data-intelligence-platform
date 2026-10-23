@@ -2,19 +2,29 @@ package de.eseidinger.odip.platform.curation.web
 
 import de.eseidinger.odip.platform.ingestion.service.IngestionService
 import de.eseidinger.odip.platform.ingestion.service.TransformationRequest
-import de.eseidinger.odip.platform.ingestion.web.CompleteRunRequest
 import de.eseidinger.odip.platform.ingestion.web.ArtifactValidationRequest
+import de.eseidinger.odip.platform.ingestion.web.CompleteRunRequest
 import de.eseidinger.odip.platform.ingestion.web.PipelineRunResponse
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotEmpty
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 // Compatibility mapping remains in the reference adapter, outside ingestion core.
-data class LegacyCompleteRunRequest(@field:NotEmpty val payload: ByteArray, val contentType: String? = null,
-    val contentLength: Long, val checksumSha256: String, val sourceVersion: String? = null,
-    val validation: ArtifactValidationRequest? = null, val transformation: TransformationRequest? = null,
-    val energyObservation: Map<String, Any?>? = null, val claimToken: UUID? = null)
+data class LegacyCompleteRunRequest(
+    @field:NotEmpty val payload: ByteArray,
+    val contentType: String? = null,
+    val contentLength: Long,
+    val checksumSha256: String,
+    val sourceVersion: String? = null,
+    val validation: ArtifactValidationRequest? = null,
+    val transformation: TransformationRequest? = null,
+    val energyObservation: Map<String, Any?>? = null,
+    val claimToken: UUID? = null,
+)
 
 @RestController
 class LegacyIngestionCompletionController(private val ingestion: IngestionService) {

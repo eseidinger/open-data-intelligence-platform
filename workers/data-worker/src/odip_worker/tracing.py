@@ -26,10 +26,14 @@ def configure():
         resource=Resource.create({"service.name": os.environ["OTEL_SERVICE_NAME"]}),
         sampler=ParentBased(TraceIdRatioBased(rate)),
     )
-    provider.add_span_processor(BatchSpanProcessor(
-        OTLPSpanExporter(endpoint=endpoint + "/v1/traces", timeout=2),
-        max_queue_size=256, max_export_batch_size=64, schedule_delay_millis=1000,
-    ))
+    provider.add_span_processor(
+        BatchSpanProcessor(
+            OTLPSpanExporter(endpoint=endpoint + "/v1/traces", timeout=2),
+            max_queue_size=256,
+            max_export_batch_size=64,
+            schedule_delay_millis=1000,
+        )
+    )
     trace.set_tracer_provider(provider)
     return provider
 
@@ -38,7 +42,9 @@ def configure():
 def span(name):
     # User data and exception messages must never enter trace attributes or events.
     with trace.get_tracer("odip.worker").start_as_current_span(
-        name, record_exception=False, set_status_on_exception=False,
+        name,
+        record_exception=False,
+        set_status_on_exception=False,
     ) as current:
         yield current
 

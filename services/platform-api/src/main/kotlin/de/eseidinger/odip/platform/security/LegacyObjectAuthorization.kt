@@ -15,7 +15,13 @@ class LegacyObjectAuthorization(private val access: DatasetAccess, private val j
         val path = request.requestURI.split('/').filter { it.isNotBlank() }
         if (path.size < 3 || path[1] == "v1") return true
         val id = runCatching { UUID.fromString(path[2]) }.getOrNull() ?: return true
-        val permission = if (request.method in setOf("GET", "HEAD")) "READ" else if (path[1] in setOf("data-sources", "pipeline-runs")) "INGEST" else "WRITE"
+        val permission = if (request.method in setOf("GET", "HEAD")) {
+            "READ"
+        } else if (path[1] in setOf("data-sources", "pipeline-runs")) {
+            "INGEST"
+        } else {
+            "WRITE"
+        }
         val datasets = when (path[1]) {
             "datasets" -> listOf(id)
             "raw-artifacts" -> jdbc.queryForList("SELECT ds.dataset_id FROM dataset_source ds JOIN raw_artifact a ON a.source_id=ds.source_id WHERE a.id=?", UUID::class.java, id)

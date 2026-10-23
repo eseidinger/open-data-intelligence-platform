@@ -1,8 +1,8 @@
 package de.eseidinger.odip.platform.publication
 
 import com.fasterxml.jackson.databind.JsonNode
-import jakarta.servlet.http.HttpServletRequest
 import io.micrometer.core.instrument.MeterRegistry
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -17,12 +17,17 @@ data class StoredPublication(val id: UUID, val datasetId: UUID, val manifest: By
 
 @Service
 class PublicationService(
-    private val jdbc: JdbcTemplate, private val contracts: PublicationContracts,
-    private val storage: ArtifactStorage, private val access: DatasetAccess, private val metrics: MeterRegistry,
+    private val jdbc: JdbcTemplate,
+    private val contracts: PublicationContracts,
+    private val storage: ArtifactStorage,
+    private val access: DatasetAccess,
+    private val metrics: MeterRegistry,
 ) {
     private fun record(id: UUID, lock: Boolean = false): StoredPublication = jdbc.query(
         "SELECT * FROM dataset_publication WHERE id=?" + if (lock) " FOR UPDATE" else "",
-        { row, _ -> StoredPublication(row.getObject("id", UUID::class.java), row.getObject("dataset_id", UUID::class.java), row.getBytes("manifest"), row.getString("manifest_sha256"), row.getString("status"), row.getString("creator"), row.getString("validator"), row.getString("report"), row.getString("failure_code")) }, id).firstOrNull()
+        { row, _ -> StoredPublication(row.getObject("id", UUID::class.java), row.getObject("dataset_id", UUID::class.java), row.getBytes("manifest"), row.getString("manifest_sha256"), row.getString("status"), row.getString("creator"), row.getString("validator"), row.getString("report"), row.getString("failure_code")) },
+        id,
+    ).firstOrNull()
         ?: reject(404, "not_found", "Publication was not found")
 
     private fun key(value: String) {
@@ -33,18 +38,22 @@ class PublicationService(
     fun create(request: HttpServletRequest, body: DraftRequest, key: String): Map<String, Any?> {
         key(key)
         access.require(request, body.datasetId, "WRITE")
-        checkPublication(body.rawArtifactIds.size <= 100 && body.rawArtifactIds.distinct().size == body.rawArtifactIds.size,"invalid_lineage","At most 100 distinct input artifacts are supported",400)
+        checkPublication(body.rawArtifactIds.size <= 100 && body.rawArtifactIds.distinct().size == body.rawArtifactIds.size, "invalid_lineage", "At most 100 distinct input artifacts are supported", 400)
         val principal = access.principal(request)
         val manifest = contracts.canonical(contracts.mapper.writeValueAsBytes(body.manifest))
         checkPublication(manifest.size <= 1048576, "payload_too_large", "Manifest exceeds 1 MiB", 413)
         val document = contracts.parse(manifest)
         contracts.validate("dataset-publication-v1", document)
-        checkPublication(jdbc.queryForObject("SELECT NOT EXISTS(SELECT 1 FROM publication_support WHERE schema_ref=? AND support_ends_at < CURRENT_TIMESTAMP)",Boolean::class.java,document["schemaRef"].asText()) == true,"unsupported_schema","Profile support has ended")
+        checkPublication(jdbc.queryForObject("SELECT NOT EXISTS(SELECT 1 FROM publication_support WHERE schema_ref=? AND support_ends_at < CURRENT_TIMESTAMP)", Boolean::class.java, document["schemaRef"].asText()) == true, "unsupported_schema", "Profile support has ended")
         val policy = contracts.policy(document)
         val descriptors = document["artifacts"].toList()
-        checkPublication(descriptors.map { it["artifactId"].asText() }.distinct().size == descriptors.size &&
-            descriptors.map { it["role"].asText() }.distinct().size == descriptors.size &&
-            descriptors.all { it["path"].asText() == "artifacts/${it["artifactId"].asText()}" }, "invalid_artifacts", "Artifact IDs, roles, and paths must be unique and consistent")
+        checkPublication(
+            descriptors.map { it["artifactId"].asText() }.distinct().size == descriptors.size &&
+                descriptors.map { it["role"].asText() }.distinct().size == descriptors.size &&
+                descriptors.all { it["path"].asText() == "artifacts/${it["artifactId"].asText()}" },
+            "invalid_artifacts",
+            "Artifact IDs, roles, and paths must be unique and consistent",
+        )
         checkPublication(descriptors.map { it["role"].asText() }.toSet() == policy["artifactSchemas"].fieldNames().asSequence().toSet(), "invalid_artifacts", "Artifacts must match the registered profile roles")
         val requestDigest = sha256(manifest + (body.datasetId.toString() + body.rawArtifactIds.sorted().joinToString()).toByteArray())
         jdbc.queryForObject("SELECT pg_advisory_xact_lock(hashtext(?)) IS NULL", Boolean::class.java, "$principal/$key")
@@ -62,8 +71,10 @@ class PublicationService(
             checkPublication(jdbc.queryForList("SELECT r.id FROM raw_artifact r JOIN dataset_source ds ON ds.source_id=r.source_id WHERE r.id=? AND ds.dataset_id=? AND r.payload IS NOT NULL AND octet_length(r.payload)=r.content_length", raw, body.datasetId).isNotEmpty(), "invalid_lineage", "Input artifact must have captured bytes and belong to a contributing source")
         }
         val id = UUID.randomUUID()
-        jdbc.update("INSERT INTO dataset_publication(id,dataset_id,public_dataset_id,version,manifest,manifest_sha256,status,creator,idempotency_key,request_sha256) VALUES (?,?,?,?,?,?,'DRAFT',?,?,?)",
-            id, body.datasetId, publicId, document["version"].asText(), manifest, sha256(manifest), principal, key, requestDigest)
+        jdbc.update(
+            "INSERT INTO dataset_publication(id,dataset_id,public_dataset_id,version,manifest,manifest_sha256,status,creator,idempotency_key,request_sha256) VALUES (?,?,?,?,?,?,'DRAFT',?,?,?)",
+            id, body.datasetId, publicId, document["version"].asText(), manifest, sha256(manifest), principal, key, requestDigest,
+        )
         body.rawArtifactIds.distinct().forEach { jdbc.update("INSERT INTO publication_input VALUES (?,?)", id, it) }
         access.audit(principal, "draft_created", body.datasetId, id)
         return summary(record(id))
@@ -131,8 +142,12 @@ class PublicationService(
         val principal = access.principal(request)
         access.require(request, publication.datasetId, "VALIDATE")
         checkPublication(publication.validator == principal, "forbidden", "Only the claiming validator may submit evidence", 403)
-        checkPublication(report.claimToken != null && jdbc.queryForObject("SELECT claim_token FROM dataset_publication WHERE id=?", UUID::class.java,id) == report.claimToken,
-            "stale_claim", "The validation claim is no longer current",409)
+        checkPublication(
+            report.claimToken != null && jdbc.queryForObject("SELECT claim_token FROM dataset_publication WHERE id=?", UUID::class.java, id) == report.claimToken,
+            "stale_claim",
+            "The validation claim is no longer current",
+            409,
+        )
         val reportJson = contracts.mapper.writeValueAsString(report)
         if (publication.status in setOf("PUBLISHED", "FAILED")) {
             checkPublication(publication.report?.let { contracts.parse(it.toByteArray()) } == contracts.parse(reportJson.toByteArray()), "validation_conflict", "Validation result is already final", 409)
@@ -155,12 +170,18 @@ class PublicationService(
                 checkPublication(sha256(bytes) == descriptor["sha256"].asText(), "checksum_mismatch", "Stored artifact failed integrity verification")
             }
         }
-        jdbc.update("UPDATE dataset_publication SET status=?,report=?::jsonb,failure_code=?,published_at=? WHERE id=?",
-            if (passed) "PUBLISHED" else "FAILED", reportJson, if (passed) null else report.failureCode ?: "quality_failed", if (passed) java.sql.Timestamp.from(Instant.now()) else null, id)
+        jdbc.update(
+            "UPDATE dataset_publication SET status=?,report=?::jsonb,failure_code=?,published_at=? WHERE id=?",
+            if (passed) "PUBLISHED" else "FAILED",
+            reportJson,
+            if (passed) null else report.failureCode ?: "quality_failed",
+            if (passed) java.sql.Timestamp.from(Instant.now()) else null,
+            id,
+        )
         access.audit(principal, if (passed) "publication_completed" else "publication_failed", publication.datasetId, id)
         metrics.counter("odip.publication.results", "status", if (passed) "published" else "failed").increment()
-        val created = jdbc.queryForObject("SELECT created_at FROM dataset_publication WHERE id=?",java.sql.Timestamp::class.java,id)!!.toInstant()
-        metrics.timer("odip.publication.duration").record(java.time.Duration.between(created,Instant.now()).coerceAtLeast(java.time.Duration.ZERO))
+        val created = jdbc.queryForObject("SELECT created_at FROM dataset_publication WHERE id=?", java.sql.Timestamp::class.java, id)!!.toInstant()
+        metrics.timer("odip.publication.duration").record(java.time.Duration.between(created, Instant.now()).coerceAtLeast(java.time.Duration.ZERO))
         return summary(record(id))
     }
 
@@ -197,8 +218,8 @@ class PublicationService(
         val bypass = access.developmentBypass()
         // Explicit cast keeps a null schema filter typed in PostgreSQL.
         val typedFilter = filter.replace("? IS NULL", "CAST(? AS text) IS NULL")
-        val count = jdbc.queryForObject("SELECT COUNT(*) $typedFilter",Long::class.java,bypass,principal,schemaRef,schemaRef) ?: 0L
-        val records = jdbc.query("SELECT manifest $typedFilter ORDER BY public_dataset_id,version LIMIT ? OFFSET ?", { row, _ -> contracts.mapper.convertValue(contracts.parse(row.getBytes(1)),Map::class.java) }, bypass,principal,schemaRef,schemaRef,pageSize,page.toLong()*pageSize)
+        val count = jdbc.queryForObject("SELECT COUNT(*) $typedFilter", Long::class.java, bypass, principal, schemaRef, schemaRef) ?: 0L
+        val records = jdbc.query("SELECT manifest $typedFilter ORDER BY public_dataset_id,version LIMIT ? OFFSET ?", { row, _ -> contracts.mapper.convertValue(contracts.parse(row.getBytes(1)), Map::class.java) }, bypass, principal, schemaRef, schemaRef, pageSize, page.toLong() * pageSize)
         return mapOf("items" to records, "page" to page, "pageSize" to pageSize, "total" to count)
     }
 
@@ -220,13 +241,13 @@ class PublicationService(
     fun recoverAbandoned() {
         jdbc.update("UPDATE dataset_publication SET validator=NULL,claimed_at=NULL,claim_token=NULL WHERE status='VALIDATING' AND claimed_at < CURRENT_TIMESTAMP - INTERVAL '5 minutes'")
         jdbc.update("DELETE FROM publication_audit WHERE created_at < CURRENT_TIMESTAMP - INTERVAL '180 days'")
-        val expired = jdbc.queryForList("SELECT id FROM dataset_publication WHERE status='PUBLISHED' AND publication_expired(id)",UUID::class.java).filterNotNull()
+        val expired = jdbc.queryForList("SELECT id FROM dataset_publication WHERE status='PUBLISHED' AND publication_expired(id)", UUID::class.java).filterNotNull()
         expired.forEach { id ->
-            jdbc.update("DELETE FROM publication_request WHERE publication_id=?",id)
-            jdbc.update("DELETE FROM publication_input WHERE publication_id=?",id)
-            jdbc.update("DELETE FROM publication_artifact WHERE publication_id=?",id)
-            access.audit("retention", "publication_expired",publication=id)
-            jdbc.update("DELETE FROM dataset_publication WHERE id=?",id)
+            jdbc.update("DELETE FROM publication_request WHERE publication_id=?", id)
+            jdbc.update("DELETE FROM publication_input WHERE publication_id=?", id)
+            jdbc.update("DELETE FROM publication_artifact WHERE publication_id=?", id)
+            access.audit("retention", "publication_expired", publication = id)
+            jdbc.update("DELETE FROM dataset_publication WHERE id=?", id)
         }
     }
 
@@ -234,7 +255,11 @@ class PublicationService(
         "id" to p.id, "datasetId" to p.datasetId, "status" to p.status, "manifestSha256" to p.digest,
         "manifest" to contracts.mapper.convertValue(contracts.parse(p.manifest), Map::class.java),
         "report" to p.report?.let { contracts.mapper.convertValue(contracts.parse(it.toByteArray()), Map::class.java) }, "failureCode" to p.failureCode,
-        "claimToken" to jdbc.queryForObject("SELECT claim_token FROM dataset_publication WHERE id=?",UUID::class.java,p.id),
-        "inputArtifacts" to jdbc.query("SELECT a.id,a.pipeline_run_id,a.checksum_sha256,a.retrieved_at FROM raw_artifact a JOIN publication_input i ON i.raw_artifact_id=a.id WHERE i.publication_id=? ORDER BY a.id",
-            { row, _ -> mapOf("rawArtifactId" to row.getObject(1,UUID::class.java), "pipelineRunId" to row.getObject(2,UUID::class.java), "sha256" to row.getString(3), "capturedAt" to row.getTimestamp(4).toInstant().toString()) },p.id))
+        "claimToken" to jdbc.queryForObject("SELECT claim_token FROM dataset_publication WHERE id=?", UUID::class.java, p.id),
+        "inputArtifacts" to jdbc.query(
+            "SELECT a.id,a.pipeline_run_id,a.checksum_sha256,a.retrieved_at FROM raw_artifact a JOIN publication_input i ON i.raw_artifact_id=a.id WHERE i.publication_id=? ORDER BY a.id",
+            { row, _ -> mapOf("rawArtifactId" to row.getObject(1, UUID::class.java), "pipelineRunId" to row.getObject(2, UUID::class.java), "sha256" to row.getString(3), "capturedAt" to row.getTimestamp(4).toInstant().toString()) },
+            p.id,
+        ),
+    )
 }

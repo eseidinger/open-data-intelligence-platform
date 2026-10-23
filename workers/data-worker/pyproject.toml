@@ -16,3 +16,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
 odip_worker = ["adapters.json"]
+
+[dependency-groups]
+dev = ["ruff==0.14.2"]

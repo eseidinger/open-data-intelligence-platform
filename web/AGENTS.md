@@ -53,3 +53,9 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Validation and diagnostics
+
+- Follow the repository AGENTS.md linting and logging rules. Run `npm run lint` for TypeScript and Angular template checks before completing changes.
+- Keep template accessibility lint checks enabled and run `npm run test:a11y` for UI changes.
+- Do not log HTTP bodies, principal headers, cookies, or source locations in the browser.

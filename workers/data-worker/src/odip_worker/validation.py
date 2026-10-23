@@ -7,7 +7,10 @@ from typing import Any
 
 def validate_payload(payload: bytes, content_type: str | None) -> dict[str, Any]:
     normalized_content_type = (content_type or "").split(";", 1)[0].lower()
-    if normalized_content_type in {"application/json", "application/ld+json"} or normalized_content_type.endswith("+json"):
+    if normalized_content_type in {
+        "application/json",
+        "application/ld+json",
+    } or normalized_content_type.endswith("+json"):
         return _validate_json(payload)
     if normalized_content_type in {"text/csv", "application/csv"}:
         return _validate_csv(payload)
@@ -18,7 +21,11 @@ def _validate_json(payload: bytes) -> dict[str, Any]:
     try:
         value = json.loads(payload)
     except (UnicodeDecodeError, json.JSONDecodeError) as error:
-        return {"status": "INVALID", "detectedFormat": "JSON", "failureReason": str(error)}
+        return {
+            "status": "INVALID",
+            "detectedFormat": "JSON",
+            "failureReason": str(error),
+        }
     record_count = len(value) if isinstance(value, list) else 1
     return {
         "status": "VALID",
@@ -32,11 +39,33 @@ def _validate_csv(payload: bytes) -> dict[str, Any]:
     try:
         rows = list(csv.DictReader(io.StringIO(payload.decode("utf-8-sig"))))
     except (UnicodeDecodeError, csv.Error) as error:
-        return {"status": "INVALID", "detectedFormat": "CSV", "failureReason": str(error)}
-    if not rows and not csv.DictReader(io.StringIO(payload.decode("utf-8-sig"))).fieldnames:
-        return {"status": "INVALID", "detectedFormat": "CSV", "failureReason": "CSV header is missing"}
-    field_names = sorted(rows[0].keys()) if rows else sorted(csv.DictReader(io.StringIO(payload.decode("utf-8-sig"))).fieldnames or [])
-    return {"status": "VALID", "detectedFormat": "CSV", "recordCount": len(rows), "schemaFingerprint": _fingerprint({"columns": field_names})}
+        return {
+            "status": "INVALID",
+            "detectedFormat": "CSV",
+            "failureReason": str(error),
+        }
+    if (
+        not rows
+        and not csv.DictReader(io.StringIO(payload.decode("utf-8-sig"))).fieldnames
+    ):
+        return {
+            "status": "INVALID",
+            "detectedFormat": "CSV",
+            "failureReason": "CSV header is missing",
+        }
+    field_names = (
+        sorted(rows[0].keys())
+        if rows
+        else sorted(
+            csv.DictReader(io.StringIO(payload.decode("utf-8-sig"))).fieldnames or []
+        )
+    )
+    return {
+        "status": "VALID",
+        "detectedFormat": "CSV",
+        "recordCount": len(rows),
+        "schemaFingerprint": _fingerprint({"columns": field_names}),
+    }
 
 
 def _shape(value: Any) -> Any:

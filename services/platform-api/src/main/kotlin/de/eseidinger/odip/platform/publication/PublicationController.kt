@@ -1,15 +1,24 @@
 package de.eseidinger.odip.platform.publication
 
 import jakarta.servlet.http.HttpServletRequest
+import org.springframework.context.annotation.Configuration
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.scheduling.annotation.EnableScheduling
-import org.springframework.context.annotation.Configuration
-import org.springframework.web.bind.annotation.*
-import java.util.UUID
-import java.time.Instant
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
+import java.time.Instant
+import java.util.UUID
 
 @Configuration
 @EnableScheduling
@@ -22,13 +31,14 @@ class PublicationController(private val service: PublicationService, private val
     @Transactional
     fun support(request: HttpServletRequest, @RequestBody body: SupportEndRequest): ResponseEntity<Void> {
         // The platform's operator policy authorizes retention administration.
-        checkPublication(body.schemaRef.length in 1..200 && body.supportEndsAt.isAfter(Instant.now()),"invalid_retention","Support end must be in the future",400)
-        jdbc.update("INSERT INTO publication_support VALUES (?,?) ON CONFLICT(schema_ref) DO UPDATE SET support_ends_at=EXCLUDED.support_ends_at",body.schemaRef,java.sql.Timestamp.from(body.supportEndsAt))
-        access.audit(access.principal(request),"support_end_recorded")
+        checkPublication(body.schemaRef.length in 1..200 && body.supportEndsAt.isAfter(Instant.now()), "invalid_retention", "Support end must be in the future", 400)
+        jdbc.update("INSERT INTO publication_support VALUES (?,?) ON CONFLICT(schema_ref) DO UPDATE SET support_ends_at=EXCLUDED.support_ends_at", body.schemaRef, java.sql.Timestamp.from(body.supportEndsAt))
+        access.audit(access.principal(request), "support_end_recorded")
         return ResponseEntity.noContent().build()
     }
+
     @GetMapping("/datasets")
-    fun discover(request: HttpServletRequest, @RequestParam(required=false) schemaRef: String?, @RequestParam(defaultValue="PUBLISHED") status: String, @RequestParam(defaultValue="0") page: Int, @RequestParam(defaultValue="20") pageSize: Int): Map<String, Any> {
+    fun discover(request: HttpServletRequest, @RequestParam(required = false) schemaRef: String?, @RequestParam(defaultValue = "PUBLISHED") status: String, @RequestParam(defaultValue = "0") page: Int, @RequestParam(defaultValue = "20") pageSize: Int): Map<String, Any> {
         checkPublication(status == "PUBLISHED", "invalid_status", "Only PUBLISHED discovery is supported", 400)
         return service.discover(request, schemaRef, page, pageSize)
     }
@@ -39,34 +49,47 @@ class PublicationController(private val service: PublicationService, private val
     @GetMapping("/datasets/{dataset}/versions/{version}/artifacts/{artifact}")
     fun artifact(request: HttpServletRequest, @PathVariable dataset: String, @PathVariable version: String, @PathVariable artifact: String) = response(request, service.read(request, dataset, version, artifact))
 
-    @GetMapping("/publication-drafts") fun drafts(request: HttpServletRequest) = service.drafts(request)
-    @GetMapping("/publication-drafts/{id}") fun draft(request: HttpServletRequest, @PathVariable id: UUID) = service.draft(request, id)
+    @GetMapping("/publication-drafts")
+    fun drafts(request: HttpServletRequest) = service.drafts(request)
+
+    @GetMapping("/publication-drafts/{id}")
+    fun draft(request: HttpServletRequest, @PathVariable id: UUID) = service.draft(request, id)
+
     @PostMapping("/publication-drafts")
     fun create(request: HttpServletRequest, @RequestBody body: DraftRequest, @RequestHeader("Idempotency-Key") key: String) = ResponseEntity.status(201).body(service.create(request, body, key))
-    @PutMapping("/publication-drafts/{id}/artifacts/{artifact}", consumes=["application/octet-stream"])
+
+    @PutMapping("/publication-drafts/{id}/artifacts/{artifact}", consumes = ["application/octet-stream"])
     fun upload(request: HttpServletRequest, @PathVariable id: UUID, @PathVariable artifact: String, @RequestBody bytes: ByteArray): ResponseEntity<Void> {
         service.upload(request, id, artifact, bytes)
         return ResponseEntity.noContent().build()
     }
+
     @GetMapping("/publication-drafts/{id}/artifacts/{artifact}")
-    fun download(request: HttpServletRequest, @PathVariable id: UUID, @PathVariable artifact: String) = ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(service.operatorArtifact(request,id,artifact))
+    fun download(request: HttpServletRequest, @PathVariable id: UUID, @PathVariable artifact: String) = ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(service.operatorArtifact(request, id, artifact))
+
     @PostMapping("/publication-drafts/{id}/publish")
     fun publish(request: HttpServletRequest, @PathVariable id: UUID, @RequestHeader("Idempotency-Key") key: String) = ResponseEntity.accepted().body(service.publish(request, id, key))
+
     @PostMapping("/publication-jobs/claim-next")
     fun claim(request: HttpServletRequest): ResponseEntity<Map<String, Any?>> = service.claim(request)?.let { ResponseEntity.ok(it) } ?: ResponseEntity.noContent().build()
+
     @GetMapping("/publication-jobs/{id}/artifacts/{artifact}")
     fun input(request: HttpServletRequest, @PathVariable id: UUID, @PathVariable artifact: String) = ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).body(service.draftArtifact(request, id, artifact))
+
     @PostMapping("/publication-jobs/{id}/completed")
     fun complete(request: HttpServletRequest, @PathVariable id: UUID, @RequestBody report: ValidationReport) = service.complete(request, id, report)
 
-    @GetMapping("/operator-capabilities")
     // This endpoint is operator-only at the platform boundary, not a local role.
-    fun capabilities(request: HttpServletRequest) = mapOf("manageGrants" to true, "writableDatasetIds" to
-        jdbc.queryForList("SELECT id FROM dataset", UUID::class.java).filterNotNull().filter { access.allowed(access.principal(request),it,"WRITE") })
+    @GetMapping("/operator-capabilities")
+    fun capabilities(request: HttpServletRequest) = mapOf(
+        "manageGrants" to true,
+        "writableDatasetIds" to
+            jdbc.queryForList("SELECT id FROM dataset", UUID::class.java).filterNotNull().filter { access.allowed(access.principal(request), it, "WRITE") },
+    )
+
     @GetMapping("/dataset-grants/{dataset}")
-    fun grants(@PathVariable dataset: UUID): List<Map<String, Any?>> {
-        return jdbc.queryForList("SELECT principal_id AS \"principalId\",permission FROM dataset_grant WHERE dataset_id=? ORDER BY principal_id,permission", dataset)
-    }
+    fun grants(@PathVariable dataset: UUID): List<Map<String, Any?>> = jdbc.queryForList("SELECT principal_id AS \"principalId\",permission FROM dataset_grant WHERE dataset_id=? ORDER BY principal_id,permission", dataset)
+
     @PutMapping("/dataset-grants/{dataset}")
     @Transactional
     fun grant(request: HttpServletRequest, @PathVariable dataset: UUID, @RequestBody body: GrantRequest): ResponseEntity<Void> {
@@ -75,6 +98,7 @@ class PublicationController(private val service: PublicationService, private val
         access.audit(access.principal(request), "grant_created", dataset)
         return ResponseEntity.noContent().build()
     }
+
     @DeleteMapping("/dataset-grants/{dataset}")
     @Transactional
     fun revoke(request: HttpServletRequest, @PathVariable dataset: UUID, @RequestParam principalId: String, @RequestParam permission: String): ResponseEntity<Void> {

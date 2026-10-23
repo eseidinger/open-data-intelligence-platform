@@ -1,20 +1,20 @@
 package de.eseidinger.odip.platform.curation.service
 
+import de.eseidinger.odip.platform.catalog.domain.DatasetVersionEntity
 import de.eseidinger.odip.platform.catalog.persistence.DatasetRepository
 import de.eseidinger.odip.platform.catalog.persistence.DatasetVersionRepository
-import de.eseidinger.odip.platform.catalog.domain.DatasetVersionEntity
 import de.eseidinger.odip.platform.curation.domain.EnergyObservationEntity
 import de.eseidinger.odip.platform.curation.persistence.EnergyObservationRepository
 import de.eseidinger.odip.platform.curation.web.CreateEnergyObservationRequest
+import de.eseidinger.odip.platform.ingestion.domain.ArtifactValidationStatus
 import de.eseidinger.odip.platform.ingestion.persistence.RawArtifactRepository
 import de.eseidinger.odip.platform.ingestion.persistence.RawArtifactValidationRepository
-import java.util.UUID
+import de.eseidinger.odip.platform.publication.checkPublication
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
-import de.eseidinger.odip.platform.ingestion.domain.ArtifactValidationStatus
-import de.eseidinger.odip.platform.publication.checkPublication
+import java.util.UUID
 
 @Service
 class EnergyCurationService(
@@ -27,8 +27,11 @@ class EnergyCurationService(
     @Transactional
     fun curate(rawArtifactId: UUID, request: CreateEnergyObservationRequest): EnergyObservationEntity {
         val artifact = artifacts.findById(rawArtifactId).orElseThrow { notFound("Raw artifact", rawArtifactId) }
-        checkPublication(artifactValidations.findByRawArtifact_Id(rawArtifactId)?.status == ArtifactValidationStatus.VALID,
-            "quality_failed", "Validated raw input is required before curation")
+        checkPublication(
+            artifactValidations.findByRawArtifact_Id(rawArtifactId)?.status == ArtifactValidationStatus.VALID,
+            "quality_failed",
+            "Validated raw input is required before curation",
+        )
         val sourceId = requireNotNull(artifact.source).id
         val dataset = datasets.findAllBySources_Id(sourceId).singleOrNull()
             ?: throw ResponseStatusException(HttpStatus.CONFLICT, "Raw artifact $rawArtifactId must map to exactly one dataset")
