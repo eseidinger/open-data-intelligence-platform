@@ -10,3 +10,7 @@ docker compose --file infrastructure/compose/docker-compose.yml ps
 PostgreSQL is available at `localhost:5432` with database, username, and password `odip`.
 
 These credentials are for local development only. Stop the services with `docker compose --file infrastructure/compose/docker-compose.yml down`. Add `--volumes` only when intentionally deleting all local data.
+
+For local S3 testing, use the optional RustFS profile and bucket/versioning setup
+in the [artifact storage runbook](../../docs/artifact-storage.md#local-rustfs).
+The deployed API uses Developer Platform S3 bindings rather than these local keys.

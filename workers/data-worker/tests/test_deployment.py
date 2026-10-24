@@ -132,6 +132,7 @@ class DeploymentTests(unittest.TestCase):
             ("/api/data-sources", "POST"),
             ("/api/datasets", "POST"),
             ("/api/v1/operator-capabilities", "GET"),
+            ("/api/v1/artifact-storage/raw/fixture/migrate", "POST"),
         ]:
             self.assertTrue(
                 permitted(path, method, "browser-session", "dataset-operators")
@@ -172,6 +173,79 @@ class DeploymentTests(unittest.TestCase):
                     route["authorization"]["anyOfGroups"], ["dataset-operators"]
                 )
 
+    def test_workflow_guard_requires_separate_database_and_s3_bindings(self):
+        workflow = (ROOT / ".github/workflows/platform-deploy.yml").read_text()
+        guard = textwrap.dedent(
+            workflow.split(
+                "      - name: Check deployment descriptor\n        run: |\n", 1
+            )[1].split("      - name:", 1)[0]
+        )
+        ids = [
+            "94983c92-41c2-439c-887b-3a6b59509633",
+            "59b4c8c3-6311-4ba8-b32c-218377cf25ec",
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "scripts").mkdir()
+            (root / "scripts/render-release.py").write_bytes(
+                (ROOT / "scripts/render-release.py").read_bytes()
+            )
+            for project, filename, ref in [
+                (
+                    "odip-test",
+                    "infrastructure/deployments/application-test.json",
+                    "refs/heads/main",
+                ),
+                (
+                    "odip",
+                    "infrastructure/deployments/application.json",
+                    "refs/tags/v0.5.1",
+                ),
+            ]:
+                for backend, bindings, passes in [
+                    ("postgres", ids[:1], True),
+                    ("s3", ids, True),
+                    ("s3", ids[:1], False),
+                    ("postgres", ids, False),
+                    ("s3", [ids[0], ids[0]], False),
+                    ("s3", [ids[0], "invalid-uuid"], False),
+                    ("unknown", ids[:1], False),
+                ]:
+                    with self.subTest(
+                        project=project, backend=backend, bindings=bindings
+                    ):
+                        declaration = json.loads((ROOT / filename).read_text())
+                        declaration["spec"]["configuration"]["values"].update(
+                            {
+                                "ODIP_ARTIFACT_STORAGE_BACKEND": backend,
+                                "ODIP_WORKER_BINDING_PREFIX": "ACCESS_TEST",
+                            }
+                        )
+                        declaration["spec"]["components"][0]["bindings"] = [
+                            {"bindingId": binding, "envPrefix": ""}
+                            for binding in bindings
+                        ]
+                        path = root / filename
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        path.write_text(json.dumps(declaration))
+                        env = dict(
+                            os.environ,
+                            PROJECT=project,
+                            DESCRIPTOR=filename,
+                            GITHUB_REF=ref,
+                            RUNNER_TEMP=directory,
+                            GITHUB_ENV=str(root / "github-env"),
+                        )
+                        result = subprocess.run(
+                            ["bash", "-e", "-c", guard],
+                            cwd=root,
+                            env=env,
+                            capture_output=True,
+                            text=True,
+                            check=False,
+                        )
+                        self.assertEqual(result.returncode == 0, passes, result.stderr)
+
     def test_workflow_guard_accepts_only_matching_ref_project_and_images(self):
         workflow = (ROOT / ".github/workflows/platform-deploy.yml").read_text()
         guard = workflow.split(
@@ -198,6 +272,11 @@ class DeploymentTests(unittest.TestCase):
                 declaration["spec"]["configuration"]["values"][
                     "ODIP_WORKER_BINDING_PREFIX"
                 ] = "ACCESS_TEST"
+                # This fixture intentionally tests the single-binding PostgreSQL path.
+                # S3 binding combinations are covered by the separate guard test.
+                declaration["spec"]["configuration"]["values"][
+                    "ODIP_ARTIFACT_STORAGE_BACKEND"
+                ] = "postgres"
                 (Path(directory) / filename).parent.mkdir(parents=True, exist_ok=True)
                 (Path(directory) / filename).write_text(json.dumps(declaration))
             version = "0.4.1"

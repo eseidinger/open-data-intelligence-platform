@@ -1,3 +1,4 @@
+import { ArtifactMigrationComponent } from '../../shared/artifact-migration/artifact-migration';
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -20,6 +21,7 @@ import {
   selector: 'app-publications-page',
   imports: [
     JsonPipe,
+    ArtifactMigrationComponent,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -83,6 +85,10 @@ export class PublicationsPageComponent {
   }
   canWrite(draft: PublicationDraft): boolean {
     return this.capabilities().writableDatasetIds.includes(draft.datasetId);
+  }
+  canMigrate(draft: PublicationDraft): boolean {
+    const storage = this.capabilities().artifactStorage;
+    return storage?.enabled === true && storage.publicationDatasetIds.includes(draft.datasetId);
   }
   select(draft: PublicationDraft): void {
     this.selected.set(draft);
@@ -166,12 +172,10 @@ export class PublicationsPageComponent {
     const dataset = this.grantForm.controls.datasetId.value;
     this.grants.set([]);
     if (dataset)
-      this.api
-        .grants(dataset)
-        .subscribe({
-          next: (grants) => this.grants.set(grants),
-          error: (error) => this.failed(error),
-        });
+      this.api.grants(dataset).subscribe({
+        next: (grants) => this.grants.set(grants),
+        error: (error) => this.failed(error),
+      });
   }
   grant(): void {
     if (this.grantForm.invalid) return;

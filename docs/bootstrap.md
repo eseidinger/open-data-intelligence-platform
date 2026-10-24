@@ -6,7 +6,7 @@ deployment credential. The first deployment runs only `web`: the platform needs
 that application before it can configure access policy and issue worker credentials.
 After worker access is active, deploy the complete application through GitHub Actions.
 
-Run commands from the repository root. The examples use profile `odip-lab`, which
+Run commands from the repository root. The examples use profile `lab`, which
 must have administrator access to the selected project. For an existing environment,
 inspect its resources and skip completed steps; do not bootstrap an application that
 already declares its worker.
@@ -48,9 +48,9 @@ devplat --version
 Create a profile if it does not exist, then authenticate:
 
 ```bash
-devplat profiles create odip-lab --api-url https://platform.eseidinger.de \
+devplat profiles create lab --api-url https://platform.eseidinger.de \
   --issuer https://identity.eseidinger.de/realms/platform --project odip-test
-devplat --profile odip-lab auth login
+devplat --profile lab auth login
 ```
 
 An existing profile can be reused for both projects: every setup command below
@@ -110,9 +110,9 @@ to the general egress allowlist.
 Inspect accessible projects, then create only those that are missing:
 
 ```bash
-devplat --profile odip-lab projects list --output json
-devplat --profile odip-lab projects create --project odip-test
-devplat --profile odip-lab projects create --project odip
+devplat --profile lab projects list --output json
+devplat --profile lab projects create --project odip-test
+devplat --profile lab projects create --project odip
 ```
 
 Project creation requires platform-administrator authority. Once the projects
@@ -124,16 +124,16 @@ must not be retired. Run the following sequence for test first, then production.
 Preview and apply test storage, saving its binding to the test descriptor:
 
 ```bash
-python scripts/setup-storage.py --profile odip-lab --project odip-test
-python scripts/setup-storage.py --profile odip-lab --project odip-test --apply \
+python scripts/setup-storage.py --profile lab --project odip-test
+python scripts/setup-storage.py --profile lab --project odip-test --apply \
   --update-descriptor infrastructure/deployments/application-test.json
 ```
 
 Repeat for production:
 
 ```bash
-python scripts/setup-storage.py --profile odip-lab --project odip
-python scripts/setup-storage.py --profile odip-lab --project odip --apply \
+python scripts/setup-storage.py --profile lab --project odip
+python scripts/setup-storage.py --profile lab --project odip --apply \
   --update-descriptor infrastructure/deployments/application.json
 ```
 
@@ -183,7 +183,7 @@ platform. Apply deploys it and waits for readiness:
 
 ```bash
 python scripts/bootstrap-deployment.py --project odip-test
-python scripts/bootstrap-deployment.py --profile odip-lab --project odip-test --apply
+python scripts/bootstrap-deployment.py --profile lab --project odip-test --apply
 ```
 
 For production, specify an already published release version. Replace `v0.4.1`
@@ -191,7 +191,7 @@ with the release you intend to deploy:
 
 ```bash
 python scripts/bootstrap-deployment.py --project odip --version v0.4.1
-python scripts/bootstrap-deployment.py --profile odip-lab --project odip \
+python scripts/bootstrap-deployment.py --profile lab --project odip \
   --version v0.4.1 --apply
 ```
 
@@ -207,11 +207,11 @@ write; use normal full deployment for that environment instead.
 Preview and apply the policy independently for each deployed application:
 
 ```bash
-python scripts/configure-access-policy.py --profile odip-lab --project odip-test
-python scripts/configure-access-policy.py --profile odip-lab --project odip-test --apply
+python scripts/configure-access-policy.py --profile lab --project odip-test
+python scripts/configure-access-policy.py --profile lab --project odip-test --apply
 
-python scripts/configure-access-policy.py --profile odip-lab --project odip
-python scripts/configure-access-policy.py --profile odip-lab --project odip --apply
+python scripts/configure-access-policy.py --profile lab --project odip
+python scripts/configure-access-policy.py --profile lab --project odip --apply
 ```
 
 Apply creates missing `dataset-operators`, `dataset-readers` and `ingestion-workers`
@@ -223,9 +223,9 @@ configuration do not approve a human or worker identity.
 Review and record each project's governance using the installation's policy:
 
 ```bash
-devplat --profile odip-lab governance replace --project odip-test \
+devplat --profile lab governance replace --project odip-test \
   --file infrastructure/integration/odip-governance.json
-devplat --profile odip-lab governance replace --project odip \
+devplat --profile lab governance replace --project odip \
   --file infrastructure/integration/odip-governance.json
 ```
 
@@ -238,11 +238,11 @@ them. The access policy does not release email attributes by default.
 Preview and apply worker access for each project:
 
 ```bash
-python scripts/configure-worker-access.py --profile odip-lab --project odip-test
-python scripts/configure-worker-access.py --profile odip-lab --project odip-test --apply
+python scripts/configure-worker-access.py --profile lab --project odip-test
+python scripts/configure-worker-access.py --profile lab --project odip-test --apply
 
-python scripts/configure-worker-access.py --profile odip-lab --project odip
-python scripts/configure-worker-access.py --profile odip-lab --project odip --apply
+python scripts/configure-worker-access.py --profile lab --project odip
+python scripts/configure-worker-access.py --profile lab --project odip --apply
 ```
 
 This helper requests a project-wide service identity named `<project>-worker`
@@ -282,10 +282,10 @@ installation these changes must include the actual installation's own references
 If the images are already published, full manual deployment is also available:
 
 ```bash
-devplat --profile odip-lab deploy apply --project odip-test \
+devplat --profile lab deploy apply --project odip-test \
   --file infrastructure/deployments/application-test.json --wait
 python scripts/render-release.py --version v0.4.1 > /tmp/odip-release.json
-devplat --profile odip-lab deploy apply --project odip --file /tmp/odip-release.json --wait
+devplat --profile lab deploy apply --project odip --file /tmp/odip-release.json --wait
 ```
 
 For local deployment, apply the local descriptor manually after saving its own
@@ -308,8 +308,8 @@ role alone does not grant application access. Inspect pending requests and appro
 the appropriate ID for each environment:
 
 ```bash
-devplat --profile odip-lab access human-requests list --project odip-test --output json
-devplat --profile odip-lab access human-requests approve REQUEST_ID \
+devplat --profile lab access human-requests list --project odip-test --output json
+devplat --profile lab access human-requests approve REQUEST_ID \
   --project odip-test --group dataset-operators --wait
 ```
 
@@ -323,9 +323,9 @@ without them, an authenticated worker still cannot process those datasets.
 Inspect readiness, scheduled runs and bounded logs:
 
 ```bash
-devplat --profile odip-lab components list --project odip-test --output json
-devplat --profile odip-lab logs --project odip-test --component web --tail 50
-devplat --profile odip-lab logs --project odip-test --component ingestion-worker --tail 50
+devplat --profile lab components list --project odip-test --output json
+devplat --profile lab logs --project odip-test --component web --tail 50
+devplat --profile lab logs --project odip-test --component ingestion-worker --tail 50
 ```
 
 Repeat for `odip`. Verify a representative claim, ingestion and publication in test
@@ -335,7 +335,7 @@ for dataset grants, publication verification and the VEF handoff.
 ## Recover interrupted setup
 
 Exit code 3 means authentication failed: unset stale authentication environment
-variables and run `devplat --profile odip-lab auth login` again. Exit code 4 means the selected identity lacks permission.
+variables and run `devplat --profile lab auth login` again. Exit code 4 means the selected identity lacks permission.
 A timeout does not cancel an accepted platform operation. Inspect operations and
 resource state before rerunning; helpers never automatically retry uncertain
 writes. Storage and worker setup discover matching resources on the next run.
@@ -347,3 +347,7 @@ access. If a worker prefix is missing, apply worker access and commit the update
 descriptor before retrying CI. Removing an application does not purge its named
 PostgreSQL data; retirement, purge, credential rotation, and database migration are
 separate operations.
+
+## Optional Phase 2 S3 binding
+
+After the PostgreSQL bootstrap, follow the [artifact storage runbook](artifact-storage.md#developer-platform-setup) to provision a separate S3 resource and append its `web` binding. Preserve the database binding. Apply the updated access policy before using the operator migration routes. The worker receives neither store binding.

@@ -1,0 +1,6 @@
+{
+  "name": "artifacts",
+  "provider": "s3",
+  "quota_bytes": 1073741824,
+  "extensions": []
+}

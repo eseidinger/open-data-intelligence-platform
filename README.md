@@ -30,13 +30,13 @@ The [documentation index](docs/README.md) is the authoritative entry point for t
 | [Architecture overview](docs/architecture/overview.md) | Components, logical model, data flow, interfaces, and evolution path. |
 | [Architecture decisions](docs/architecture/decisions.md) | Accepted baseline decisions and ADR format. |
 | [Development plan](docs/development-plan.md) | Phased delivery plan and exit criteria. |
-| [Energy configuration integration plan](docs/energy-configuration-integration-plan.md) | Next milestone: immutable dataset publication and the VEF integration handoff. |
+| [Energy configuration integration plan](docs/energy-configuration-integration-plan.md) | Accepted publication milestone and VEF integration handoff; regression baseline for subsequent releases. |
 | [Data lifecycle and governance](docs/data-lifecycle-and-governance.md) | Provenance, quality, licensing, access, and retention policies. |
 | [Experiment framework](docs/experiment-framework.md) | Comparable workloads, measurement controls, and evidence requirements. |
 
 ## Current status
 
-ODIP implements catalog and ingestion, PostgreSQL raw storage, energy curation, and generic immutable dataset publication with scoped access and an operator interface. The [energy configuration integration](docs/energy-configuration-integration-plan.md) is verified locally, including restart and PostgreSQL restoration. The next gate is platform provisioning and the deployed VEF handoff using the [integration runbook](docs/energy-configuration-integration-runbook.md).
+ODIP implements catalog and ingestion, energy curation, and generic immutable dataset publication with scoped access and an operator interface. The [energy configuration integration](docs/energy-configuration-integration-plan.md#completion-criteria) was accepted by maintainer confirmation on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0; the completion record distinguishes acceptance from retained execution evidence. Phase 2 is next: quality and analytics with Developer Platform S3 storage, Parquet, and DuckDB. The [storage runbook](docs/artifact-storage.md) describes the S3 adapter and controlled migration; the [integration runbook](docs/energy-configuration-integration-runbook.md) remains the deployment and regression baseline. Gate 6 AI work remains with VEF and the cross-project owners.
 
 ## License
 

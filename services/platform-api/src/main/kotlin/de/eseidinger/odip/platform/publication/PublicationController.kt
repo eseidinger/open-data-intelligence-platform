@@ -26,7 +26,7 @@ class PublicationScheduling
 
 @RestController
 @RequestMapping("/api/v1")
-class PublicationController(private val service: PublicationService, private val access: DatasetAccess, private val jdbc: JdbcTemplate) {
+class PublicationController(private val service: PublicationService, private val access: DatasetAccess, private val jdbc: JdbcTemplate, private val storage: ArtifactStorage) {
     @PutMapping("/publication-retention")
     @Transactional
     fun support(request: HttpServletRequest, @RequestBody body: SupportEndRequest): ResponseEntity<Void> {
@@ -85,6 +85,11 @@ class PublicationController(private val service: PublicationService, private val
         "manageGrants" to true,
         "writableDatasetIds" to
             jdbc.queryForList("SELECT id FROM dataset", UUID::class.java).filterNotNull().filter { access.allowed(access.principal(request), it, "WRITE") },
+        "artifactStorage" to mapOf(
+            "enabled" to storage.externalWrites(),
+            "publicationDatasetIds" to if (storage.externalWrites()) jdbc.queryForList("SELECT id FROM dataset", UUID::class.java).filterNotNull().filter { access.allowed(access.principal(request), it, "READ") && access.allowed(access.principal(request), it, "WRITE") } else emptyList<UUID>(),
+            "sourceIds" to if (storage.externalWrites()) jdbc.queryForList("SELECT id FROM data_source", UUID::class.java).filterNotNull().filter { access.sourceAllowed(request, it, "READ") && access.sourceAllowed(request, it, "INGEST") } else emptyList<UUID>(),
+        ),
     )
 
     @GetMapping("/dataset-grants/{dataset}")

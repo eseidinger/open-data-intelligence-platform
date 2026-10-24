@@ -75,6 +75,21 @@ class PublicationIntegrationTests(
         return report
     }
 
+    @Test fun `UI migration capabilities are disabled without S3`() {
+        mvc.perform(
+            get("/api/v1/operator-capabilities").headers(
+                org.springframework.http.HttpHeaders().also { headers ->
+                    val request = principal("writer")
+                    request.headerNames.toList().forEach { headers.add(it, request.getHeader(it)) }
+                },
+            ),
+        )
+            .andExpect(status().isOk)
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.artifactStorage.enabled").value(false))
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.artifactStorage.publicationDatasetIds").isEmpty)
+            .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.artifactStorage.sourceIds").isEmpty)
+    }
+
     @Test fun `both shared fixtures publish and retain exact canonical bytes`() {
         for (name in listOf("energy-reference-wasserburg-am-inn-2024", "non-energy-mobility-counts-2024")) {
             val (id, _, _) = prepare(name)

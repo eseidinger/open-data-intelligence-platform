@@ -1,4 +1,4 @@
-"""Preview or provision ODIP's named PostgreSQL resource and web binding via devplat.
+"""Preview or provision ODIP's named PostgreSQL or S3 resource and web binding via devplat.
 
 Use --apply to create missing resources. Repeated runs reuse matching resources;
 this script never migrates data, changes quotas, revokes access, or deploys.
@@ -16,6 +16,7 @@ from uuid import UUID
 
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCE = ROOT / "infrastructure/integration/odip-postgresql.json"
+S3_RESOURCE = ROOT / "infrastructure/integration/odip-s3.json"
 CLI_VERSION = "0.3.0"
 
 
@@ -96,13 +97,13 @@ def validate_resource(row, project, desired):
     if (
         row.get("owner_project") != project
         or row.get("name") != desired["name"]
-        or row.get("provider") != "postgresql"
+        or row.get("provider") != desired["provider"]
         or row.get("state") != "active"
         or row.get("quota_bytes") != desired["quota_bytes"]
         or row.get("extensions", []) != desired["extensions"]
     ):
         raise StorageError(
-            "Existing resource does not match the requested active PostgreSQL configuration; review it manually."
+            "Existing resource does not match the requested active storage configuration; review it manually."
         )
 
 
@@ -142,16 +143,20 @@ def wait_active(read, validate, timeout, *, clock=time.monotonic, sleep=time.sle
 def setup(cli, project, desired, *, apply=False, timeout=180):
     if not re.fullmatch(r"[a-z](?:[a-z0-9-]{0,30}[a-z0-9])?", project):
         raise StorageError("Supply a valid project slug of at most 32 characters.")
+    if desired.get("provider") not in {"postgresql", "s3"}:
+        raise StorageError("Unsupported storage provider.")
     context = cli.invoke(["stores", "context", "--project", project])
     if context.get("project") != project or context.get("manage") is not True:
         raise StorageError(
             "Use an existing project and a project-administrator login; deployment credentials cannot set up stores."
         )
     if not any(
-        p.get("id") == "postgresql" and p.get("enabled") is True
+        p.get("id") == desired["provider"] and p.get("enabled") is True
         for p in context.get("providers", [])
     ):
-        raise StorageError("PostgreSQL is not enabled on this platform.")
+        raise StorageError(
+            "The requested storage provider is not enabled on this platform."
+        )
     resources = items(cli.invoke(["stores", "list", "--project", project]), "resources")
     matches = [row for row in resources if row.get("name") == desired["name"]]
     if len(matches) > 1:
@@ -165,10 +170,18 @@ def setup(cli, project, desired, *, apply=False, timeout=180):
     bindings = items(
         cli.invoke(["stores", "bindings", "list", "--project", project]), "bindings"
     )
+    other_provider_resources = {
+        row["resource_id"]
+        for row in resources
+        if row.get("provider") in {"postgresql", "s3"}
+        and row.get("provider") != desired["provider"]
+    }
     candidates = [
         row
         for row in bindings
-        if row.get("component") == "web" and row.get("state") in ("pending", "active")
+        if row.get("component") == "web"
+        and row.get("state") in ("pending", "active")
+        and row.get("resource_id") not in other_provider_resources
     ]
     if len(candidates) > 1 or (
         candidates
@@ -232,7 +245,11 @@ def setup(cli, project, desired, *, apply=False, timeout=180):
         "binding_id": binding_id,
         "component": "web",
         "observed_state": "active",
-        "ODIP_DATABASE_BINDING_ID": binding_id,
+        (
+            "ODIP_S3_BINDING_ID"
+            if desired["provider"] == "s3"
+            else "ODIP_DATABASE_BINDING_ID"
+        ): binding_id,
     }
 
 
@@ -242,6 +259,9 @@ def main(argv=None):
         "--profile", help="Existing devplat profile; otherwise use the active profile"
     )
     parser.add_argument("--project", default="odip")
+    parser.add_argument(
+        "--provider", choices=("postgresql", "s3"), default="postgresql"
+    )
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument(
         "--apply",
@@ -285,7 +305,9 @@ def main(argv=None):
                 raise StorageError(
                     "The deployment descriptor must contain exactly one web component."
                 )
-        desired = json.loads(RESOURCE.read_text())
+        desired = json.loads(
+            (S3_RESOURCE if args.provider == "s3" else RESOURCE).read_text()
+        )
         if args.quota_bytes is not None:
             desired["quota_bytes"] = args.quota_bytes
         if not 1048576 <= desired["quota_bytes"] <= 1099511627776:
@@ -312,7 +334,13 @@ def main(argv=None):
             web = next(
                 c for c in descriptor["spec"]["components"] if c["name"] == "web"
             )
-            web["bindings"] = [{"bindingId": result["binding_id"], "envPrefix": ""}]
+            existing = web.setdefault("bindings", [])
+            if not any(b.get("bindingId") == result["binding_id"] for b in existing):
+                existing.append({"bindingId": result["binding_id"], "envPrefix": ""})
+            if args.provider == "s3":
+                descriptor["spec"]["configuration"]["values"][
+                    "ODIP_ARTIFACT_STORAGE_BACKEND"
+                ] = "s3"
             args.update_descriptor.write_text(json.dumps(descriptor, indent=2) + "\n")
         print(json.dumps(result, indent=2))
         return 0

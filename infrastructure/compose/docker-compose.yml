@@ -15,5 +15,26 @@ services:
       timeout: 3s
       retries: 10
 
+  rustfs:
+    profiles: [s3]
+    image: rustfs/rustfs:1.0.2@sha256:7e948dad4748bda48f8985fda7195f8cf2e4259427011f6120acc2c9acf51587
+    environment:
+      RUSTFS_ACCESS_KEY: odip-local-access
+      RUSTFS_SECRET_KEY: odip-local-secret-only
+      RUSTFS_VOLUMES: /data
+      RUSTFS_OBS_LOGGER_LEVEL: error
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - rustfs-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9000/health/ready"]
+      interval: 5s
+      timeout: 3s
+      start_period: 30s
+      retries: 20
+
 volumes:
   postgres-data:
+  rustfs-data:

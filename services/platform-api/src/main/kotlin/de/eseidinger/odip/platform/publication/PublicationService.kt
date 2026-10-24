@@ -68,8 +68,9 @@ class PublicationService(
         val identity = jdbc.queryForList("SELECT dataset_id FROM dataset_public_identity WHERE public_dataset_id=?", publicId).firstOrNull()
         checkPublication(identity?.get("dataset_id") == body.datasetId, "dataset_identity_conflict", "Public identifier is already bound to another dataset", 409)
         body.rawArtifactIds.forEach { raw ->
-            checkPublication(jdbc.queryForList("SELECT r.id FROM raw_artifact r JOIN dataset_source ds ON ds.source_id=r.source_id WHERE r.id=? AND ds.dataset_id=? AND r.payload IS NOT NULL AND octet_length(r.payload)=r.content_length", raw, body.datasetId).isNotEmpty(), "invalid_lineage", "Input artifact must have captured bytes and belong to a contributing source")
+            checkPublication(jdbc.queryForList("SELECT r.id FROM raw_artifact r JOIN dataset_source ds ON ds.source_id=r.source_id WHERE r.id=? AND ds.dataset_id=? AND ((r.payload IS NOT NULL AND octet_length(r.payload)=r.content_length) OR EXISTS(SELECT 1 FROM artifact_object o WHERE o.raw_artifact_id=r.id AND o.sha256=r.checksum_sha256 AND o.content_length=r.content_length))", raw, body.datasetId).isNotEmpty(), "invalid_lineage", "Input artifact must have captured bytes and belong to a contributing source")
         }
+        body.rawArtifactIds.forEach { storage.readRaw(it) }
         val id = UUID.randomUUID()
         jdbc.update(
             "INSERT INTO dataset_publication(id,dataset_id,public_dataset_id,version,manifest,manifest_sha256,status,creator,idempotency_key,request_sha256) VALUES (?,?,?,?,?,?,'DRAFT',?,?,?)",
@@ -94,7 +95,7 @@ class PublicationService(
             checkPublication(previous.contentEquals(bytes), "artifact_conflict", "Uploaded artifact is immutable", 409)
             return
         }
-        val total = jdbc.queryForObject("SELECT COALESCE(SUM(octet_length(payload)),0) FROM publication_artifact WHERE publication_id=?", Long::class.java, id) ?: 0L
+        val total = jdbc.queryForObject("SELECT COALESCE(SUM(COALESCE(content_length,octet_length(payload))),0) FROM publication_artifact WHERE publication_id=?", Long::class.java, id) ?: 0L
         checkPublication(total + bytes.size <= 52428800, "publication_limit_exceeded", "Publication exceeds 50 MiB")
         if (descriptor["mediaType"].asText() == "application/json") {
             checkPublication(contracts.canonical(bytes).contentEquals(bytes), "non_canonical_artifact", "JSON artifacts must use RFC 8785 canonical bytes")

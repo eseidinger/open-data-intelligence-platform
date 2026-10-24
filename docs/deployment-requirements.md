@@ -30,7 +30,7 @@ Provision database storage, backups, replication, retention, and restore capacit
 
 The migration adds the payload column without inventing content for existing artifact rows. If prior artifacts must remain downloadable, retain their old storage long enough to backfill the payload column or document that historical payloads are unavailable; all newly completed runs store their payload in PostgreSQL.
 
-S3-compatible object storage is a required Phase 2 capability for raw artifacts and Parquet publications. It is not required by the current Phase 1 deployment. Before entering Phase 2, the deployment must add endpoint, bucket, identity, encryption, lifecycle, backup, health-check, and PostgreSQL-to-S3 migration requirements.
+Phase 2 uses Developer Platform S3 bindings for raw artifacts and publication outputs; local application tests use RustFS. The [artifact storage runbook](artifact-storage.md) defines the injected binding environment, private access, versioning, readiness, migration, retention and recovery requirements. PostgreSQL remains the default until an S3 binding is provisioned and the backend is enabled. Confirm installation-owned transport/at-rest encryption and joint PostgreSQL/bucket backups before production activation. Parquet generation remains subsequent Phase 2 work.
 
 ### Ingestion worker
 
@@ -58,7 +58,7 @@ See the [integration runbook](energy-configuration-integration-runbook.md) for t
 
 ## Configuration and secrets
 
-On Developer Platform, the unprefixed `web` binding injects `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`. The production Spring configuration consumes them directly. Only `web` receives these managed store credentials and database egress; the worker must remain unbound. Remove stale `ODIP_DATABASE_*` overrides when switching to this binding. Outside Developer Platform, supply the following database overrides and payload limit:
+On Developer Platform, the unprefixed `web` binding injects `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD`. The production Spring configuration consumes them directly. Only `web` receives these managed store credentials and database egress; an additional S3 binding also belongs only to `web`; the worker must remain unbound. Remove stale `ODIP_DATABASE_*` overrides when switching to this binding. Outside Developer Platform, supply the following database overrides and payload limit:
 
 | Setting | Required value |
 | --- | --- |

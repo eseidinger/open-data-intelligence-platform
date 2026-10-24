@@ -49,8 +49,9 @@ class IngestionController(private val ingestionService: IngestionService) {
 
     @GetMapping("/raw-artifacts/{artifactId}/content")
     fun content(@PathVariable artifactId: UUID): ResponseEntity<ByteArray> {
-        val artifact = ingestionService.artifactContent(artifactId)
-        val payload = requireNotNull(artifact.payload) { "Raw artifact content is unavailable" }
+        val stored = ingestionService.artifactContent(artifactId)
+        val artifact = stored.artifact
+        val payload = stored.bytes
         val contentType = artifact.contentType?.let { runCatching { MediaType.parseMediaType(it) }.getOrNull() } ?: MediaType.APPLICATION_OCTET_STREAM
         return ResponseEntity.ok().header("Content-Disposition", "attachment; filename=\"${artifact.id}.bin\"").header("X-Content-Type-Options", "nosniff").contentType(contentType).contentLength(artifact.contentLength).body(payload)
     }

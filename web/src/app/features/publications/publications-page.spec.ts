@@ -14,12 +14,20 @@ describe('Publication operator access', () => {
   });
   afterEach(() => http.verify());
 
-  function create(operator: boolean) {
+  function create(operator: boolean, enabled = true) {
     const fixture = TestBed.createComponent(PublicationsPageComponent);
     http.expectOne('/api/v1/publication-drafts').flush([]);
     http
       .expectOne('/api/v1/operator-capabilities')
-      .flush({ manageGrants: operator, writableDatasetIds: operator ? ['dataset'] : [] });
+      .flush({
+        manageGrants: operator,
+        writableDatasetIds: operator ? ['dataset'] : [],
+        artifactStorage: {
+          enabled,
+          publicationDatasetIds: operator ? ['dataset'] : [],
+          sourceIds: [],
+        },
+      });
     http
       .expectOne('/api/datasets')
       .flush([{ id: 'dataset', name: 'Reference', sources: [], classification: 'PUBLIC' }]);
@@ -47,5 +55,44 @@ describe('Publication operator access', () => {
     await fixture.componentInstance.chooseManifest(event);
     expect(fixture.componentInstance.error()).toContain('valid publication manifest');
     http.expectNone('/api/v1/publication-drafts', 'No write should be sent');
+  });
+  it('shows migration for permitted published artifacts and hides it when S3 is disabled', () => {
+    const fixture = create(true);
+    const draft = {
+      id: 'publication',
+      datasetId: 'dataset',
+      status: 'PUBLISHED' as const,
+      manifestSha256: 'a'.repeat(64),
+      report: null,
+      failureCode: null,
+      manifest: {
+        datasetId: 'energy',
+        version: '1.0.0',
+        schemaRef: 'energy:v1',
+        metadata: {},
+        artifacts: [
+          {
+            artifactId: 'hourly-counts',
+            role: 'counts',
+            mediaType: 'application/json',
+            sha256: 'b'.repeat(64),
+          },
+        ],
+        quality: { status: 'PASS', policyRef: 'quality:v1', warnings: [] },
+        provenance: [],
+      },
+    };
+    fixture.componentInstance.select(draft);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Check S3 migration for hourly-counts',
+    );
+    fixture.componentInstance.capabilities.set({
+      manageGrants: true,
+      writableDatasetIds: ['dataset'],
+      artifactStorage: { enabled: false, publicationDatasetIds: [], sourceIds: [] },
+    });
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Check S3 migration');
   });
 });

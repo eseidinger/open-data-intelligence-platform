@@ -48,6 +48,11 @@ export interface DatasetGrant {
 export interface OperatorCapabilities {
   manageGrants: boolean;
   writableDatasetIds: readonly string[];
+  artifactStorage?: {
+    enabled: boolean;
+    publicationDatasetIds: readonly string[];
+    sourceIds: readonly string[];
+  };
 }
 
 @Injectable({ providedIn: 'root' })

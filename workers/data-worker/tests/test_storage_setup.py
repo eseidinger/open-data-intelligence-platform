@@ -161,7 +161,7 @@ class StorageTests(unittest.TestCase):
             )
 
     def test_cli_uses_json_stdin_and_does_not_echo_errors(self):
-        cli = storage.PlatformCLI("odip-lab")
+        cli = storage.PlatformCLI("lab")
         with patch.object(
             storage.subprocess,
             "run",
@@ -171,7 +171,7 @@ class StorageTests(unittest.TestCase):
                 ["stores", "create", "--project", "odip", "--file", "-"], DESIRED
             )
         self.assertEqual(json.loads(run.call_args.kwargs["input"]), DESIRED)
-        self.assertIn("odip-lab", run.call_args.args[0])
+        self.assertIn("lab", run.call_args.args[0])
         with patch.object(
             storage.subprocess,
             "run",
@@ -180,7 +180,7 @@ class StorageTests(unittest.TestCase):
             with self.assertRaises(storage.StorageError) as error:
                 cli.invoke(["stores", "list", "--project", "odip"])
         self.assertNotIn("sensitive-value", str(error.exception))
-        self.assertIn("devplat --profile odip-lab auth login", str(error.exception))
+        self.assertIn("devplat --profile lab auth login", str(error.exception))
         self.assertIn("PLATFORM_ACCESS_TOKEN", str(error.exception))
 
     def test_invalid_project_prevents_cli_call(self):
@@ -210,9 +210,9 @@ class StorageTests(unittest.TestCase):
                     storage.main(["--apply", "--update-descriptor", str(path)]), 0
                 )
             expected = copy.deepcopy(original)
-            expected["spec"]["components"][0]["bindings"] = [
+            expected["spec"]["components"][0]["bindings"].append(
                 {"bindingId": BINDING_ID, "envPrefix": ""}
-            ]
+            )
             self.assertEqual(json.loads(path.read_text()), expected)
 
     def test_descriptor_update_rejects_wrong_project_before_provisioning(self):
@@ -230,3 +230,104 @@ class StorageTests(unittest.TestCase):
                 1,
             )
         provision.assert_not_called()
+
+
+class S3StorageTests(unittest.TestCase):
+    def test_s3_setup_reuses_postgres_without_changing_its_binding(self):
+        cli = FakeCLI()
+        desired = json.loads(storage.S3_RESOURCE.read_text())
+        invoke = cli.invoke
+        postgres = {
+            "resource_id": "fdb62935-044e-499f-b143-5d3bebfc6a1d",
+            "name": "database",
+            "provider": "postgresql",
+        }
+        postgres_binding = {
+            "grant_id": "efbf65b1-1891-4a4f-b8ee-95895c902276",
+            "resource_id": postgres["resource_id"],
+            "component": "web",
+            "state": "active",
+        }
+
+        def with_postgres(arguments, body=None):
+            result = invoke(arguments, body)
+            if arguments[:2] == ["stores", "context"]:
+                result["providers"].append({"id": "s3", "enabled": True})
+            if arguments[:2] == ["stores", "list"]:
+                result["resources"].append(copy.deepcopy(postgres))
+            if arguments[:3] == ["stores", "bindings", "list"]:
+                result["bindings"].append(copy.deepcopy(postgres_binding))
+            return result
+
+        with patch.object(cli, "invoke", side_effect=with_postgres):
+            preview = storage.setup(cli, "odip", desired)
+            self.assertEqual(preview["resource_action"], "create")
+            self.assertEqual(cli.writes, [])
+            result = storage.setup(cli, "odip", desired, apply=True)
+            self.assertEqual(result["ODIP_S3_BINDING_ID"], BINDING_ID)
+            self.assertEqual(cli.resource["provider"], "s3")
+            cli.writes.clear()
+            self.assertEqual(storage.setup(cli, "odip", desired, apply=True), result)
+            self.assertEqual(cli.writes, [])
+
+    def test_s3_descriptor_adds_binding_and_backend_and_preserves_database(self):
+        original = json.loads(
+            (ROOT / "infrastructure/deployments/application.json").read_text()
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "application.json"
+            path.write_text(json.dumps(original))
+            with (
+                patch.object(
+                    storage.subprocess,
+                    "run",
+                    return_value=subprocess.CompletedProcess(
+                        [], 0, storage.CLI_VERSION, ""
+                    ),
+                ),
+                patch.object(storage, "setup", return_value={"binding_id": BINDING_ID}),
+                patch("builtins.print"),
+            ):
+                self.assertEqual(
+                    storage.main(
+                        [
+                            "--provider",
+                            "s3",
+                            "--apply",
+                            "--update-descriptor",
+                            str(path),
+                        ]
+                    ),
+                    0,
+                )
+                # Retrying must not append duplicate bindings.
+                self.assertEqual(
+                    storage.main(
+                        [
+                            "--provider",
+                            "s3",
+                            "--apply",
+                            "--update-descriptor",
+                            str(path),
+                        ]
+                    ),
+                    0,
+                )
+            actual = json.loads(path.read_text())
+        self.assertEqual(
+            actual["spec"]["components"][0]["bindings"],
+            original["spec"]["components"][0]["bindings"]
+            + [{"bindingId": BINDING_ID, "envPrefix": ""}],
+        )
+        self.assertEqual(
+            actual["spec"]["configuration"]["values"]["ODIP_ARTIFACT_STORAGE_BACKEND"],
+            "s3",
+        )
+
+    def test_disabled_s3_provider_prevents_all_writes(self):
+        cli = FakeCLI()
+        with self.assertRaises(storage.StorageError):
+            storage.setup(
+                cli, "odip", json.loads(storage.S3_RESOURCE.read_text()), apply=True
+            )
+        self.assertEqual(cli.writes, [])

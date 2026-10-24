@@ -39,7 +39,7 @@ class PublicationContracts {
         if (node.isArray) return mapper.createArrayNode().also { array -> node.forEach { array.add(rewrite(it, context)) } }
         if (!node.isObject) return node
         val result = mapper.createObjectNode()
-        node.fields().forEachRemaining { (key, value) ->
+        node.properties().forEach { (key, value) ->
             if (key != "\$id") {
                 if (key == "\$ref") {
                     val ref = value.asText()

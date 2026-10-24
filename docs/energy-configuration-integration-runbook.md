@@ -53,24 +53,24 @@ devplat --version
 Create a CLI profile and sign in as a project administrator. Confirm the installation's issuer before creating the profile; the commands below use `https://identity.eseidinger.de/realms/platform`:
 
 ```bash
-devplat profiles create odip-lab --api-url https://platform.eseidinger.de \
+devplat profiles create lab --api-url https://platform.eseidinger.de \
   --issuer https://identity.eseidinger.de/realms/platform --project odip
-devplat --profile odip-lab auth login
+devplat --profile lab auth login
 ```
 
-If `odip-lab` already exists, inspect it with `devplat profiles show odip-lab` and reuse it rather than recreating it. Human login uses the CLI's device flow and secure OS keyring. Run the commands from a desktop terminal with access to the OS keyring. Follow the verification URL and user code printed by `auth login` and sign in as a project administrator.
+If `lab` already exists, inspect it with `devplat profiles show lab` and reuse it rather than recreating it. Human login uses the CLI's device flow and secure OS keyring. Run the commands from a desktop terminal with access to the OS keyring. Follow the verification URL and user code printed by `auth login` and sign in as a project administrator.
 
 Environment authentication takes precedence over profile login. Clear stale authentication variables and API overrides before signing in with the selected profile:
 
 ```bash
 unset PLATFORM_ACCESS_TOKEN PLATFORM_TOKEN_ENDPOINT PLATFORM_CLIENT_ID PLATFORM_CLIENT_SECRET PLATFORM_API_URL
 
-devplat --profile odip-lab auth login
-devplat --profile odip-lab --output json auth status
-devplat --profile odip-lab --output json access context --project odip
+devplat --profile lab auth login
+devplat --profile lab --output json auth status
+devplat --profile lab --output json access context --project odip
 ```
 
-The authentication source should be `human-profile-session`. `auth status` reports the selected source without validating the session against the server; `access context` makes an authenticated read and lets you check project eligibility and access-policy administration permissions. If authentication fails, run `devplat --profile odip-lab auth login` again. A deployment credential or hosted ODIP session cannot administer platform access policy.
+The authentication source should be `human-profile-session`. `auth status` reports the selected source without validating the session against the server; `access context` makes an authenticated read and lets you check project eligibility and access-policy administration permissions. If authentication fails, run `devplat --profile lab auth login` again. A deployment credential or hosted ODIP session cannot administer platform access policy.
 
 For the local Developer Platform, follow the [local authentication and network
 notes](bootstrap.md#prepare-tools-and-authentication). Substitute profile
@@ -83,7 +83,7 @@ Preview the complete policy for the disposable installation:
 
 ```bash
 python3 scripts/configure-access-policy.py \
-  --profile odip-lab --project odip
+  --profile lab --project odip
 ```
 
 The script checks the CLI version and authentication source, then uses `devplat access context`, `access groups list`, and `access policy get` with JSON output to validate eligibility and preview the policy. The preview lists missing groups under `groupsToCreate` without creating them; policy group references remain names until all stable IDs exist. With `--apply`, it creates missing `dataset-operators`, `dataset-readers`, and `ingestion-workers` groups from `infrastructure/integration/groups.json`, using project-specific idempotency keys, then reads back their active IDs before applying the policy. Existing active groups are reused; duplicate, inactive or malformed groups stop the operation. Group creation failures stop policy application and are never automatically retried. Select either `--project odip` or `--project odip-test`. `--platform-url` overrides the CLI profile's API origin when needed; otherwise the active or selected profile supplies it. HTTPS is required, and the script never requests insecure TLS. The CLI honors `PLATFORM_CA_BUNDLE` or the profile's CA bundle.
@@ -92,7 +92,7 @@ Review the preview, then apply it:
 
 ```bash
 python3 scripts/configure-access-policy.py \
-  --profile odip-lab --project odip --apply
+  --profile lab --project odip --apply
 ```
 
 `--apply` creates missing groups and creates or **replaces the entire access policy**, including any manually added rules. It sends non-secret policy JSON through stdin to `devplat access policy apply --file - --wait`. Existing-policy updates pass the exact quoted CLI ETag through `--if-match`; initial creation uses CLI v0.3.0's native version handling because that release rejects the zero-version ETag. Do not run concurrent initial policy creation from another administrator or automation. The CLI owns HTTPS transport, redirect rejection, authentication, and operation watching. The wrapper does not print raw CLI errors or credentials, preserves CLI failure exit codes, and never retries a write. It does not change existing groups, governance, membership, service approval, or dataset grants.
@@ -155,8 +155,8 @@ for component `web` before deploying `odip`:
 ```bash
 # Upgrade the Python environment that owns devplat, if needed.
 bash scripts/upgrade-devplat.sh /path/to/venv/bin/python
-python scripts/setup-storage.py --profile odip-lab --project odip
-python scripts/setup-storage.py --profile odip-lab --project odip --apply \
+python scripts/setup-storage.py --profile lab --project odip
+python scripts/setup-storage.py --profile lab --project odip --apply \
   --update-descriptor infrastructure/deployments/application.json
 ```
 
@@ -168,7 +168,7 @@ saves the approved binding UUID in `web.bindings` with an empty `envPrefix`.
 For test storage, use the same shared script with the test project and descriptor:
 
 ```bash
-python scripts/setup-storage.py --profile odip-lab --project odip-test --apply \
+python scripts/setup-storage.py --profile lab --project odip-test --apply \
   --update-descriptor infrastructure/deployments/application-test.json
 ```
 
@@ -189,9 +189,9 @@ migration before switching to a new resource.
 For manual deployment after provisioning, apply the test descriptor directly or render the production release first:
 
 ```bash
-devplat --profile odip-lab deploy apply --project odip-test --file infrastructure/deployments/application-test.json --wait
+devplat --profile lab deploy apply --project odip-test --file infrastructure/deployments/application-test.json --wait
 python scripts/render-release.py --version v0.4.1 > /tmp/odip-release.json
-devplat --profile odip-lab deploy apply --project odip --file /tmp/odip-release.json --wait
+devplat --profile lab deploy apply --project odip --file /tmp/odip-release.json --wait
 ```
 
 For local deployment, use `--profile odip-local --project odip-test-local` and

@@ -47,11 +47,16 @@ jobs:
             *) echo 'Deployment target does not match the Git ref'; exit 1 ;;
           esac
           jq -e --arg project "$PROJECT" --arg version "$expected_version" '
+            (.spec.configuration.values.ODIP_ARTIFACT_STORAGE_BACKEND // "postgres") as $storage |
+            ($storage == "postgres" or $storage == "s3") and
             .metadata.name == $project and .metadata.project == $project and
             (.spec.components | all(.runtime.image | endswith(":" + $version))) and
             (.spec.components[] | select(.name == "web") | .bindings |
-              length == 1 and .[0].envPrefix == "" and
-              (.[0].bindingId | test("^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"))) and
+              . as $bindings |
+              length == (if $storage == "s3" then 2 else 1 end) and
+              all(.[]; .envPrefix == "" and
+                (.bindingId | test("^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$"))) and
+              (($bindings | map(.bindingId) | unique | length) == ($bindings | length))) and
             (.spec.configuration.values.ODIP_WORKER_BINDING_PREFIX |
               test("^ACCESS_[A-Z0-9_]+$"))
           ' "$DESCRIPTOR" > /dev/null

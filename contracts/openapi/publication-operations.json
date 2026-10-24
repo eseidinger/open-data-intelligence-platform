@@ -317,6 +317,47 @@
             "format": "uuid"
           }
         }
+      },
+      "StorageMigrationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "apply": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "description": "Preview by default. Apply only after reviewing the artifact identity and checksum."
+      },
+      "StorageMigrationResult": {
+        "type": "object",
+        "required": [
+          "status",
+          "sha256",
+          "contentLength",
+          "postgresCopyRetained"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "migrated",
+              "already_migrated"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "contentLength": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "postgresCopyRetained": {
+            "type": "boolean"
+          }
+        }
       }
     },
     "responses": {
@@ -1066,7 +1107,8 @@
                   "type": "object",
                   "required": [
                     "manageGrants",
-                    "writableDatasetIds"
+                    "writableDatasetIds",
+                    "artifactStorage"
                   ],
                   "properties": {
                     "manageGrants": {
@@ -1078,6 +1120,35 @@
                       "items": {
                         "type": "string",
                         "format": "uuid"
+                      }
+                    },
+                    "artifactStorage": {
+                      "type": "object",
+                      "required": [
+                        "enabled",
+                        "publicationDatasetIds",
+                        "sourceIds"
+                      ],
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "publicationDatasetIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "description": "Datasets with READ and WRITE; empty when S3 is disabled."
+                        },
+                        "sourceIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "description": "Sources with READ and INGEST through contributing datasets; empty when S3 is disabled."
+                        }
                       }
                     }
                   }
@@ -1298,6 +1369,151 @@
           },
           "403": {
             "$ref": "#/components/responses/Error403"
+          }
+        }
+      }
+    },
+    "/api/v1/artifact-storage/raw/{id}/migrate": {
+      "post": {
+        "operationId": "migrateRawArtifactStorage",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DraftId"
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          },
+          "200": {
+            "description": "Verified preview, completed migration, or verified idempotent repeat.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageMigrationResult"
+                }
+              }
+            }
+          }
+        },
+        "description": "Requires platform operator session and dataset READ plus INGEST. Preserves raw bytes and lineage. Uses a new UUID key and exact S3 version; verifies readback before committing the reference. Existing PostgreSQL copies are retained.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorageMigrationRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/artifact-storage/publications/{id}/artifacts/{artifact}/migrate": {
+      "post": {
+        "operationId": "migratePublicationArtifactStorage",
+        "security": [
+          {
+            "platformSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DraftId"
+          },
+          {
+            "$ref": "#/components/parameters/ArtifactId"
+          },
+          {
+            "$ref": "#/components/parameters/Origin"
+          },
+          {
+            "$ref": "#/components/parameters/Csrf"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Managed browser login required"
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "413": {
+            "$ref": "#/components/responses/Error413"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          },
+          "200": {
+            "description": "Verified preview, completed migration, or verified idempotent repeat.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageMigrationResult"
+                }
+              }
+            }
+          }
+        },
+        "description": "Requires platform operator session and dataset READ plus WRITE. Preserves immutable published bytes and manifest. Uses a new UUID key and exact S3 version; verifies readback before committing the reference. Existing PostgreSQL copies are retained.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorageMigrationRequest"
+              }
+            }
           }
         }
       }

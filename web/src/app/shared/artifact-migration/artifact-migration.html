@@ -1,0 +1,52 @@
+<section [attr.aria-label]="'S3 migration for ' + label()" [attr.aria-busy]="busy() !== null">
+  <p>Move this artifact to S3. Its content and publication version stay the same.</p>
+  <div class="actions">
+    <button
+      #checkButton
+      mat-stroked-button
+      type="button"
+      (click)="check()"
+      [disabled]="busy() !== null"
+    >
+      Check S3 migration for {{ label() }}
+    </button>
+    @if (result()?.status === 'ready') {
+      <button mat-flat-button type="button" (click)="migrate()" [disabled]="busy() !== null">
+        Migrate {{ label() }} to S3
+      </button>
+    }
+  </div>
+  <div role="status" aria-atomic="true">
+    @if (busy() === 'checking') {
+      <p>Checking migration…</p>
+    }
+    @if (busy() === 'migrating') {
+      <p>Migrating artifact…</p>
+    }
+    @if (result(); as value) {
+      @if (value.status === 'ready') {
+        <p>Ready to migrate. Review the size and checksum before continuing.</p>
+      }
+      @if (value.status === 'migrated') {
+        <p>Migration completed and verified.</p>
+      }
+      @if (value.status === 'already_migrated') {
+        <p>This artifact is already stored in S3. Its content has been verified.</p>
+      }
+    }
+  </div>
+  @if (result(); as value) {
+    <dl>
+      <dt>Size</dt>
+      <dd>{{ value.contentLength }} bytes</dd>
+      <dt>SHA-256 checksum</dt>
+      <dd class="checksum">{{ value.sha256 }}</dd>
+    </dl>
+    @if (value.postgresCopyRetained) {
+      <p>The original copy is retained for recovery.</p>
+    }
+  }
+  @if (error(); as message) {
+    <p role="alert">{{ message }}</p>
+  }
+</section>

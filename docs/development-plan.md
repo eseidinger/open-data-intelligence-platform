@@ -25,6 +25,8 @@ Exit criteria: a licensed source is registered, ingested, versioned, browsable, 
 
 ## Phase 2 — Quality and analytics
 
+The [artifact storage increment](artifact-storage.md) adds Developer Platform S3 bindings, local RustFS verification, exact-version storage and explicit per-artifact migration with retained PostgreSQL copies. Parquet generation, DuckDB queries, broader quality workflows and measured analytical comparisons remain to be delivered. Deployment activation and joint database/bucket restoration require installation-specific verification.
+
 Add profiling, expectations, reject workflows, freshness reporting, historical data loading, and basic charts/questions for the energy use case. Introduce an S3-compatible object-storage adapter for large immutable raw artifacts and Parquet publications, including a controlled migration path from PostgreSQL-backed artifacts. Add DuckDB queries over the published analytical representations.
 
 Exit criteria: users can inspect quality/freshness and answer the documented reference questions from curated data; the same analytical query can run reproducibly over its specified representation. Raw and Parquet artifacts are stored in S3-compatible storage, and their lineage, checksums, retention, and retrieval work through the storage abstraction.

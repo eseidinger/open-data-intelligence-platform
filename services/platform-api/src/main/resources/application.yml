@@ -29,9 +29,11 @@ management:
         enabled: true
       group:
         readiness:
-          include: readinessState,db
+          include: readinessState,db,artifactStorage
 
 odip:
+  artifact-storage:
+    backend: ${ODIP_ARTIFACT_STORAGE_BACKEND:postgres}
   source-policy:
     hosts: ${ODIP_SOURCE_HOSTS:jsonplaceholder.typicode.com,ec.europa.eu,re.jrc.ec.europa.eu}
   raw-artifact:

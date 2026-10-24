@@ -9,6 +9,7 @@ import de.eseidinger.odip.platform.ingestion.persistence.PipelineRunRepository
 import de.eseidinger.odip.platform.ingestion.persistence.RawArtifactRepository
 import de.eseidinger.odip.platform.ingestion.persistence.RawArtifactValidationRepository
 import de.eseidinger.odip.platform.ingestion.web.CompleteRunRequest
+import de.eseidinger.odip.platform.publication.ArtifactStorage
 import de.eseidinger.odip.platform.publication.DatasetAccess
 import de.eseidinger.odip.platform.publication.checkPublication
 import jakarta.servlet.http.HttpServletRequest
@@ -33,6 +34,7 @@ class IngestionService(
     private val access: DatasetAccess,
     private val request: HttpServletRequest,
     private val jdbc: JdbcTemplate,
+    private val storage: ArtifactStorage,
     @Value("\${odip.raw-artifact.max-payload-bytes}") private val maxPayloadBytes: Long,
 ) {
     @Transactional(readOnly = true)
@@ -96,17 +98,18 @@ class IngestionService(
         checkPublication(request.claimToken != null && request.claimToken == run.claimToken, "stale_claim", "The ingestion claim is no longer current", 409)
         if (run.status == PipelineRunStatus.SUCCEEDED) {
             val prior = rawArtifactRepository.findAllByPipelineRun_IdOrderByRetrievedAtDesc(runId).singleOrNull()
-            checkPublication(prior?.checksumSha256 == request.checksumSha256.lowercase() && prior?.payload?.contentEquals(request.payload) == true, "completion_conflict", "Run already completed with different content", 409)
+            checkPublication(prior?.checksumSha256 == request.checksumSha256.lowercase() && prior.let { storage.readRaw(it.id)?.contentEquals(request.payload) } == true, "completion_conflict", "Run already completed with different content", 409)
             return run
         }
         requireStatus(run, PipelineRunStatus.RUNNING)
         val source = run.source ?: throw notFound("Data source", runId)
-        checkPublication(request.payload.size.toLong() <= maxPayloadBytes, "payload_too_large", "Payload exceeds the configured maximum size", 413)
+        checkPublication(request.payload.size.toLong() <= if (storage.externalWrites()) minOf(maxPayloadBytes, 10485760L) else maxPayloadBytes, "payload_too_large", "Payload exceeds the configured maximum size", 413)
         checkPublication(request.payload.size.toLong() == request.contentLength, "invalid_length", "Payload length does not match contentLength", 400)
         val calculatedChecksum = MessageDigest.getInstance("SHA-256").digest(request.payload).joinToString("") { "%02x".format(it.toInt() and 0xff) }
         checkPublication(calculatedChecksum.equals(request.checksumSha256, ignoreCase = true), "checksum_mismatch", "Payload checksum does not match checksumSha256", 400)
         val artifactId = UUID.randomUUID()
-        val artifact = rawArtifactRepository.saveAndFlush(RawArtifactEntity(id = artifactId, pipelineRun = run, source = source, storageUri = "postgres://raw-artifacts/$artifactId", payload = request.payload, contentType = request.contentType, contentLength = request.contentLength, checksumSha256 = calculatedChecksum, sourceVersion = request.sourceVersion))
+        val artifact = rawArtifactRepository.saveAndFlush(RawArtifactEntity(id = artifactId, pipelineRun = run, source = source, storageUri = if (storage.externalWrites()) "odip://raw-artifacts/$artifactId" else "postgres://raw-artifacts/$artifactId", payload = if (storage.externalWrites()) null else request.payload, contentType = request.contentType, contentLength = request.contentLength, checksumSha256 = calculatedChecksum, sourceVersion = request.sourceVersion))
+        storage.putRaw(artifact.id, request.payload)
         request.validation?.let { validation ->
             rawArtifactValidationRepository.save(RawArtifactValidationEntity(rawArtifact = artifact, status = validation.status, detectedFormat = validation.detectedFormat, recordCount = validation.recordCount, schemaFingerprint = validation.schemaFingerprint, failureReason = validation.failureReason))
         }
@@ -133,10 +136,10 @@ class IngestionService(
     }
 
     @Transactional(readOnly = true)
-    fun artifactContent(artifactId: UUID): RawArtifactEntity {
+    fun artifactContent(artifactId: UUID): RawArtifactContent {
         val artifact = rawArtifactRepository.findById(artifactId).orElseThrow { notFound("Raw artifact", artifactId) }
         access.requireSource(request, requireNotNull(artifact.source).id, "READ")
-        return artifact
+        return RawArtifactContent(artifact, requireNotNull(storage.readRaw(artifactId)))
     }
 
     private fun run(id: UUID, lock: Boolean = false): PipelineRunEntity = if (lock) {
@@ -161,3 +164,5 @@ class IngestionService(
 
 data class IngestionJob(val runId: UUID, val sourceId: UUID, val location: String, val normalizer: String?, val claimToken: UUID? = null)
 data class RawArtifactWithValidation(val artifact: RawArtifactEntity, val validation: RawArtifactValidationEntity?)
+
+data class RawArtifactContent(val artifact: RawArtifactEntity, val bytes: ByteArray)

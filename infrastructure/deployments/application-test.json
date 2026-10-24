@@ -12,7 +12,8 @@
         "ODIP_API_URL": "https://web-odip-test.apps.eseidinger.de",
         "ODIP_IDENTITY_MODE": "platform",
         "ODIP_SOURCE_HOSTS": "jsonplaceholder.typicode.com,ec.europa.eu,re.jrc.ec.europa.eu,github.com",
-        "ODIP_WORKER_BINDING_PREFIX": "ACCESS_367961294744"
+        "ODIP_WORKER_BINDING_PREFIX": "ACCESS_367961294744",
+        "ODIP_ARTIFACT_STORAGE_BACKEND": "s3"
       }
     },
     "components": [
@@ -58,6 +59,10 @@
         "bindings": [
           {
             "bindingId": "e87b203a-8768-49db-9ee3-fee237877635",
+            "envPrefix": ""
+          },
+          {
+            "bindingId": "a9b8abfd-0709-4ecb-8c1d-683352ff603b",
             "envPrefix": ""
           }
         ]

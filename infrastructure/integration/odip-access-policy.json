@@ -60,6 +60,23 @@
       }
     },
     {
+      "name": "operator-artifact-storage",
+      "match": {
+        "pathPrefix": "/api/v1/artifact-storage",
+        "methods": [
+          "POST"
+        ]
+      },
+      "authentication": {
+        "mode": "browser-session"
+      },
+      "authorization": {
+        "anyOfGroups": [
+          "dataset-operators"
+        ]
+      }
+    },
+    {
       "name": "operator-3",
       "match": {
         "pathPrefix": "/api/v1/publication-drafts",

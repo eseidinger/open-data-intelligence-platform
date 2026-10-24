@@ -37,7 +37,27 @@ jobs:
           --health-retries 10
         ports:
           - 5432:5432
+      rustfs:
+        image: rustfs/rustfs:1.0.2@sha256:7e948dad4748bda48f8985fda7195f8cf2e4259427011f6120acc2c9acf51587
+        env:
+          RUSTFS_ACCESS_KEY: odip-local-access
+          RUSTFS_SECRET_KEY: odip-local-secret-only
+          RUSTFS_VOLUMES: /data
+          RUSTFS_OBS_LOGGER_LEVEL: error
+        options: >-
+          --health-cmd "wget -q --spider http://127.0.0.1:9000/health/ready"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-start-period 30s
+          --health-retries 20
+        ports:
+          - 9000:9000
     env:
+      ODIP_S3_INTEGRATION_TEST: "true"
+      AWS_ENDPOINT_URL_S3: http://localhost:9000
+      AWS_ACCESS_KEY_ID: odip-local-access
+      AWS_SECRET_ACCESS_KEY: odip-local-secret-only
+      AWS_DEFAULT_REGION: us-east-1
       ODIP_DATABASE_URL: jdbc:postgresql://localhost:5432/odip
       ODIP_DATABASE_USERNAME: odip
       ODIP_DATABASE_PASSWORD: odip

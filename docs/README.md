@@ -8,11 +8,13 @@ This documentation turns the project vision in the root [README](../README.md) i
 - [Architecture overview](architecture/overview.md) — system boundaries, components, data flow, and design principles.
 - [Architecture decisions](architecture/decisions.md) — baseline choices and the rules for introducing alternatives.
 - [Development plan](development-plan.md) — phased delivery plan, milestones, and exit criteria.
-- [Energy configuration integration plan](energy-configuration-integration-plan.md) — next delivery milestone: immutable publications, the energy adapter, scoped access, and the VEF handoff.
+- [Energy configuration integration plan](energy-configuration-integration-plan.md) — accepted milestone: immutable publications, the energy adapter, scoped access, and the VEF handoff.
 
-The ODIP publication implementation is available locally. Use the [integration runbook](energy-configuration-integration-runbook.md) for verification, provisioning, and deployment; the deployed VEF handoff remains the next integration gate.
+The ODIP publication and deployed VEF handoff were accepted by maintainer confirmation on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0. See the [completion record](energy-configuration-integration-plan.md#completion-criteria) for evidence limits. The next ODIP milestone is Phase 2 quality and analytics, including Developer Platform S3, Parquet, and DuckDB. The [integration runbook](energy-configuration-integration-runbook.md) remains the installation and regression baseline; Gate 6 AI acceptance belongs to VEF and the cross-project owners.
 
 ## Operating the platform
+
+- [Artifact storage](artifact-storage.md) — Developer Platform S3 bindings, local RustFS, verified migration, retention, and recovery.
 
 - [Bootstrap environments](bootstrap.md) — complete first deployment of test and production, including storage, access and worker setup.
 
