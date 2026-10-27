@@ -2,6 +2,14 @@
 
 Current acceptance scope: the maintainer accepts the other listed non-AI points without further testing under [DEC-11](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-11-current-release-non-ai-acceptance-exceptions.md). They are ACCEPTED_EXCEPTION, not demonstrated passes. Hosted AI-05/06 and AI-08/11 pass within recorded evidence limits. A private hosted VEF AI-10 probe passes ten verifier/client/optimizer checks against synthetic ODIP fixtures; the complete unchanged deployed Gate 5 suite remains unrecorded as one run. AI-10 and final Gate 6 stay open. This supersedes older non-AI release-check prerequisites and chronological case counts below.
 
+Subsequent protected VEF runs on AI-enabled revision 45 pass both full original
+and corrected 252-candidate oracles. ODIP's non-energy publication matches its
+pinned manifest hash. The energy source is linked to its dataset, but an energy
+pipeline attempt failed with `NewConnectionError`; the registered source URL is
+a GitHub release page rather than the pinned PVGIS raw JSON. No successful raw
+artifact or publication input link is inferred. See the
+[current-image report](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-27-ai10-current-image-oracles.json).
+
 Historical DEC-10 scope (additional non-AI checks subsequently excepted by DEC-11): the maintainer accepts this release without the isolated joint database/S3 restore test under [DEC-10](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-10-current-release-recovery-test-exception.md). Restore-execution acceptance clauses below are excepted for this release, not passed. Backup/storage/security duties and other open Gate 6 cases remain; recovery VM provisioning is not required.
 
 Status: ODIP's energy configuration integration handoff is complete by maintainer confirmation on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0. The deterministic 0.4.0 workflow was accepted upstream at Gate 5 on October 17, 2026. VEF AI assistance is implemented; Gate 6 acceptance and the final cross-project release remain open for AI-10. AI-05/06 pass hosted citation/semantic review, AI-08/11 pass the hosted private validation boundary, and the listed non-AI checks have accepted exceptions. Decisions are recorded in [ADR0001](architecture/adr/0001-energy-configuration-integration.md); verification and deployment are described in the [runbook](energy-configuration-integration-runbook.md).

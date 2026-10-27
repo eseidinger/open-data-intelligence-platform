@@ -583,3 +583,30 @@ old/new VEF runs are separate live observations. The job did not mutate an ODIP
 read response or execute the complete unchanged deployed Gate 5 suite as one
 release-pinned regression. AI-10 and final Gate 6 remain OPEN. Joint restore
 is excepted under DEC-10; DEC-11 applies only to its stated non-AI checks.
+
+### Current-image numerical regression and source-ingestion boundary
+
+After VEF CI run 40560871383, `vareng-test` revision 45 enabled AI on image
+`cea0b41b880201a3a24cce0191d508c5d5486226ef51c1e10b4232c9221d2d6c`.
+The maintainer started new protected original `1.0.0` and corrected `1.0.1`
+energy runs there. Each complete result and all 252 candidate records passed
+its independent oracle, including provenance, metrics, constraints, ranking
+and recommendation. Across versions, components, feasibility, constraints
+and non-cost metrics matched. The published non-energy fixture `1.0.0` was
+read back with manifest digest
+`f0d4f6b882c1a05154fb43283166953fda7a0dba7f2ed435dd7f46088663bbff`.
+The [shared sanitized report](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-27-ai10-current-image-oracles.json)
+retains run IDs, oracle/export hashes and deployment pins.
+
+The ODIP Sources view has an energy source linked to the energy dataset. Its
+recorded `location` is the contract-kit GitHub release page, whereas the
+fixture publisher captures the bundled pinned PVGIS JSON through the protected
+reference-input API. A pipeline attempt for the catalog source ended `FAILED`
+at 19:05:17 UTC; the worker emitted `NewConnectionError` after six milliseconds.
+The worker deployment does not declare GitHub egress, which likely explains
+the connection failure, but no direct network-denial record was captured.
+Even if fetched, the release page would not equal the pinned raw JSON. Do not
+retry that source URL or attach its response as PVGIS evidence. The existing
+published versions remain immutable; an isolated future input-capture case
+must use the pinned JSON and an approved path. AI-10's single unchanged deployed
+Gate 5 suite and final Gate 6 remain OPEN.
