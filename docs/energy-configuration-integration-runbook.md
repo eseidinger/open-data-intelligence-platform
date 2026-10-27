@@ -414,6 +414,13 @@ The handoff values, local verification, and container builds do not close these 
 
 ## October 27 guided test result
 
+The operator additionally confirmed that isolated partial-calendar version
+1.0.90 is FAILED with `profile_validation_failed`; see the cross-project
+guided record below for its manifest digest and 4,368-hour construction.
+Reading an existing non-published version returns contract-defined HTTP 409.
+VEF initially misclassified this as 503 and is being corrected to 422
+`publication_not_published`; the hosted VEF retest remains pending.
+
 The [guided acceptance record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-guided-release-acceptance.md) records successful publication and full VEF oracle comparisons for 1.0.0 and
 corrected 1.0.1, plus unchanged original-run readback. The fixture has manifest
 provenance but no captured raw-input links or matching ingestion run were
