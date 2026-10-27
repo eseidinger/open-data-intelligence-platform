@@ -520,3 +520,14 @@ VEF commit be61607's saved-run loading UI passed CI/test deployment 40541725793;
 both hosted explanation reviews
 remain pending. The shared guided record contains preparation evidence and
 cleanup obligations. AI-05/06/08/10/11 remain OPEN; DEC-10/11 are unchanged.
+
+### Hosted AI-05 review passed
+
+The maintainer supplied the rendered explanation for the VEF AI-05 fixture.
+Assistant review confirms unproven optimality, explicit missing battery
+replacement price, unchanged recommendation/metrics and correct evidence
+categories. All 32 supplied citation values match the corrected oracle and
+declared fixture, including whole constraints. AI-05 passes; the shared guided
+record retains transcript hash, model/prompt/image pins and capture limits.
+Remaining acceptance work is AI-06, AI-08, AI-10 and AI-11. This does not change
+ODIP publications, DEC-10/11 exceptions or the pending final Gate 6 decision.
