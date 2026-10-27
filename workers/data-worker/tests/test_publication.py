@@ -4,7 +4,11 @@ import unittest
 from unittest.mock import Mock, patch
 
 from odip_worker.contract import KIT, canonical_bytes, load_json
-from odip_worker.energy.profile import reference_outputs, validate_profile
+from odip_worker.energy.profile import (
+    calendar_year_hours,
+    reference_outputs,
+    validate_profile,
+)
 from odip_worker.publication import validate_job
 
 
@@ -47,6 +51,32 @@ class PublicationTests(unittest.TestCase):
                 ).hexdigest()
             with self.assertRaises(Exception):
                 validate_profile(manifest, artifacts)
+
+    def test_complete_calendar_year_counts_include_gregorian_leap_rules(self):
+        for year, count in [(1900, 8760), (2000, 8784), (2023, 8760), (2024, 8784), (2100, 8760)]:
+            with self.subTest(year=year):
+                self.assertEqual(calendar_year_hours({
+                    "start": f"{year}-01-01T00:00:00Z",
+                    "endExclusive": f"{year + 1}-01-01T00:00:00Z",
+                    "step": "PT1H",
+                }), count)
+
+    def test_partial_rolling_shifted_and_multi_year_publications_fail(self):
+        for start, end in [
+            ("2024-01-01T00:00:00Z", "2024-01-02T00:00:00Z"),
+            ("2024-01-01T00:00:00Z", "2024-12-31T00:00:00Z"),
+            ("2024-01-01T01:00:00Z", "2025-01-01T01:00:00Z"),
+            ("2023-02-01T00:00:00Z", "2024-02-01T00:00:00Z"),
+            ("2024-01-01T00:00:00+01:00", "2025-01-01T00:00:00+01:00"),
+            ("2024-01-01T00:00:00.000001Z", "2025-01-01T00:00:00.000001Z"),
+            ("2024-01-01T00:00:00Z", "2026-01-01T00:00:00Z"),
+            ("2025-01-01T00:00:00Z", "2024-01-01T00:00:00Z"),
+        ]:
+            with self.subTest(start=start, end=end):
+                manifest = copy.deepcopy(self.manifest)
+                manifest["metadata"]["period"].update(start=start, endExclusive=end)
+                with self.assertRaisesRegex(ValueError, "one complete UTC calendar year"):
+                    validate_profile(manifest, self.artifacts)
 
     def test_modified_artifact_produces_failed_report(self):
         job = {

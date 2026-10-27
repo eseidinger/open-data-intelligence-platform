@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from tools.build_fixtures import (
     component_catalog,
     load_shape,
@@ -18,9 +20,25 @@ SCHEMAS = {
 
 
 def validate_profile(manifest, artifacts):
+    calendar_year_hours(manifest["metadata"]["period"])
     for descriptor in manifest["artifacts"]:
         validate(SCHEMAS[descriptor["role"]], artifacts[descriptor["artifactId"]])
     validate_energy_publication(manifest, artifacts)
+
+
+def calendar_year_hours(period):
+    """DEC-08: annual optimization data spans January 1 to the next January 1 UTC."""
+    start = datetime.fromisoformat(period["start"].replace("Z", "+00:00"))
+    end = datetime.fromisoformat(period["endExclusive"].replace("Z", "+00:00"))
+    if (
+        period.get("step") != "PT1H"
+        or start.tzinfo != timezone.utc
+        or end.tzinfo != timezone.utc
+        or start != datetime(start.year, 1, 1, tzinfo=timezone.utc)
+        or end != datetime(start.year + 1, 1, 1, tzinfo=timezone.utc)
+    ):
+        raise ValueError("energy profiles require one complete UTC calendar year")
+    return (end - start).days * 24
 
 
 def reference_outputs(source_document):

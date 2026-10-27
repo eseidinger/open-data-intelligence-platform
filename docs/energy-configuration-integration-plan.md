@@ -8,6 +8,20 @@ ODIP publishes complete, validated dataset versions that the Variability Enginee
 
 ODIP supplies reference data and provenance. VEF owns customer inputs, component compatibility, simulation, optimization, and AI explanations. The Developer Platform provides deployment, identity facilities, routing, and application databases. The first integration uses a bounded reference region, calendar year, and component catalog; synthetic fixtures can establish the initial flow. These boundaries follow the proposed [energy configuration use case](https://github.com/eseidinger/energy-system-configuration/blob/main/energy-configuration-use-case.md).
 
+## Current-release scope
+
+The maintainer selected new installations for the current release on October 27
+in shared [DEC-07](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-07-new-equipment-release-scope.md). Existing-equipment support is deferred; VEF requires an empty
+`existingComponentIds` list and rejects non-empty inputs before run creation.
+ODIP continues publishing the same domain-neutral manifests and energy catalog;
+no customer equipment data or new publication endpoint is required. GAP-06 is
+closed by scope decision, while shared-kit release packaging remains under GAP-10.
+Released kit 0.5.0 and its vendored bytes remain immutable; the next shared-kit
+release must carry the new scope decision before final acceptance. The maintainer
+also accepted [DEC-08](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-08-complete-calendar-year.md): the energy adapter now requires a complete UTC calendar year with exactly
+8,760 or 8,784 aligned hours. This closes the local annual-period validation
+deficiency; deployed negative regression and final acceptance remain open.
+
 ## Relationship to the roadmap
 
 This publication milestone follows the ingestion and curation foundation and precedes the Parquet/DuckDB analytical comparison. It closes publication, quality, and authorization gaps needed by an external consumer without requiring the full analytics platform.

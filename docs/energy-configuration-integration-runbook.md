@@ -4,6 +4,21 @@ ODIP consumes contract kit 0.5.0, which preserves the accepted 0.4.0 publication
 
 For a new test or production installation, start with [Bootstrap environments](bootstrap.md). It covers the web-only first deployment, shared setup scripts and CI prerequisites in dependency order.
 
+## Current-release acceptance scope
+
+Use requests for new installations with `existingComponentIds: []`, following
+[DEC-07](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-07-new-equipment-release-scope.md). Existing-equipment planning is deferred. Include an explicit VEF HTTP 422 /
+`existing_equipment_not_supported` and no-created-run check for a non-empty list
+in the deployed negative regression. Original dataset 1.0.0 and the synthetic
+corrected-version drill remain unchanged.
+
+Under [DEC-08](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-08-complete-calendar-year.md), energy optimization uses January 1 at 00:00 UTC through the following
+January 1, with 8,760 or 8,784 complete hourly intervals. The energy worker
+checks this before passing publication validation, while VEF checks it
+independently. Reject partial/rolling/shifted periods in the deployed regression.
+Existing immutable publications are never rewritten; historical shorter profiles
+are unsupported for new annual optimizations.
+
 ## Verify the repository
 
 From the repository root:
@@ -56,8 +71,7 @@ candidates, feasibility, ranking, recommendation and metrics. It also recomputes
 unchanged `1.0.0`. The October 27 local execution passed; see the
 [VEF verification record](https://github.com/eseidinger/variability-engineering-framework/blob/main/docs/04-development/energy-gap-closure-verification.md).
 
-This closes the local unchanged-content test deficiency. Hosted old/new owned
-VEF runs, shared review of the synthetic correction and integrated application
+This closes the local unchanged-content test deficiency. The deployed comparison of the maintainer-approved [DEC-09 correction](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-09-corrected-tariff-acceptance-case.md) and integrated application
 restore remain open in [GAP-03/05](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-gap-analysis.md).
 Never overwrite an existing published version; use an isolated namespace when
 an installation already occupies `1.0.1`.
