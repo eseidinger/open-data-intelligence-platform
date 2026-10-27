@@ -459,8 +459,14 @@ and worker image
 `sha256:6acce327d1b15fc0223dddeb7a0f5e1e0f397f3b71a9a7dfbb2ca357465eca02`.
 Service restart `2b197f8a-f634-4456-b357-bd496ecf5f8c` succeeded with one
 ready replica, unchanged web image and replacement of the old web pod. The
-scheduled worker remained active. Publication-byte and VEF numerical readback
-after restart are still pending; readiness alone does not close that scenario.
+scheduled worker remained active. The subsequent VEF corrected-version run
+`run-36002a86-73ce-4445-bd66-aff03c7621f9` succeeded with the same recommendation,
+194 feasible of 252, EUR 365.64 annualized cost, EUR 8,240 investment,
+self-sufficiency 0.889509006, expected manifest digest and PROVEN_OPTIMAL.
+The reported summary matches the independent corrected oracle; the functional
+summary check passes. Complete candidate-page exports for this run and direct
+ODIP byte readback are absent. VEF's verified cache means this run alone does
+not prove fresh S3 reads; downloading the five published artifacts is next.
 
 HTTP metrics, current resource usage and retained logs are readable. Retired-pod
 log envelopes and recent request correlation metadata were observed. Actual
