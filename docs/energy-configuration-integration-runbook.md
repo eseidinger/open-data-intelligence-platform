@@ -434,8 +434,12 @@ energy-import-tariff-v1". An earlier 422 `missing_artifact` prevented validation
 before every upload succeeded. The wrong-unit upload rejection passes; the
 earlier expected worker FAILED result was incorrect because upload schema
 validation intervenes first. No worker report or FAILED status is claimed for
-1.0.91. The guided record prepares checksum-mismatch version 1.0.92, awaiting
-execution. Independent hosted VEF invalid-content validation remains open.
+1.0.91. The subsequent upload of checksum-mismatch version 1.0.92 returned
+422 `checksum_mismatch`,
+"Artifact digest does not match the manifest". Hosted upload integrity rejection
+therefore passes. The guided record prepares version 1.0.93 with unsupported
+energy publication schema v99; its draft-creation test remains pending.
+Independent hosted VEF invalid-content validation remains open.
 
 The [guided acceptance record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-guided-release-acceptance.md) records successful publication and full VEF oracle comparisons for 1.0.0 and
 corrected 1.0.1, plus unchanged original-run readback. The fixture has manifest
