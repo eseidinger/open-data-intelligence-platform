@@ -484,3 +484,14 @@ Read-only recovery preflight found the configured VM port 127.0.0.1:2222
 unavailable, no local recovery VM directory and no /dev/kvm on this controller.
 An isolated target and explicit verified snapshot must be selected before the
 remaining database/bucket restore. No restore or new backup has been performed.
+
+### Current-release recovery-test exception
+
+The maintainer explicitly accepts the current release without the recovery test;
+[DEC-10](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-10-current-release-recovery-test-exception.md)
+records ACCEPTED_EXCEPTION for the joint database/S3 restore exercise. The
+previous VM preflight is no longer a release prerequisite. No database/bucket
+restoration or post-restore reconciliation was demonstrated. Existing restart
+and exact artifact-readback evidence remains valid. Backup, retention, access,
+storage-integrity and other AI/operational/evidence duties are unchanged; final
+Gate 6 remains open. Immutable kit 0.5.0 and historical handoffs are unchanged.
