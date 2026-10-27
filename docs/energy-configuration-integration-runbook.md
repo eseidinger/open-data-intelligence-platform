@@ -548,3 +548,18 @@ remained `SUCCEEDED`. The temporary VEF database write grant was revoked.
 The [sanitized cleanup record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-27-hosted-ai-fixture-cleanup.json)
 records the exact IDs and evidence limits. No ODIP publication was changed.
 AI-08/10/11 and Gate 6 remain open.
+
+### Hosted VEF AI-08/11 boundary probe passed
+
+VEF CI run 40550620333, attempt 3, passed browser, API and packaged
+integration tests and deployed image digest
+`a3b0f884c4186072fe3fdb673d032c0c1e5e51aa46d71b3ab8cc34528eff8a75`
+to `vareng-test`. A private scheduled component on revision 40 ran seven
+synthetic AI-08/11 validation checks and reported `succeeded`, with all seven
+PASS markers. The component had no database binding, external egress or public
+port. Revision 41 removed it; `web` remained ready on the same image. The
+[shared sanitized record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-27-hosted-ai-boundary-probe.json)
+retains exact evidence and limits. AI-08/11 pass alongside the earlier public
+cross-user route checks. The injected payloads exercised hosted VEF resource
+methods with in-memory fixtures, not the public gateway. ODIP publications
+were unchanged. Only AI-10 and final Gate 6 acceptance remain open.
