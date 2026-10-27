@@ -495,3 +495,15 @@ restoration or post-restore reconciliation was demonstrated. Existing restart
 and exact artifact-readback evidence remains valid. Backup, retention, access,
 storage-integrity and other AI/operational/evidence duties are unchanged; final
 Gate 6 remains open. Immutable kit 0.5.0 and historical handoffs are unchanged.
+
+### Maintainer accepts the other non-AI points without testing
+
+[DEC-11](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-11-current-release-non-ai-acceptance-exceptions.md)
+records ACCEPTED_EXCEPTION for the other listed non-AI operational, security,
+retention, reproducibility, workload, accessibility, S3 and additional
+release-evidence/review points. This supersedes the earlier requirements to
+complete those checks for this release. No missing evidence becomes PASS, and
+implemented controls remain. DEC-10 remains the recovery-test exception.
+AI-05, AI-06, AI-08, AI-10 and AI-11 are still OPEN with their own evidence
+obligations; only these cases remain acceptance work. Final Gate 6, production
+deployment and release publication are not granted by this scoped decision.
