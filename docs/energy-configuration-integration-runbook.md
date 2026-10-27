@@ -411,3 +411,12 @@ These are deployed acceptance checks from [the pinned integration plan](https://
 | Cross-project use-case suite | ODIP and VEF | Run the shared energy and non-energy fixtures through deployed ODIP, then verify VEF's independent import/cache, exact feasible set and numerical results, tamper/unit/missing-hour/unsupported-schema denials, `1.0.0` versus corrected `1.0.1` isolation, and reproducibility after outage and restore. VEF's later AI proposal and explanation acceptance belongs to Gate 6. |
 
 The handoff values, local verification, and container builds do not close these deployed gates.
+
+## October 27 guided test result
+
+The [guided acceptance record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-guided-release-acceptance.md) records successful publication and full VEF oracle comparisons for 1.0.0 and
+corrected 1.0.1, plus unchanged original-run readback. The fixture has manifest
+provenance but no captured raw-input links or matching ingestion run were
+observed in this installation. Ordinary draft creation was used; do not claim
+hosted raw capture or rewrite immutable 1.0.0. Remaining regression/recovery
+and final deployment inventory remain open.
