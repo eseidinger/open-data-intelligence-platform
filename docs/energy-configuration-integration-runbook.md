@@ -428,8 +428,14 @@ The operator subsequently reported missing-hour version 1.0.99 as FAILED after
 the guided upload/validate steps. Its schema-valid, digest-matching PV series has
 8,783 values in the 8,784-hour 2024 period. Hosted publication-status rejection
 passes; the worker failure code/report was not separately captured. The guided
-record below retains its digest and the prepared, still-pending wrong-unit
-version 1.0.91. Independent hosted VEF invalid-content validation remains open.
+record below retains its digest. Wrong-unit version 1.0.91 was subsequently
+rejected at upload with 422 `schema_validation_failed`, "Document fails schema
+energy-import-tariff-v1". An earlier 422 `missing_artifact` prevented validation
+before every upload succeeded. The wrong-unit upload rejection passes; the
+earlier expected worker FAILED result was incorrect because upload schema
+validation intervenes first. No worker report or FAILED status is claimed for
+1.0.91. The guided record prepares checksum-mismatch version 1.0.92, awaiting
+execution. Independent hosted VEF invalid-content validation remains open.
 
 The [guided acceptance record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-guided-release-acceptance.md) records successful publication and full VEF oracle comparisons for 1.0.0 and
 corrected 1.0.1, plus unchanged original-run readback. The fixture has manifest
