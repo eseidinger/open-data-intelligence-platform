@@ -607,6 +607,29 @@ The worker deployment does not declare GitHub egress, which likely explains
 the connection failure, but no direct network-denial record was captured.
 Even if fetched, the release page would not equal the pinned raw JSON. Do not
 retry that source URL or attach its response as PVGIS evidence. The existing
-published versions remain immutable; an isolated future input-capture case
-must use the pinned JSON and an approved path. AI-10's single unchanged deployed
+published versions remain immutable; the isolated input-capture case below
+uses the pinned JSON and an approved path. AI-10's single unchanged deployed
 Gate 5 suite and final Gate 6 remain OPEN.
+
+### Isolated synthetic raw-input capture passed
+
+The maintainer created `energy-ai10-lineage-20261027` as a separate PUBLIC
+dataset linked to the existing energy source. The existing worker principal
+received temporary `READ`, `INGEST` and `VALIDATE` grants on this dataset only.
+The local publisher verified the pinned PVGIS source SHA-256
+`d82aff39f867cb3cd77f7f355ec164b2d43c19d27bb86b13e87306885d082f29`,
+five generated artifact hashes, source association and grants before any write.
+Using a private operator session, it captured the raw JSON through the
+reference-input API and published isolated `1.0.0` draft
+`9cd77d70-058c-47ed-ab4a-7507af293698`. ODIP reported `PUBLISHED` with one
+linked raw artifact `736d9724-1f27-46d6-ac29-1ef6ba0a0a05` and canonical
+manifest digest `8e98f8efa93806fdda674beee198c4286a852ebbbf937fabe054b404c5d1d215`.
+Protected readback of the raw artifact returned 824,681 bytes with the pinned
+source digest; all five artifact bytes matched the manifest. The private
+cookie file was removed and the maintainer confirmed revocation of the three
+temporary worker grants. See the [shared sanitized evidence](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-27-ai10-isolated-lineage.json).
+
+This test uses a new synthetic dataset. It neither changes the immutable
+reference versions nor makes the catalog source's GitHub release page suitable
+for scheduled raw download. That failed download remains separate. The
+unchanged complete cross-project Gate 5 suite required by AI-10 is still OPEN.
