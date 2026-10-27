@@ -2,6 +2,17 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.24.
 
+## Dependency security
+
+Run `npm ci` and `npm audit --audit-level=high` to reproduce CI's dependency check.
+The override for `@angular/build@^21.2.24` selects `undici` 7.30.1 or a compatible
+newer 7.x version because Angular's build package still pins an affected version.
+The [upstream advisory](https://github.com/nodejs/undici/security/advisories/GHSA-xjj6-f33q-929c)
+identifies the fix. Review and remove this override when the supported Angular
+build dependency supplies a patched version itself; keep the selector aligned
+with the direct dependency range. The lockfile also updates node-gyp's separate
+undici 6.x dependency to 6.29.1 and fast-uri to 3.1.9.
+
 ## Development server
 
 To start a local development server, run:
