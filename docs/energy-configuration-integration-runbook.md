@@ -563,3 +563,23 @@ retains exact evidence and limits. AI-08/11 pass alongside the earlier public
 cross-user route checks. The injected payloads exercised hosted VEF resource
 methods with in-memory fixtures, not the public gateway. ODIP publications
 were unchanged. Only AI-10 and final Gate 6 acceptance remain open.
+
+### Hosted VEF AI-10 private publication regression
+
+VEF commit `5cb913f` passed [CI run 40558758302](https://github.com/eseidinger/variability-engineering-framework/actions/runs/40558758302)
+and deployed image digest
+`f6f4c6ac212eccb2bc9ebcfb1e401b36f956c776e542eccf9e746a1378278c88`
+to `vareng-test`. A private scheduled job on revision 43 passed ten synthetic
+checks using the real VEF publication verifier, client and optimizer: original
+and corrected complete 252-candidate oracles, version/cache isolation and five
+invalid-content/state denials. It had no ODIP network access, database binding
+or public port. Revision 44 removed the job; the web component stayed ready on
+the same image. The [shared sanitized record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-27-hosted-ai10-private-regression.json)
+contains fixture, image, deployment and log hashes.
+
+This closes the independent VEF invalid-content subcase within its in-memory
+transport boundary. ODIP's earlier hosted upload/status denials and protected
+old/new VEF runs are separate live observations. The job did not mutate an ODIP
+read response or execute the complete unchanged deployed Gate 5 suite as one
+release-pinned regression. AI-10 and final Gate 6 remain OPEN. Joint restore
+is excepted under DEC-10; DEC-11 applies only to its stated non-AI checks.
