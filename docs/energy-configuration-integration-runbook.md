@@ -424,6 +424,13 @@ deployment in run `40502827158`. The operator's hosted retest returned 422
 This completes the partial-calendar publication/state rejection scenario;
 it does not prove independent VEF validation of invalid published bytes.
 
+The operator subsequently reported missing-hour version 1.0.99 as FAILED after
+the guided upload/validate steps. Its schema-valid, digest-matching PV series has
+8,783 values in the 8,784-hour 2024 period. Hosted publication-status rejection
+passes; the worker failure code/report was not separately captured. The guided
+record below retains its digest and the prepared, still-pending wrong-unit
+version 1.0.91. Independent hosted VEF invalid-content validation remains open.
+
 The [guided acceptance record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-guided-release-acceptance.md) records successful publication and full VEF oracle comparisons for 1.0.0 and
 corrected 1.0.1, plus unchanged original-run readback. The fixture has manifest
 provenance but no captured raw-input links or matching ingestion run were
