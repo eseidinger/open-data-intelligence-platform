@@ -507,3 +507,15 @@ implemented controls remain. DEC-10 remains the recovery-test exception.
 AI-05, AI-06, AI-08, AI-10 and AI-11 are still OPEN with their own evidence
 obligations; only these cases remain acceptance work. Final Gate 6, production
 deployment and release publication are not granted by this scoped decision.
+
+### VEF AI fixture preparation
+
+The guided review prepared two private, marked VEF test copies through the
+protected PostgreSQL console after explicit maintainer permission. The operator
+confirmed `run-ai05-acceptance-20261027` (FEASIBLE_NOT_PROVEN) and
+`run-ai06-acceptance-20261027` (injected metadata, PROVEN_OPTIMAL), each with
+252 candidates copied from the accepted corrected-version run. The temporary
+database grant was immediately revoked. ODIP publications were not modified.
+VEF's saved-run loading UI is being deployed; both hosted explanation reviews
+remain pending. The shared guided record contains preparation evidence and
+cleanup obligations. AI-05/06/08/10/11 remain OPEN; DEC-10/11 are unchanged.
