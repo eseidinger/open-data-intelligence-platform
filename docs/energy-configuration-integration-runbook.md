@@ -464,9 +464,13 @@ scheduled worker remained active. The subsequent VEF corrected-version run
 194 feasible of 252, EUR 365.64 annualized cost, EUR 8,240 investment,
 self-sufficiency 0.889509006, expected manifest digest and PROVEN_OPTIMAL.
 The reported summary matches the independent corrected oracle; the functional
-summary check passes. Complete candidate-page exports for this run and direct
-ODIP byte readback are absent. VEF's verified cache means this run alone does
-not prove fresh S3 reads; downloading the five published artifacts is next.
+summary check passes. The operator then downloaded all five published artifacts
+through ODIP's Download buttons. All five match the approved 1.0.1 manifest
+digests and corrected-reference bytes exactly; the guided record links the
+machine-readable verification and private evidence archive hash. The operator
+artifact-readback check passes. Complete new candidate-page exports and consumer
+manifest/ETag capture remain absent. S3 is enabled, but these reads alone do not
+prove each artifact lacks a legacy database payload fallback.
 
 HTTP metrics, current resource usage and retained logs are readable. Retired-pod
 log envelopes and recent request correlation metadata were observed. Actual
@@ -476,3 +480,7 @@ restore is required for this installation. The installed tenant CLI only exposes
 an operator-assistance request for recovery. No request was sent and no data
 was restored. The final platform/source/image inventory must be pinned again
 at release acceptance because test CI continues deploying automatically.
+Read-only recovery preflight found the configured VM port 127.0.0.1:2222
+unavailable, no local recovery VM directory and no /dev/kvm on this controller.
+An isolated target and explicit verified snapshot must be selected before the
+remaining database/bucket restore. No restore or new backup has been performed.
