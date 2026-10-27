@@ -64,10 +64,15 @@ export class PublicationApiService {
   capabilities() {
     return this.http.get<OperatorCapabilities>('/api/v1/operator-capabilities');
   }
-  create(datasetId: string, manifest: Record<string, unknown>, key: string) {
+  create(
+    datasetId: string,
+    manifest: Record<string, unknown>,
+    key: string,
+    rawArtifactIds: readonly string[] = [],
+  ) {
     return this.http.post<PublicationDraft>(
       '/api/v1/publication-drafts',
-      { datasetId, manifest },
+      { datasetId, manifest, rawArtifactIds },
       { headers: { 'Idempotency-Key': key } },
     );
   }

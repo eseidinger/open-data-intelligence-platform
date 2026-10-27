@@ -1,6 +1,14 @@
 import { ArtifactMigrationComponent } from '../../shared/artifact-migration/artifact-migration';
 import { JsonPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
@@ -37,6 +45,7 @@ export class PublicationsPageComponent {
   private readonly api = inject(PublicationApiService);
   private readonly catalog = inject(DatasetApiService);
   private readonly fb = inject(NonNullableFormBuilder);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   readonly drafts = signal<readonly PublicationDraft[]>([]);
   readonly datasets = signal<readonly Dataset[]>([]);
   readonly grants = signal<readonly DatasetGrant[]>([]);
@@ -48,6 +57,9 @@ export class PublicationsPageComponent {
     this.datasets().filter((d) => this.capabilities().writableDatasetIds.includes(d.id)),
   );
   readonly selected = signal<PublicationDraft | null>(null);
+  readonly draftSource = signal<{ version: string; rawArtifactIds: readonly string[] } | null>(
+    null,
+  );
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
   readonly message = signal<string | null>(null);
@@ -62,6 +74,9 @@ export class PublicationsPageComponent {
   private readonly publishKeys = new Map<string, string>();
 
   constructor() {
+    this.form.controls.datasetId.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.clearDraftSource();
+    });
     this.refresh();
   }
   refresh(): void {
@@ -94,6 +109,24 @@ export class PublicationsPageComponent {
     this.selected.set(draft);
     this.message.set(null);
   }
+  reuseInputs(draft: PublicationDraft): void {
+    if (draft.status !== 'PUBLISHED' || !this.canWrite(draft) || !draft.inputArtifacts?.length) {
+      this.error.set('Select a permitted published version with captured inputs first.');
+      return;
+    }
+    this.form.controls.datasetId.setValue(draft.datasetId);
+    this.draftSource.set({
+      version: draft.manifest.version,
+      rawArtifactIds: [...new Set(draft.inputArtifacts.map((input) => input.rawArtifactId))],
+    });
+    this.error.set(null);
+    this.message.set('Source inputs selected. Choose the manifest for the new version.');
+    this.host.nativeElement.querySelector<HTMLInputElement>('#publication-manifest')?.focus();
+  }
+  clearDraftSource(): void {
+    this.draftSource.set(null);
+    this.draftKey = crypto.randomUUID();
+  }
   async chooseManifest(event: Event): Promise<void> {
     this.manifest = null;
     this.error.set(null);
@@ -118,14 +151,21 @@ export class PublicationsPageComponent {
       return;
     }
     this.busy.set(true);
-    this.api.create(this.form.controls.datasetId.value, this.manifest, this.draftKey).subscribe({
-      next: (draft) => {
-        this.selected.set(draft);
-        this.message.set('Draft created. Attach its artifacts before requesting publication.');
-        this.refresh();
-      },
-      error: (error) => this.failed(error),
-    });
+    this.api
+      .create(
+        this.form.controls.datasetId.value,
+        this.manifest,
+        this.draftKey,
+        this.draftSource()?.rawArtifactIds ?? [],
+      )
+      .subscribe({
+        next: (draft) => {
+          this.selected.set(draft);
+          this.message.set('Draft created. Attach its artifacts before requesting publication.');
+          this.refresh();
+        },
+        error: (error) => this.failed(error),
+      });
   }
   upload(draft: PublicationDraft, artifactId: string, event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];

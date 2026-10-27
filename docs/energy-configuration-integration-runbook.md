@@ -79,6 +79,27 @@ an installation already occupies `1.0.1`.
 The [October 27 review](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-implementation-and-acceptance-review.md) records the accepted ODIP handoff separately
 from the remaining joint AI-10 regression and recovery evidence.
 
+### Create corrected 1.0.1 while retaining original input lineage
+
+For the approved DEC-09 scenario, prepare the checksum-verified 1.0.1 manifest
+and five artifacts with the local acceptance harness's `--evidence-dir` option.
+Keep the original published version and its captured raw-input links intact.
+
+In the signed-in ODIP test application, select published version 1.0.0 under
+Publications. Under Raw input lineage, choose **Use these inputs for a new draft**.
+The dataset is selected automatically, the captured-input count appears above
+the creation form, and focus moves to the manifest chooser. Select the prepared
+1.0.1 `manifest.json` and create the draft. The existing operator API receives
+the selected raw-input IDs together with the manifest; backend ownership and
+source-membership checks still apply. Changing datasets clears the selection.
+Only permitted published versions with captured inputs expose this action.
+
+Select the new 1.0.1 draft, attach its five checksum-matching artifact files,
+and request validation/publication through the existing UI and worker. Record
+the draft ID, manifest checksum, preserved input count and final validation
+status. If the original has no captured inputs, investigate its lineage before
+proceeding. A console script or cookie export is not required for this workflow.
+
 ## Prepare platform resources
 
 Use [ADR0001](architecture/adr/0001-energy-configuration-integration.md) and the shared DEC-01 through DEC-06 as the accepted implementation decisions.

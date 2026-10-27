@@ -40,6 +40,17 @@
     <mat-card appearance="outlined">
       <mat-card-content>
         <h2>Create a draft</h2>
+        @if (draftSource(); as source) {
+          <p role="status">
+            Linking {{ source.rawArtifactIds.length }} captured inputs from published version
+            {{ source.version }}.
+          </p>
+          <button mat-button type="button" (click)="clearDraftSource()" [disabled]="busy()">
+            Clear selected source inputs
+          </button>
+        } @else {
+          <p>Select a published version below to reuse its captured source inputs.</p>
+        }
         <form [formGroup]="form" (ngSubmit)="create()">
           <mat-form-field
             ><mat-label>Dataset</mat-label
@@ -136,6 +147,11 @@
         }
         <h3>Provenance</h3>
         <h4>Raw input lineage</h4>
+        @if (draft.status === 'PUBLISHED' && canWrite(draft) && draft.inputArtifacts?.length) {
+          <button mat-stroked-button type="button" (click)="reuseInputs(draft)" [disabled]="busy()">
+            Use these inputs for a new draft
+          </button>
+        }
         @for (input of draft.inputArtifacts ?? []; track input.rawArtifactId) {
           <p class="digest">
             Artifact {{ input.rawArtifactId }} · run {{ input.pipelineRunId }}<br />Captured
