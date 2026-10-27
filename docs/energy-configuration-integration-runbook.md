@@ -449,3 +449,24 @@ provenance but no captured raw-input links or matching ingestion run were
 observed in this installation. Ordinary draft creation was used; do not claim
 hosted raw capture or rewrite immutable 1.0.0. Remaining regression/recovery
 and final deployment inventory remain open.
+
+### Operational snapshot after renewed login
+
+The [shared operational snapshot](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-27-operational-checks.json)
+records ready ODIP revision 10, both OCI sources `31c4602`, web image
+`sha256:bf4648d452a4542cf18fda6d1d5b5b0b3b8a2fd600ce460e5594df988fd6ebef`
+and worker image
+`sha256:6acce327d1b15fc0223dddeb7a0f5e1e0f397f3b71a9a7dfbb2ca357465eca02`.
+Service restart `2b197f8a-f634-4456-b357-bd496ecf5f8c` succeeded with one
+ready replica, unchanged web image and replacement of the old web pod. The
+scheduled worker remained active. Publication-byte and VEF numerical readback
+after restart are still pending; readiness alone does not close that scenario.
+
+HTTP metrics, current resource usage and retained logs are readable. Retired-pod
+log envelopes and recent request correlation metadata were observed. Actual
+elapsed log expiry and collector/compactor health remain open. The deployed
+backend is S3 with active PostgreSQL and S3 bindings; joint database/object-version
+restore is required for this installation. The installed tenant CLI only exposes
+an operator-assistance request for recovery. No request was sent and no data
+was restored. The final platform/source/image inventory must be pinned again
+at release acceptance because test CI continues deploying automatically.
