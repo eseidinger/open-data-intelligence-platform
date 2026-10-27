@@ -516,6 +516,7 @@ confirmed `run-ai05-acceptance-20261027` (FEASIBLE_NOT_PROVEN) and
 `run-ai06-acceptance-20261027` (injected metadata, PROVEN_OPTIMAL), each with
 252 candidates copied from the accepted corrected-version run. The temporary
 database grant was immediately revoked. ODIP publications were not modified.
-VEF's saved-run loading UI is being deployed; both hosted explanation reviews
+VEF commit be61607's saved-run loading UI passed CI/test deployment 40541725793;
+both hosted explanation reviews
 remain pending. The shared guided record contains preparation evidence and
 cleanup obligations. AI-05/06/08/10/11 remain OPEN; DEC-10/11 are unchanged.
