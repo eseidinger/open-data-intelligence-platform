@@ -541,3 +541,10 @@ assistant semantic review passes. The shared guided record retains image/model/
 prompt pins, transcript hash and the limits of rendered rather than raw HTTP
 evidence. AI-05/06 now pass; AI-08/10/11 remain OPEN. Authorized cleanup concerns
 only the marked VEF copies and does not modify ODIP publications.
+
+The maintainer subsequently confirmed that the two marked VEF test copies were
+removed (`remaining_test_runs=0`) and the original corrected reference run
+remained `SUCCEEDED`. The temporary VEF database write grant was revoked.
+The [sanitized cleanup record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-27-hosted-ai-fixture-cleanup.json)
+records the exact IDs and evidence limits. No ODIP publication was changed.
+AI-08/10/11 and Gate 6 remain open.
