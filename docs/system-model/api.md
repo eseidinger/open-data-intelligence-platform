@@ -40,6 +40,17 @@ stateDiagram-v2
     VALIDATING --> VALIDATING: claim expires and is released
 ```
 
+## Artifact storage operations
+
+The existing `GET /api/v1/operator-capabilities` reports storage migration
+availability. The operator API adds `POST /api/v1/artifact-storage/raw/{id}/migrate` /
+`POST /api/v1/artifact-storage/publications/{id}/artifacts/{artifact}/migrate`.
+Migration previews by default; `{"apply":true}` requests the explicit migration.
+Platform operator/session/CSRF controls and per-dataset grants apply. S3 objects
+are private implementation details; consumer routes and ETags are unchanged.
+Readiness checks bucket access and versioning when S3 is enabled. See the
+[storage runbook](../artifact-storage.md) for exact requests and recovery limits.
+
 ## Manifest and response semantics
 
 A publication manifest declares `schemaVersion`, a public `datasetId`, semantic `version`, `schemaRef`, metadata, `publishedAt`, artifacts, quality, and provenance. Each artifact has an ID, role, media type, path, and SHA-256 digest. The manifest's `status: PUBLISHED` describes its *intended published representation* even while the database row is `DRAFT` or `VALIDATING`; the row status governs visibility.

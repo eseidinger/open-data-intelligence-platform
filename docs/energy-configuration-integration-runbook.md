@@ -34,6 +34,37 @@ uv run --project workers/data-worker --locked python scripts/local-publication-a
 
 The harness creates its own PostgreSQL container and temporary files. It ingests fixture bytes, derives the energy outputs, publishes both domains, verifies digests and conditional reads, rejects a missing-hour version, preserves earlier versions, restarts the API, and performs a real dump/restore into another database. It binds the API only to loopback and uses explicit development mode. It removes its own container and temporary backup afterward. This is local durability evidence, not deployed platform authentication evidence.
 
+### Corrected-version regression boundary
+
+The October 27 follow-up harness uses failed draft `1.0.99` and valid corrected
+`1.0.1` in its disposable local database. It adds exactly EUR 0.01/kWh to every
+hourly import tariff and advances the catalog version. The pinned `1.0.0` bytes
+and released oracle stay unchanged. This is a synthetic regression fixture,
+not a newly accepted commercial tariff or replacement of the released oracle.
+
+Export the bytes read after restart and actual PostgreSQL restore, together with
+an independent Python contract-kit oracle, to a new evidence directory:
+
+```bash
+uv run --project workers/data-worker --locked python scripts/local-publication-acceptance.py \
+  --evidence-dir /tmp/odip-corrected-energy
+```
+
+The VEF `EnergyCorrectedPublicationTest` consumes that directory through
+`ENERGY_CORRECTED_FIXTURE_DIRECTORY`, validates all bytes and compares all 252
+candidates, feasibility, ranking, recommendation and metrics. It also recomputes
+unchanged `1.0.0`. The October 27 local execution passed; see the
+[VEF verification record](https://github.com/eseidinger/variability-engineering-framework/blob/main/docs/04-development/energy-gap-closure-verification.md).
+
+This closes the local unchanged-content test deficiency. Hosted old/new owned
+VEF runs, shared review of the synthetic correction and integrated application
+restore remain open in [GAP-03/05](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-gap-analysis.md).
+Never overwrite an existing published version; use an isolated namespace when
+an installation already occupies `1.0.1`.
+
+The [October 27 review](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-implementation-and-acceptance-review.md) records the accepted ODIP handoff separately
+from the remaining joint AI-10 regression and recovery evidence.
+
 ## Prepare platform resources
 
 Use [ADR0001](architecture/adr/0001-energy-configuration-integration.md) and the shared DEC-01 through DEC-06 as the accepted implementation decisions.

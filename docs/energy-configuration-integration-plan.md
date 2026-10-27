@@ -1,9 +1,10 @@
 # Energy Configuration Integration Plan
 
-Status: ODIP's energy configuration integration handoff is complete by maintainer confirmation on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0. The deterministic 0.4.0 workflow was accepted upstream at Gate 5 on October 17, 2026. Gate 6 AI implementation and cross-project release acceptance remain with VEF and the cross-project owners. Decisions are recorded in [ADR0001](architecture/adr/0001-energy-configuration-integration.md); verification and deployment are described in the [runbook](energy-configuration-integration-runbook.md).
-Updated: 2026-10-19
+Status: ODIP's energy configuration integration handoff is complete by maintainer confirmation on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0. The deterministic 0.4.0 workflow was accepted upstream at Gate 5 on October 17, 2026. VEF AI assistance is implemented; Gate 6 acceptance and the final cross-project release remain open for AI-05/06/08/10/11 and the shared gaps. Decisions are recorded in [ADR0001](architecture/adr/0001-energy-configuration-integration.md); verification and deployment are described in the [runbook](energy-configuration-integration-runbook.md).
+Updated: 2026-10-27. See the [cross-project review](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-implementation-and-acceptance-review.md) and
+[gap analysis](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-gap-analysis.md) for the reconciled baseline and closure evidence.
 
-ODIP publishes complete, validated dataset versions that the Variability Engineering Framework (VEF) retrieves and verifies through an application API. The implemented publication path uses the Kotlin API, Python worker, PostgreSQL storage, and Angular operator interface. The next cross-project milestone is the VEF AI-assistance increment, with the deterministic publication path retained as its regression baseline.
+ODIP publishes complete, validated dataset versions that the Variability Engineering Framework (VEF) retrieves and verifies through an application API. The implemented publication path uses the Kotlin API, Python worker, PostgreSQL storage, and Angular operator interface. The next cross-project milestone is acceptance of the implemented VEF AI-assistance increment, with the deterministic publication path retained as its regression baseline.
 
 ODIP supplies reference data and provenance. VEF owns customer inputs, component compatibility, simulation, optimization, and AI explanations. The Developer Platform provides deployment, identity facilities, routing, and application databases. The first integration uses a bounded reference region, calendar year, and component catalog; synthetic fixtures can establish the initial flow. These boundaries follow the proposed [energy configuration use case](https://github.com/eseidinger/energy-system-configuration/blob/main/energy-configuration-use-case.md).
 
@@ -11,11 +12,24 @@ ODIP supplies reference data and provenance. VEF owns customer inputs, component
 
 This publication milestone follows the ingestion and curation foundation and precedes the Parquet/DuckDB analytical comparison. It closes publication, quality, and authorization gaps needed by an external consumer without requiring the full analytics platform.
 
-Use bounded PostgreSQL storage for the first publication fixture behind an artifact storage interface. Phase 2 still introduces S3-compatible storage and Parquet as specified in the [development plan](development-plan.md) and [architecture decisions](architecture/decisions.md). Publication access must remain stable when storage changes.
+The accepted first publication fixture uses bounded PostgreSQL storage behind an artifact storage interface. The subsequent S3 adapter and controlled migration are implemented; Parquet/DuckDB remain planned. See the [development plan](development-plan.md) and [storage runbook](artifact-storage.md). Publication access remains stable across storage backends; installation-specific S3 activation/recovery is separate evidence.
 
 The implementation pins released contract kit 0.5.0 and its [reconciled integration contract](https://github.com/eseidinger/energy-system-configuration/blob/contract-kit-v0.5.0/energy-configuration-integration-contract.md), dated 2026-10-11. Kit 0.5.0 adds VEF AI-assistance contracts without changing ODIP publication APIs, fixtures or numerical results. The shared decisions remain resolved. The [integration plan](https://github.com/eseidinger/energy-system-configuration/blob/contract-kit-v0.5.0/energy-configuration-integration-plan.md) records Gate 5 acceptance and the Gate 6 AI milestone. Acceptance by maintainer direction does not constitute a new execution of the suite; retain the historical local evidence and rerun deployed regression for the AI increment.
 
-## Current implementation and gaps
+## Current implementation and acceptance boundaries
+
+| Area | Implemented at the reviewed source revision | Remaining shared evidence |
+| --- | --- | --- |
+| Publication | Generic immutable manifest/artifacts, validation lifecycle, ETags, conditional reads, energy and non-energy adapters. | Complete unchanged deployed Gate 5 regression for AI-10. |
+| Access and lineage | Stable-principal dataset grants, worker claims, source restrictions, raw inputs and publication lineage. | Release-specific denied/allowed boundary, rotation/revocation and retained correlation evidence. |
+| Durability | PostgreSQL persistence, local restart/dump/restore harness; October 19 maintainer-confirmed ODIP handoff. | Joint ODIP/VEF restoration and ODIP restart/observability for the later AI release. |
+| Version isolation | Immutable versions; local missing-hour `1.0.99` rejection and synthetic tariff-corrected `1.0.1` publication, preserved after actual restore and independently checked in VEF. | Review the synthetic correction for shared acceptance and execute deployed old/new pinned VEF run comparison. The local correction is documented in the runbook. |
+| Artifact storage | PostgreSQL default plus optional S3 exact-version storage, V13 references/deletion outbox, operator migration. | Installation activation and joint bucket/database restore when S3 is enabled. Parquet/DuckDB remain later work. |
+
+These evidence gaps do not revoke the accepted October 19 ODIP milestone.
+The shared gap IDs GAP-03/04/05/09/10/13 define the remaining ODIP contributions.
+
+## Historical pre-implementation baseline
 
 The table below records the original implementation baseline and required changes, delivered by the accepted deterministic workflow. The original baseline is repository revision `912ed42794af552965ab055d6e9bc18735ffe74c`. Source registration, ingestion jobs, PostgreSQL raw payload storage, checksum verification, validation metadata, energy curation, dataset version listing, and the dataset browser already exist.
 

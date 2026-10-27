@@ -16,7 +16,7 @@ The first reference implementation is **energy intelligence**: public electricit
 
 The first implementation is intentionally small: a Kotlin/Spring Boot platform API and orchestration layer, Python workers for data and AI work, PostgreSQL for operational metadata, raw artifacts, and curated serving data, DuckDB for analytics, and an Angular user interface.
 
-Phase 2 introduces S3-compatible object storage for large raw artifacts and Parquet publications; it is not a dependency of the current Phase 1 PostgreSQL-based deployment.
+The S3-compatible artifact adapter and controlled migration are implemented as the first Phase 2 increment. PostgreSQL remains the default artifact backend; S3 activation and joint database/bucket recovery require installation-specific verification. Parquet generation and DuckDB analytics remain planned.
 
 Specialized search, graph, vector, document, and streaming technologies are optional adapters. They are introduced only when a product requirement or reproducible experiment justifies them.
 
@@ -36,7 +36,7 @@ The [documentation index](docs/README.md) is the authoritative entry point for t
 
 ## Current status
 
-ODIP implements catalog and ingestion, energy curation, and generic immutable dataset publication with scoped access and an operator interface. The [energy configuration integration](docs/energy-configuration-integration-plan.md#completion-criteria) was accepted by maintainer confirmation on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0; the completion record distinguishes acceptance from retained execution evidence. Phase 2 is next: quality and analytics with Developer Platform S3 storage, Parquet, and DuckDB. The [storage runbook](docs/artifact-storage.md) describes the S3 adapter and controlled migration; the [integration runbook](docs/energy-configuration-integration-runbook.md) remains the deployment and regression baseline. Gate 6 AI work remains with VEF and the cross-project owners.
+ODIP implements catalog and ingestion, energy curation, and generic immutable dataset publication with scoped access and an operator interface. The [energy configuration integration](docs/energy-configuration-integration-plan.md#completion-criteria) was accepted by maintainer confirmation on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0; the completion record distinguishes acceptance from retained execution evidence. Phase 2 is in progress: S3 storage and controlled migration are implemented; broader quality workflows, Parquet and DuckDB remain planned. The [storage runbook](docs/artifact-storage.md) describes the S3 adapter and controlled migration; the [integration runbook](docs/energy-configuration-integration-runbook.md) remains the deployment and regression baseline. VEF AI assistance is implemented, but Gate 6 acceptance remains open for AI-05/06/08/10/11. The [cross-project review](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-implementation-and-acceptance-review.md) and [gap analysis](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-gap-analysis.md) distinguish accepted ODIP delivery from remaining joint regression and release evidence.
 
 ## License
 

@@ -1,6 +1,6 @@
 # ODIP database schema
 
-Flyway migrations [V1–V12](../../services/platform-api/src/main/resources/db/migration/) create the PostgreSQL application schema. The tables separate catalog identity, acquisition evidence, curated observations, and consumer publications. Most row identities and relationships use UUIDs; public publication IDs and semantic versions are strings. Flexible metadata and reports use `JSONB`, while acquired and published bytes use `BYTEA`. See the [system model](README.md) for the conceptual flow and the [API model](api.md) for the interfaces over these tables.
+Flyway migrations [V1–V13](../../services/platform-api/src/main/resources/db/migration/) create the PostgreSQL application schema. The tables separate catalog identity, acquisition evidence, curated observations, and consumer publications. Most row identities and relationships use UUIDs; public publication IDs and semantic versions are strings. Flexible metadata and reports use `JSONB`; artifact bytes use `BYTEA` or exact S3 versions referenced by `artifact_object`. Manifests remain in PostgreSQL. See the [system model](README.md) for the conceptual flow and the [API model](api.md) for the interfaces over these tables.
 
 ## Catalog, acquisition, and curation
 
@@ -27,10 +27,24 @@ erDiagram
 | `dataset` | `id` UUID primary key | Unique `name`; description, owner, and classification. This is the internal dataset identity. |
 | `dataset_source` | `(dataset_id, source_id)` primary key; foreign keys to `dataset` and `data_source` | Many-to-many map of contributing sources. Deleting a dataset cascades through this link; deleting a referenced source is restricted. |
 | `pipeline_run` | `id` UUID primary key; optional source, dataset, and output-version foreign keys | One execution's status, requested/start/end times, failure reason, configuration, metrics, owning principal, and claim token. The ingestion path uses the source link; some other links are optional in the schema. |
-| `raw_artifact` | `id` UUID primary key; unique `pipeline_run_id` foreign key and source foreign key | Captured `payload` bytes, storage URI, content type/length, SHA-256, source version, and retrieval time. The URI identifies PostgreSQL-backed content in current writes; `payload` is nullable to accommodate earlier rows. |
+| `raw_artifact` | `id` UUID primary key; unique `pipeline_run_id` foreign key and source foreign key | Captured `payload` bytes, storage URI, content type/length, SHA-256, source version, and retrieval time. The URI identifies the storage location; `payload` is nullable for legacy or S3-backed rows. Migrated rows retain the original PostgreSQL payload. |
 | `raw_artifact_validation` | `id` UUID primary key; unique raw-artifact foreign key | One optional assessment per artifact: `VALID`, `INVALID`, or `UNSUPPORTED`, plus format, record count, schema fingerprint, reason, and validation time. |
 | `dataset_version` | `id` UUID primary key; dataset foreign key; optional raw-artifact foreign key | Internal integer `version_number`, status, JSON schema definition, and quality summary. `(dataset_id, version_number)` is unique; `(dataset_id, raw_artifact_id)` is unique when the artifact is present. |
 | `energy_observation` | `id` UUID primary key; dataset and raw-artifact foreign keys; optional dataset-version foreign key | Annual indicator/region/unit/value rows. A raw artifact cannot repeat the same indicator, region, year, and unit; years are limited to 1900–2200. |
+
+## Artifact storage references (V13)
+
+| Table | Identity and relationships | Stored meaning and important constraints |
+| --- | --- | --- |
+| `artifact_object` | `storage_id` primary key; either unique raw-artifact FK or unique `(publication_id, artifact_id)` FK | Bucket, key, non-null exact version ID, SHA-256, content length and creation time. Exactly one artifact target is required; references cascade on artifact deletion. |
+| `artifact_object_deletion` | UUID primary key; no live-artifact FK | Transactional outbox of exact bucket/key/version deletions. A trigger queues work when a reference is deleted; scheduled cleanup retries storage failures. |
+
+An explicit migration verifies original bytes and S3 readback before committing
+the reference; it preserves original payloads and publication immutability.
+New S3 uploads can have no PostgreSQL byte copy. Recovery therefore requires
+both catalog/reference backups and retained bucket versions. See
+[V13](../../services/platform-api/src/main/resources/db/migration/V13__add_s3_artifact_locations.sql)
+and the [storage runbook](../artifact-storage.md).
 
 ## Publication, access, and retention
 
@@ -51,7 +65,7 @@ erDiagram
 | --- | --- | --- |
 | `dataset_public_identity` | `public_dataset_id` string primary key; unique dataset foreign key | Binding between a contract-facing ID and one internal dataset. |
 | `dataset_publication` | `id` UUID primary key; dataset foreign key | Public ID and semantic version; canonical manifest bytes and digest; `DRAFT`, `VALIDATING`, `FAILED`, or `PUBLISHED` state; creator, idempotency/request digests, claim owner/token/time, result report, and publication time. `(public_dataset_id, version)` and `(creator, idempotency_key)` are unique. |
-| `publication_artifact` | `(publication_id, artifact_id)` primary key; publication foreign key | Artifact `BYTEA` payload and SHA-256. Artifacts are identified by the manifest's declared names. |
+| `publication_artifact` | `(publication_id, artifact_id)` primary key; publication foreign key | Nullable `BYTEA` payload, SHA-256 and optional content length. V13 permits S3-only bytes with a stored length; older/migrated payloads remain retained. Artifacts use the manifest's declared names. |
 | `publication_input` | `(publication_id, raw_artifact_id)` primary key; publication and raw-artifact foreign keys | Explicit provenance link to captured source bytes. At draft creation, the service also verifies that each input comes from a source linked to the dataset and has captured bytes. |
 | `publication_request` | `(principal_id, idempotency_key)` primary key; publication foreign key | Makes publish requests idempotent for a principal and key. |
 | `dataset_grant` | `(dataset_id, principal_id, permission)` primary key; dataset foreign key | Explicit `READ`, `WRITE`, `INGEST`, or `VALIDATE` permission for one stable principal on one dataset. |

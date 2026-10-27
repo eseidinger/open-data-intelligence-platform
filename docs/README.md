@@ -10,7 +10,12 @@ This documentation turns the project vision in the root [README](../README.md) i
 - [Development plan](development-plan.md) — phased delivery plan, milestones, and exit criteria.
 - [Energy configuration integration plan](energy-configuration-integration-plan.md) — accepted milestone: immutable publications, the energy adapter, scoped access, and the VEF handoff.
 
-The ODIP publication and deployed VEF handoff were accepted by maintainer confirmation on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0. See the [completion record](energy-configuration-integration-plan.md#completion-criteria) for evidence limits. The next ODIP milestone is Phase 2 quality and analytics, including Developer Platform S3, Parquet, and DuckDB. The [integration runbook](energy-configuration-integration-runbook.md) remains the installation and regression baseline; Gate 6 AI acceptance belongs to VEF and the cross-project owners.
+The ODIP publication and deployed VEF handoff were accepted by maintainer confirmation on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0. See the [completion record](energy-configuration-integration-plan.md#completion-criteria) for evidence limits. Phase 2 is in progress: the S3 adapter and controlled migration are implemented; Parquet/DuckDB analytics and broader quality workflows remain planned. The [integration runbook](energy-configuration-integration-runbook.md) remains the installation and regression baseline; Gate 6 AI acceptance belongs to VEF and the cross-project owners.
+
+The [October 27 cross-project review](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-implementation-and-acceptance-review.md) consolidates implementation,
+acceptance and executed checks. The [shared gap register](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-gap-analysis.md) tracks corrected
+dataset isolation, joint regression/recovery and final release evidence without
+reopening the accepted ODIP handoff.
 
 ## Operating the platform
 
