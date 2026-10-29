@@ -6,6 +6,10 @@ For a new test or production installation, start with [Bootstrap environments](b
 
 ## Current-release acceptance scope
 
+As of October 29, [DEC-12](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-12-proposed-ai10-equivalent-regression.md)
+classifies AI-10 as ACCEPTED_WITH_LIMITATIONS for this bounded release. The
+limits are stated below. Final Gate 6 acceptance remains OPEN.
+
 Use requests for new installations with `existingComponentIds: []`, following
 [DEC-07](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-07-new-equipment-release-scope.md). Existing-equipment planning is deferred. Include an explicit VEF HTTP 422 /
 `existing_equipment_not_supported` and no-created-run check for a non-empty list
@@ -687,6 +691,7 @@ or report. The isolated publication is additional evidence; the standard
 immutable versions were read, not republished. The private invalid-content
 probe and DEC-10/11 exceptions retain their documented limits. The proposed
 [DEC-12 decision](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-12-proposed-ai10-equivalent-regression.md)
-would accept AI-10 with those limits for this release. It is not approved;
-AI-10 and Gate 6 remain OPEN pending the integration contract maintainer's
-explicit decision.
+was approved by the integration contract maintainer on October 29. AI-10 is
+ACCEPTED_WITH_LIMITATIONS for this release; Gate 6 remains OPEN pending its
+separate final decision. Earlier AI-10 OPEN statements above describe the
+status at their dated evidence checkpoints.
