@@ -15,23 +15,24 @@ a GitHub release page rather than the pinned PVGIS raw JSON. No successful raw
 artifact or publication input link is inferred. See the
 [current-image report](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-27-ai10-current-image-oracles.json).
 
-The isolated synthetic dataset `energy-ai10-lineage-20261027/1.0.0` then passed
+At the October 27 checkpoint, the isolated synthetic dataset `energy-ai10-lineage-20261027/1.0.0` passed
 protected capture of the pinned PVGIS JSON, worker validation/publication,
 raw-byte readback and all five artifact digests. The temporary worker grants
 were removed after publication by operator confirmation. This does not add
 raw-input links to immutable reference versions or fix the catalog URL's
 scheduled download. The [sanitized lineage record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-27-ai10-isolated-lineage.json)
-keeps the evidence and limits; AI-10's full suite stays open.
+keeps the evidence and limits. AI-10's full suite was still open at that
+checkpoint; DEC-12 later accepted it with explicit limits.
 
 Historical DEC-10 scope (additional non-AI checks subsequently excepted by DEC-11): the maintainer accepts this release without the isolated joint database/S3 restore test under [DEC-10](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-10-current-release-recovery-test-exception.md). Restore-execution acceptance clauses below are excepted for this release, not passed. Backup/storage/security duties and other open Gate 6 cases remain; recovery VM provisioning is not required.
 
-Status: ODIP's energy configuration integration handoff was accepted on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0. The deterministic 0.4.0 workflow was accepted upstream at Gate 5 on October 17, 2026. VEF AI assistance is implemented; AI-10 is accepted with DEC-12 limits and bounded Gate 6 with DEC-13 limits. AI-05/06 pass hosted citation/semantic review, AI-08/11 pass the hosted private validation boundary, and the listed non-AI checks have accepted exceptions. This repository now pins the published kit 1.0.0; production deployment was separately authorized on October 29. Decisions are recorded in [ADR0001](architecture/adr/0001-energy-configuration-integration.md); verification and deployment are described in the [runbook](energy-configuration-integration-runbook.md).
-Updated: 2026-10-27. See the [cross-project review](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-implementation-and-acceptance-review.md) and
+Historical handoff: ODIP's energy configuration integration was accepted on October 19, 2026, for ODIP 0.5.0 and contract kit 0.5.0. The deterministic 0.4.0 workflow had been accepted upstream at Gate 5 on October 17. The current release status is at the top of this document. Decisions are recorded in [ADR0001](architecture/adr/0001-energy-configuration-integration.md); verification and deployment are described in the [runbook](energy-configuration-integration-runbook.md).
+October 27 checkpoint: See the [cross-project review](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-implementation-and-acceptance-review.md) and
 [gap analysis](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-gap-analysis.md) for the reconciled baseline and closure evidence.
 
-ODIP publishes complete, validated dataset versions that the Variability Engineering Framework (VEF) retrieves and verifies through an application API. The implemented publication path uses the Kotlin API, Python worker, PostgreSQL storage, and Angular operator interface. The next cross-project milestone is acceptance of the implemented VEF AI-assistance increment, with the deterministic publication path retained as its regression baseline.
+ODIP publishes complete, validated dataset versions that the Variability Engineering Framework (VEF) retrieves and verifies through an application API. The implemented publication path uses the Kotlin API, Python worker, PostgreSQL storage, and Angular operator interface. The VEF AI-assistance increment was accepted within the bounded Gate 6 closure, with the deterministic publication path retained as its regression baseline.
 
-ODIP supplies reference data and provenance. VEF owns customer inputs, component compatibility, simulation, optimization, and AI explanations. The Developer Platform provides deployment, identity facilities, routing, and application databases. The first integration uses a bounded reference region, calendar year, and component catalog; synthetic fixtures can establish the initial flow. These boundaries follow the proposed [energy configuration use case](https://github.com/eseidinger/energy-system-configuration/blob/main/energy-configuration-use-case.md).
+ODIP supplies reference data and provenance. VEF owns customer inputs, component compatibility, simulation, optimization, and AI explanations. The Developer Platform provides deployment, identity facilities, routing, and application databases. The first integration uses a bounded reference region, calendar year, and component catalog; synthetic fixtures establish the initial flow. These boundaries follow the [energy configuration use case](https://github.com/eseidinger/energy-system-configuration/blob/main/energy-configuration-use-case.md).
 
 ## Current-release scope
 
@@ -40,12 +41,13 @@ in shared [DEC-07](https://github.com/eseidinger/energy-system-configuration/blo
 `existingComponentIds` list and rejects non-empty inputs before run creation.
 ODIP continues publishing the same domain-neutral manifests and energy catalog;
 no customer equipment data or new publication endpoint is required. GAP-06 is
-closed by scope decision, while shared-kit release packaging remains under GAP-10.
+closed by scope decision; shared-kit release packaging was completed with kit 1.0.0.
 Released kit 0.5.0 and its vendored bytes remain immutable; published kit 1.0.0
 carries the scope decision. The maintainer
 also accepted [DEC-08](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-08-complete-calendar-year.md): the energy adapter now requires a complete UTC calendar year with exactly
 8,760 or 8,784 aligned hours. This closes the local annual-period validation
-deficiency; deployed negative regression and final acceptance remain open.
+deficiency. The deployed negative regression and bounded final acceptance were
+subsequently recorded under DEC-12/13 with their stated limits.
 
 ## Relationship to the roadmap
 
@@ -53,20 +55,22 @@ This publication milestone follows the ingestion and curation foundation and pre
 
 The accepted first publication fixture uses bounded PostgreSQL storage behind an artifact storage interface. The subsequent S3 adapter and controlled migration are implemented; Parquet/DuckDB remain planned. See the [development plan](development-plan.md) and [storage runbook](artifact-storage.md). Publication access remains stable across storage backends; installation-specific S3 activation/recovery is separate evidence.
 
-The implementation now pins released contract kit 1.0.0 and its [release compatibility notes](https://github.com/eseidinger/energy-system-configuration/blob/contract-kit-v1.0.0/contract-kit/RELEASE-NOTES-1.0.0.md). It retains the 0.5.0 AI-assistance contracts without changing ODIP publication APIs, fixtures or numerical results. The shared decisions remain resolved. [DEC-13](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-13-bounded-gate-6-acceptance.md) records bounded Gate 6 acceptance; this consumer pin does not itself authorize production deployment.
+The implementation now pins released contract kit 1.0.0 and its [release compatibility notes](https://github.com/eseidinger/energy-system-configuration/blob/contract-kit-v1.0.0/contract-kit/RELEASE-NOTES-1.0.0.md). It retains the 0.5.0 AI-assistance contracts without changing ODIP publication APIs, fixtures or numerical results. The shared decisions remain resolved. [DEC-13](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-13-bounded-gate-6-acceptance.md) records bounded Gate 6 acceptance; separate DEC-14 authorization permitted the production deployment.
 
 ## Current implementation and acceptance boundaries
 
 | Area | Implemented at the reviewed source revision | Remaining shared evidence |
 | --- | --- | --- |
-| Publication | Generic immutable manifest/artifacts, validation lifecycle, ETags, conditional reads, energy and non-energy adapters. A private hosted VEF probe passes exact-version, cache and invalid-content checks with in-memory ODIP transport; a new isolated source-to-consumer suite passed. | AI-10 is ACCEPTED_WITH_LIMITATIONS under DEC-12; the private job does not prove a mutated live ODIP read response. Final Gate 6 decision remains. |
+| Publication | Generic immutable manifest/artifacts, validation lifecycle, ETags, conditional reads, energy and non-energy adapters. A private hosted VEF probe passes exact-version, cache and invalid-content checks with in-memory ODIP transport; a new isolated source-to-consumer suite passed. | AI-10 is ACCEPTED_WITH_LIMITATIONS under DEC-12; the private job does not prove a mutated live ODIP read response. Gate 6 closed with this limit. |
 | Access and lineage | Stable-principal dataset grants, worker claims, source restrictions, raw inputs and publication lineage. | Release-specific denied/allowed boundary, rotation/revocation and retained correlation evidence. |
 | Durability | PostgreSQL persistence, local restart/dump/restore harness; October 19 maintainer-confirmed ODIP handoff. | ODIP restart and exact artifact readback now pass. Joint restoration is excepted under DEC-10; remaining observability assertions stay open. |
 | Version isolation | DEC-09 correction now published in odip-test; the original and corrected owned VEF runs pass full independent comparisons of all 252 candidates, metrics, ranking and provenance. Original 1.0.0 readback is unchanged. See the [guided acceptance](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-27-guided-release-acceptance.md). | Retain final deployment/evidence pins. Joint restore is excepted under DEC-10; AI-10 carries the DEC-12 limits. |
 | Artifact storage | PostgreSQL default plus optional S3 exact-version storage, V13 references/deletion outbox, operator migration. | Installation activation and joint bucket/database restore when S3 is enabled. Parquet/DuckDB remain later work. |
 
 These evidence gaps do not revoke the accepted October 19 ODIP milestone.
-The shared gap IDs GAP-03/04/05/09/10/13 define the remaining ODIP contributions.
+The shared gap IDs GAP-03/04/05/09/10/13 retain historical findings and any
+follow-up that falls outside the bounded closure; their original OPEN labels
+are not current release status.
 
 ## Historical pre-implementation baseline
 
