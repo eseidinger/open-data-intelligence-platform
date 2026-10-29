@@ -648,3 +648,19 @@ The [sanitized cross-project record](https://github.com/eseidinger/energy-system
 pins the images, runs and checks. The isolated raw-input publication remains
 the separate ODIP lineage proof above. AI-10 and final Gate 6 stay OPEN for
 the complete unchanged deployed cross-project Gate 5 suite.
+
+### Single deployed consumer regression
+
+The [shared October 29 runner](https://github.com/eseidinger/energy-system-configuration/blob/main/scripts/run-deployed-energy-consumer-regression.py)
+passed one protected execution on ODIP revision 10 and AI-enabled VEF revision
+50. ODIP operator draft routes returned the original, corrected and non-energy
+published manifests and all eleven artifact bytes exactly as pinned. The human
+operator session received `401 application_access_denied` on the separate
+service-consumer route; two successful VEF runs exercised the approved ODIP
+service binding and passed their full 252-candidate oracles. Idempotency,
+selected 422 denials, infeasibility and retained success also passed. The
+[sanitized report](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-29-deployed-consumer-regression.json)
+records image pins and run IDs. This invocation read existing published
+versions; the isolated raw-input capture above remains separate. It did not
+mutate live ODIP read bytes or execute the DEC-10/11 operational exceptions.
+AI-10 and Gate 6 remain OPEN for the complete Gate 5 assertion.
