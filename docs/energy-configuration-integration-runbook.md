@@ -664,3 +664,29 @@ records image pins and run IDs. This invocation read existing published
 versions; the isolated raw-input capture above remains separate. It did not
 mutate live ODIP read bytes or execute the DEC-10/11 operational exceptions.
 AI-10 and Gate 6 remain OPEN for the complete Gate 5 assertion.
+
+### Isolated source-to-consumer regression and AI-10 proposal
+
+The [extended runner](https://github.com/eseidinger/energy-system-configuration/blob/main/scripts/run-deployed-energy-consumer-regression.py)
+passed a new single protected invocation on October 29 with ODIP revision 10
+and AI-enabled VEF revision 51. It captured the pinned PVGIS raw JSON through
+ODIP into the isolated `energy-ai10-lineage-20261027/1.0.1` publication,
+verified the linked raw artifact and all five publication artifacts, then
+removed its temporary worker READ, INGEST and VALIDATE grants. Independent
+readback confirmed the publication was PUBLISHED and the grants were absent.
+The same invocation read both standard energy versions and the non-energy
+publication, checked all eleven artifact bytes, and created new VEF runs that
+passed the full 252-candidate oracles for both energy versions. Idempotency,
+selected 422 denials, zero-budget infeasibility and stored-result stability
+also passed. The [sanitized source-to-consumer report](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-29-deployed-source-to-consumer-regression.json)
+pins the evidence.
+
+This is a newly assembled equivalent suite, not a rerun of an unchanged Gate 5
+suite: the October 17 maintainer acceptance did not retain an executable suite
+or report. The isolated publication is additional evidence; the standard
+immutable versions were read, not republished. The private invalid-content
+probe and DEC-10/11 exceptions retain their documented limits. The proposed
+[DEC-12 decision](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-12-proposed-ai10-equivalent-regression.md)
+would accept AI-10 with those limits for this release. It is not approved;
+AI-10 and Gate 6 remain OPEN pending the integration contract maintainer's
+explicit decision.
