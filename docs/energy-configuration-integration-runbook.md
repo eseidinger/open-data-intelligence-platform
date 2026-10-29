@@ -11,7 +11,10 @@ classifies AI-10 as ACCEPTED_WITH_LIMITATIONS for this bounded release. The
 later [DEC-13](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-13-bounded-gate-6-acceptance.md)
 accepts Gate 6 for the test release with DEC-10/11/12 limits. Kit 1.0.0 is
 published and this project pins its exact archive checksum. The maintainer
-separately authorized production deployment on October 29.
+separately authorized production deployment on October 29. ODIP v1.0.0 passed
+tagged CI and is ready on `odip` revision 20; the cross-project
+[production record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-29-production-deployment.md)
+pins its image digests and the retained evidence limits.
 
 Use requests for new installations with `existingComponentIds: []`, following
 [DEC-07](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-07-new-equipment-release-scope.md). Existing-equipment planning is deferred. Include an explicit VEF HTTP 422 /
