@@ -8,7 +8,10 @@ For a new test or production installation, start with [Bootstrap environments](b
 
 As of October 29, [DEC-12](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-12-proposed-ai10-equivalent-regression.md)
 classifies AI-10 as ACCEPTED_WITH_LIMITATIONS for this bounded release. The
-limits are stated below. Final Gate 6 acceptance remains OPEN.
+later [DEC-13](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-13-bounded-gate-6-acceptance.md)
+accepts Gate 6 for the test release with DEC-10/11/12 limits. The merged kit
+1.0.0 candidate remains unpublished; this project still pins released 0.5.0.
+No production deployment is authorized.
 
 Use requests for new installations with `existingComponentIds: []`, following
 [DEC-07](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-07-new-equipment-release-scope.md). Existing-equipment planning is deferred. Include an explicit VEF HTTP 422 /
@@ -689,9 +692,9 @@ This is a newly assembled equivalent suite, not a rerun of an unchanged Gate 5
 suite: the October 17 maintainer acceptance did not retain an executable suite
 or report. The isolated publication is additional evidence; the standard
 immutable versions were read, not republished. The private invalid-content
-probe and DEC-10/11 exceptions retain their documented limits. The proposed
+probe and DEC-10/11 exceptions retain their documented limits. The
 [DEC-12 decision](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-12-proposed-ai10-equivalent-regression.md)
 was approved by the integration contract maintainer on October 29. AI-10 is
-ACCEPTED_WITH_LIMITATIONS for this release; Gate 6 remains OPEN pending its
-separate final decision. Earlier AI-10 OPEN statements above describe the
-status at their dated evidence checkpoints.
+ACCEPTED_WITH_LIMITATIONS for this release. DEC-13 subsequently accepted
+bounded Gate 6 with the same limits. Earlier AI-10 and Gate 6 OPEN statements
+above describe their dated evidence checkpoints.
