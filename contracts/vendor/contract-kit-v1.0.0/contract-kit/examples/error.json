@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "error/v1",
+  "status": 422,
+  "code": "search_space_limit_exceeded",
+  "message": "The request would evaluate more than 100000 candidates.",
+  "correlationId": "corr-example-0001",
+  "fieldErrors": [
+    {
+      "path": "/site/usableRoofAreaM2",
+      "code": "search_bound_exceeded",
+      "message": "Reduce the roof area or component search bounds."
+    }
+  ]
+}

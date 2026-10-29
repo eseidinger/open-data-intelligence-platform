@@ -1,0 +1,8 @@
+{
+  "X-Platform-Principal-Id": "prn_11111111111111111111111111111111",
+  "X-Platform-Principal-Kind": "service",
+  "X-Platform-Principal-Issuer": "https://identity.example.invalid/realms/platform",
+  "X-Platform-Principal-Subject": "service-account-example",
+  "X-Platform-Principal-Group-Ids": "grp_22222222222222222222222222222222",
+  "X-Platform-Principal-Client-Id": "service-example"
+}

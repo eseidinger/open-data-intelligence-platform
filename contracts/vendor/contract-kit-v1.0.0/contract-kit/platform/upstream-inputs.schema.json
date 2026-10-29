@@ -1,0 +1,827 @@
+{
+  "$defs": {
+    "ApplicationEnvelopeV1Alpha2": {
+      "additionalProperties": false,
+      "properties": {
+        "apiVersion": {
+          "const": "platform.example/v1alpha2",
+          "title": "Apiversion",
+          "type": "string"
+        },
+        "kind": {
+          "const": "Application",
+          "title": "Kind",
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/$defs/Metadata"
+        },
+        "spec": {
+          "$ref": "#/$defs/ComponentSpec"
+        }
+      },
+      "required": [
+        "apiVersion",
+        "kind",
+        "metadata",
+        "spec"
+      ],
+      "title": "ApplicationEnvelopeV1Alpha2",
+      "type": "object"
+    },
+    "Approval": {
+      "additionalProperties": false,
+      "properties": {
+        "groups": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Groups",
+          "type": "array"
+        }
+      },
+      "required": [
+        "groups"
+      ],
+      "title": "Approval",
+      "type": "object"
+    },
+    "Authentication": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "enum": [
+            "browser-session",
+            "bearer-token"
+          ],
+          "title": "Mode",
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "title": "Authentication",
+      "type": "object"
+    },
+    "Authorization": {
+      "additionalProperties": false,
+      "properties": {
+        "anyOfGroups": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Anyofgroups",
+          "type": "array"
+        }
+      },
+      "required": [
+        "anyOfGroups"
+      ],
+      "title": "Authorization",
+      "type": "object"
+    },
+    "ComponentRuntime": {
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 50,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Args"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 20,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Command"
+        },
+        "image": {
+          "maxLength": 512,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9][a-zA-Z0-9./_:@-]+$",
+          "title": "Image",
+          "type": "string"
+        },
+        "type": {
+          "const": "container",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "image"
+      ],
+      "title": "ComponentRuntime",
+      "type": "object"
+    },
+    "ComponentSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ServiceComponent"
+              },
+              {
+                "$ref": "#/$defs/ScheduledComponent"
+              }
+            ]
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Components",
+          "type": "array"
+        },
+        "configuration": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Configuration"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resources": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ExternalResource"
+              },
+              "maxItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resources"
+        }
+      },
+      "required": [
+        "components"
+      ],
+      "title": "ComponentSpec",
+      "type": "object"
+    },
+    "Configuration": {
+      "additionalProperties": false,
+      "properties": {
+        "values": {
+          "additionalProperties": true,
+          "title": "Values",
+          "type": "object"
+        }
+      },
+      "required": [
+        "values"
+      ],
+      "title": "Configuration",
+      "type": "object"
+    },
+    "ExternalResource": {
+      "additionalProperties": false,
+      "properties": {
+        "deletionPolicy": {
+          "const": "retain",
+          "title": "Deletionpolicy",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "profile": {
+          "const": "shared-dev",
+          "title": "Profile",
+          "type": "string"
+        },
+        "type": {
+          "const": "postgres",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "profile",
+        "deletionPolicy"
+      ],
+      "title": "ExternalResource",
+      "type": "object"
+    },
+    "Governance": {
+      "additionalProperties": false,
+      "properties": {
+        "domainRetentionOwner": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Domainretentionowner",
+          "type": "string"
+        },
+        "domainRetentionPolicy": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Domainretentionpolicy",
+          "type": "string"
+        },
+        "maximumDataClassification": {
+          "enum": [
+            "Public",
+            "Internal",
+            "Confidential"
+          ],
+          "title": "Maximumdataclassification",
+          "type": "string"
+        },
+        "maximumTelemetryClassification": {
+          "enum": [
+            "Public",
+            "Internal",
+            "Confidential"
+          ],
+          "title": "Maximumtelemetryclassification",
+          "type": "string"
+        },
+        "personalData": {
+          "title": "Personaldata",
+          "type": "boolean"
+        },
+        "purgeAuthority": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Purgeauthority",
+          "type": "string"
+        },
+        "recoveryOwner": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Recoveryowner",
+          "type": "string"
+        }
+      },
+      "required": [
+        "maximumDataClassification",
+        "maximumTelemetryClassification",
+        "personalData",
+        "domainRetentionOwner",
+        "domainRetentionPolicy",
+        "purgeAuthority",
+        "recoveryOwner"
+      ],
+      "title": "Governance",
+      "type": "object"
+    },
+    "GroupCreate": {
+      "additionalProperties": false,
+      "properties": {
+        "displayName": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Displayname",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "displayName"
+      ],
+      "title": "GroupCreate",
+      "type": "object"
+    },
+    "Health": {
+      "additionalProperties": false,
+      "properties": {
+        "readiness": {
+          "$ref": "#/$defs/Readiness"
+        }
+      },
+      "required": [
+        "readiness"
+      ],
+      "title": "Health",
+      "type": "object"
+    },
+    "IdentityAttributes": {
+      "additionalProperties": false,
+      "properties": {
+        "displayName": {
+          "default": false,
+          "title": "Displayname",
+          "type": "boolean"
+        },
+        "email": {
+          "default": false,
+          "title": "Email",
+          "type": "boolean"
+        }
+      },
+      "title": "IdentityAttributes",
+      "type": "object"
+    },
+    "InternalPort": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "pattern": "^[a-z][a-z0-9-]{0,14}$",
+          "title": "Name",
+          "type": "string"
+        },
+        "port": {
+          "maximum": 65535.0,
+          "minimum": 1024.0,
+          "title": "Port",
+          "type": "integer"
+        },
+        "protocol": {
+          "const": "http",
+          "title": "Protocol",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "protocol",
+        "port"
+      ],
+      "title": "InternalPort",
+      "type": "object"
+    },
+    "Metadata": {
+      "additionalProperties": false,
+      "properties": {
+        "environment": {
+          "anyOf": [
+            {
+              "const": "default",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Environment"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "project": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Project"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Metadata",
+      "type": "object"
+    },
+    "OutboundDestination": {
+      "additionalProperties": false,
+      "description": "One operator-approved TCP egress exception for any component.",
+      "properties": {
+        "cidr": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Cidr"
+        },
+        "dns": {
+          "anyOf": [
+            {
+              "maxLength": 253,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Dns"
+        },
+        "port": {
+          "maximum": 65535.0,
+          "minimum": 1.0,
+          "title": "Port",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "title": "OutboundDestination",
+      "type": "object"
+    },
+    "PolicyCreate": {
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "title": "Component",
+          "type": "string"
+        },
+        "defaultDecision": {
+          "const": "deny",
+          "default": "deny",
+          "title": "Defaultdecision",
+          "type": "string"
+        },
+        "identityAttributes": {
+          "$ref": "#/$defs/IdentityAttributes"
+        },
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/Route"
+          },
+          "maxItems": 100,
+          "minItems": 1,
+          "title": "Routes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "component",
+        "routes"
+      ],
+      "title": "PolicyCreate",
+      "type": "object"
+    },
+    "Readiness": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "anyOf": [
+            {
+              "maxLength": 256,
+              "minLength": 1,
+              "pattern": "^/[A-Za-z0-9._~!$&'()*+,;=:@%/-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Path"
+        },
+        "port": {
+          "anyOf": [
+            {
+              "maximum": 65535.0,
+              "minimum": 1024.0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Port"
+        },
+        "profile": {
+          "anyOf": [
+            {
+              "enum": [
+                "status",
+                "hello-world"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Profile"
+        }
+      },
+      "title": "Readiness",
+      "type": "object"
+    },
+    "Rotation": {
+      "additionalProperties": false,
+      "properties": {
+        "emergency": {
+          "default": false,
+          "title": "Emergency",
+          "type": "boolean"
+        }
+      },
+      "title": "Rotation",
+      "type": "object"
+    },
+    "Route": {
+      "additionalProperties": false,
+      "properties": {
+        "authentication": {
+          "$ref": "#/$defs/Authentication"
+        },
+        "authorization": {
+          "$ref": "#/$defs/Authorization"
+        },
+        "match": {
+          "$ref": "#/$defs/RouteMatch"
+        },
+        "name": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "match",
+        "authentication",
+        "authorization"
+      ],
+      "title": "Route",
+      "type": "object"
+    },
+    "RouteMatch": {
+      "additionalProperties": false,
+      "properties": {
+        "methods": {
+          "items": {
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE",
+              "OPTIONS"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Methods",
+          "type": "array"
+        },
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Path"
+        },
+        "pathPrefix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Pathprefix"
+        }
+      },
+      "required": [
+        "methods"
+      ],
+      "title": "RouteMatch",
+      "type": "object"
+    },
+    "ScheduledComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "concurrencyPolicy": {
+          "const": "Forbid",
+          "default": "Forbid",
+          "title": "Concurrencypolicy",
+          "type": "string"
+        },
+        "maxRunSeconds": {
+          "anyOf": [
+            {
+              "maximum": 86400.0,
+              "minimum": 60.0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Maxrunseconds"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "outbound": {
+          "items": {
+            "$ref": "#/$defs/OutboundDestination"
+          },
+          "maxItems": 5,
+          "title": "Outbound",
+          "type": "array"
+        },
+        "resources": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resources"
+        },
+        "retryLimit": {
+          "default": 6,
+          "maximum": 10.0,
+          "minimum": 0.0,
+          "title": "Retrylimit",
+          "type": "integer"
+        },
+        "runtime": {
+          "$ref": "#/$defs/ComponentRuntime"
+        },
+        "schedule": {
+          "title": "Schedule",
+          "type": "string"
+        },
+        "timeZone": {
+          "const": "UTC",
+          "default": "UTC",
+          "title": "Timezone",
+          "type": "string"
+        },
+        "type": {
+          "const": "scheduled",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "runtime",
+        "type",
+        "schedule"
+      ],
+      "title": "ScheduledComponent",
+      "type": "object"
+    },
+    "ServiceComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "exposure": {
+          "default": "private",
+          "enum": [
+            "private",
+            "public"
+          ],
+          "title": "Exposure",
+          "type": "string"
+        },
+        "health": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Health"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "outbound": {
+          "items": {
+            "$ref": "#/$defs/OutboundDestination"
+          },
+          "maxItems": 5,
+          "title": "Outbound",
+          "type": "array"
+        },
+        "ports": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/InternalPort"
+              },
+              "maxItems": 10,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ports"
+        },
+        "replicas": {
+          "default": 1,
+          "maximum": 5.0,
+          "minimum": 1.0,
+          "title": "Replicas",
+          "type": "integer"
+        },
+        "resources": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resources"
+        },
+        "runtime": {
+          "$ref": "#/$defs/ComponentRuntime"
+        },
+        "type": {
+          "const": "service",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "runtime",
+        "type"
+      ],
+      "title": "ServiceComponent",
+      "type": "object"
+    },
+    "ServiceRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "application": {
+          "title": "Application",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "projectWideCredential": {
+          "const": true,
+          "title": "Projectwidecredential",
+          "type": "boolean"
+        },
+        "providerProject": {
+          "title": "Providerproject",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "providerProject",
+        "application",
+        "projectWideCredential"
+      ],
+      "title": "ServiceRequest",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Generated by tools.build_platform_snapshot from the revision in baseline.json. Shape validation only."
+}

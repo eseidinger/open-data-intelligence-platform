@@ -93,7 +93,7 @@ def publish_fixture(base_url, folder, session, *, version=None, mutate=None):
             json={
                 "name": manifest["datasetId"],
                 "sourceType": "API",
-                "location": "https://github.com/eseidinger/energy-system-configuration/releases/tag/contract-kit-v0.5.0",
+                "location": "https://github.com/eseidinger/energy-system-configuration/releases/tag/contract-kit-v1.0.0",
                 "owner": attribution["sourceOwner"],
                 "license": attribution["license"],
             },
@@ -138,7 +138,7 @@ def publish_fixture(base_url, folder, session, *, version=None, mutate=None):
                     "contentLength": len(raw),
                     "contentType": "application/json",
                     "checksumSha256": hashlib.sha256(raw).hexdigest(),
-                    "sourceVersion": "contract-kit/0.5.0",
+                    "sourceVersion": "contract-kit/1.0.0",
                     "validation": {
                         "status": "VALID",
                         "detectedFormat": "JSON",

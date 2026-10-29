@@ -1,7 +1,7 @@
 {
-  "version": "0.5.0",
-  "tag": "contract-kit-v0.5.0",
-  "sha256": "ae4edaf6799d4b57510d14d2004c5b65ff6b05f3b225e96bbd5971b30ce8832b",
-  "archive": "vendor/contract-kit-v0.5.0.tar.gz",
-  "release": "https://github.com/eseidinger/energy-system-configuration/releases/tag/contract-kit-v0.5.0"
+  "version": "1.0.0",
+  "tag": "contract-kit-v1.0.0",
+  "sha256": "ab101a9d5588283ce30c78149084ba145c4c0a6ce3e678c4defff58749951cb0",
+  "archive": "vendor/contract-kit-v1.0.0.tar.gz",
+  "release": "https://github.com/eseidinger/energy-system-configuration/releases/tag/contract-kit-v1.0.0"
 }

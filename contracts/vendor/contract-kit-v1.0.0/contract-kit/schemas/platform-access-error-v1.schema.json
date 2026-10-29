@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portfolio:platform:access-error:v1",
+  "title": "Platform access-boundary error body",
+  "description": "The HTTP status carries 400, 401, 403, or 503. Unlike application error/v1, boundary errors have no schemaVersion, status, or message fields. Browser login redirects have no such body.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["code"],
+  "properties": {
+    "code": {"enum": ["application_access_denied", "application_access_pending", "application_access_unavailable"]},
+    "detail": {"type": "string"},
+    "requestId": {"type": "string", "minLength": 1}
+  }
+}

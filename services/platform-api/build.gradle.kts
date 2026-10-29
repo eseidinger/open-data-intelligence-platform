@@ -70,11 +70,11 @@ tasks.withType<Test> {
 }
 
 tasks.processResources {
-    from("../../contracts/vendor/contract-kit-v0.5.0/contract-kit/schemas") { into("contract-schemas") }
+    from("../../contracts/vendor/contract-kit-v1.0.0/contract-kit/schemas") { into("contract-schemas") }
 }
 
 tasks.processTestResources {
-    from("../../contracts/vendor/contract-kit-v0.5.0/contract-kit/fixtures") { into("contract-fixtures") }
+    from("../../contracts/vendor/contract-kit-v1.0.0/contract-kit/fixtures") { into("contract-fixtures") }
 }
 
 ktlint {

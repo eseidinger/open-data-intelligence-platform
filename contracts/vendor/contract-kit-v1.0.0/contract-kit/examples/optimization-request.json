@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "energy-optimization-request/v1",
+  "dataset": {
+    "datasetId": "energy-reference-wasserburg-am-inn-2024",
+    "version": "1.0.0",
+    "schemaRef": "urn:portfolio:energy-configuration-input:v1"
+  },
+  "site": {
+    "regionCode": "DE-BY-09187182",
+    "usableRoofAreaM2": 35,
+    "annualDemandKWh": 4500,
+    "existingComponentIds": []
+  },
+  "constraints": {
+    "maxInitialInvestmentEUR": 18000,
+    "minSelfSufficiency": 0.55
+  },
+  "objective": "MIN_ANNUALIZED_COST",
+  "assumptions": {
+    "analysisYears": 20,
+    "discountRate": 0.04
+  }
+}

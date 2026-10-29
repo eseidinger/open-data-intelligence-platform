@@ -1,0 +1,20 @@
+Energy System Configuration
+
+This distribution may include derived photovoltaic reference data produced
+from the European Commission Joint Research Centre's Photovoltaic Geographical
+Information System (PVGIS).
+
+Required source acknowledgement:
+
+    PVGIS © European Communities, 2001-2026
+
+Source and usage conditions:
+
+    https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis_en
+    https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis/general-information/usage-conditions-data-protection_en
+
+Every PVGIS-derived artifact must additionally record the source request,
+response or source snapshot, database and version, retrieval time, location,
+system assumptions, transformation version, and modification status in its
+provenance. PVGIS source material remains subject to its source terms and is not
+presented as original repository-authored material.

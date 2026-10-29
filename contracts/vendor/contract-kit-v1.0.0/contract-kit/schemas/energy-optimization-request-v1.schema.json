@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portfolio:energy:optimization-request:v1",
+  "title": "Energy optimization request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "dataset",
+    "site",
+    "constraints",
+    "objective",
+    "assumptions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "energy-optimization-request/v1" },
+    "dataset": {
+      "allOf": [
+        { "$ref": "urn:portfolio:common:v1#/$defs/datasetReference" },
+        {
+          "properties": {
+            "schemaRef": {
+              "const": "urn:portfolio:energy-configuration-input:v1"
+            }
+          }
+        }
+      ]
+    },
+    "site": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "regionCode",
+        "usableRoofAreaM2",
+        "annualDemandKWh",
+        "existingComponentIds"
+      ],
+      "properties": {
+        "regionCode": { "const": "DE-BY-09187182" },
+        "usableRoofAreaM2": { "type": "number", "minimum": 0 },
+        "annualDemandKWh": { "type": "number", "exclusiveMinimum": 0 },
+        "existingComponentIds": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 105,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{2,99}$"
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxInitialInvestmentEUR", "minSelfSufficiency"],
+      "properties": {
+        "maxInitialInvestmentEUR": { "type": "number", "minimum": 0 },
+        "minSelfSufficiency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "objective": { "const": "MIN_ANNUALIZED_COST" },
+    "assumptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["analysisYears", "discountRate"],
+      "properties": {
+        "analysisYears": { "const": 20 },
+        "discountRate": { "const": 0.04 }
+      }
+    }
+  }
+}

@@ -17,7 +17,7 @@ COPY services/platform-api/gradle ./gradle
 RUN chmod +x gradlew && ./gradlew --no-daemon dependencies
 
 COPY services/platform-api/src ./src
-COPY contracts/vendor/contract-kit-v0.5.0/contract-kit/schemas /contracts/vendor/contract-kit-v0.5.0/contract-kit/schemas
+COPY contracts/vendor/contract-kit-v1.0.0/contract-kit/schemas /contracts/vendor/contract-kit-v1.0.0/contract-kit/schemas
 COPY --from=web-builder /workspace/web/dist/odip-web/browser/ ./src/main/resources/static/
 RUN ./gradlew --no-daemon bootJar
 

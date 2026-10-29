@@ -12,7 +12,7 @@ RUN addgroup -g 10001 -S odip && adduser -u 10001 -S -G odip odip
 
 COPY --from=builder /build/.venv /build/.venv
 ENV PATH="/build/.venv/bin:$PATH"
-COPY contracts/vendor/contract-kit-v0.5.0/contract-kit /opt/contract-kit
+COPY contracts/vendor/contract-kit-v1.0.0/contract-kit /opt/contract-kit
 ENV ODIP_CONTRACT_KIT=/opt/contract-kit ODIP_IDENTITY_MODE=platform
 USER odip
 ENTRYPOINT ["odip-ingest"]

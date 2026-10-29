@@ -1,0 +1,9 @@
+{
+  "maximumDataClassification": "Internal",
+  "maximumTelemetryClassification": "Internal",
+  "personalData": false,
+  "domainRetentionOwner": "ODIP application owner",
+  "domainRetentionPolicy": "Published versions: supported contract lifetime plus one year.",
+  "purgeAuthority": "ODIP project administrator",
+  "recoveryOwner": "ODIP application owner and platform operator"
+}

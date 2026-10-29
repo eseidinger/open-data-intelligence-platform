@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portfolio:energy:candidate:v1",
+  "title": "Evaluated energy configuration candidate v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "configurationId",
+    "components",
+    "feasible",
+    "constraints",
+    "metrics"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "energy-candidate/v1" },
+    "configurationId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,127}$"
+    },
+    "components": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["componentId", "type", "quantity", "existing"],
+        "properties": {
+          "componentId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{2,99}$"
+          },
+          "type": {
+            "enum": ["PV_MODULE", "INVERTER", "BATTERY"]
+          },
+          "quantity": { "type": "integer", "minimum": 1, "maximum": 100 },
+          "existing": { "type": "boolean" }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "type": { "const": "INVERTER" } } },
+            "then": { "properties": { "quantity": { "const": 1 } } }
+          },
+          {
+            "if": { "properties": { "type": { "const": "BATTERY" } } },
+            "then": { "properties": { "quantity": { "maximum": 4 } } }
+          }
+        ]
+      }
+    },
+    "feasible": { "type": "boolean" },
+    "constraints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "status", "actual"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "status": { "enum": ["PASS", "FAIL"] },
+          "actual": { "type": ["boolean", "number", "string"] },
+          "limit": { "type": ["boolean", "number", "string"] },
+          "unit": { "type": "string", "minLength": 1, "maxLength": 50 }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "initialInvestmentEUR",
+        "annualizedCostEUR",
+        "selfSufficiency",
+        "annualDemandKWh",
+        "gridImportKWh",
+        "gridExportKWh",
+        "onSiteSolarUseKWh",
+        "unmetDemandKWh",
+        "inverterClippingKWh",
+        "terminalDiscardedEnergyKWh"
+      ],
+      "properties": {
+        "initialInvestmentEUR": { "type": "number", "minimum": 0 },
+        "annualizedCostEUR": { "type": "number" },
+        "selfSufficiency": { "type": "number", "minimum": 0, "maximum": 1 },
+        "annualDemandKWh": { "type": "number", "exclusiveMinimum": 0 },
+        "gridImportKWh": { "type": "number", "minimum": 0 },
+        "gridExportKWh": { "type": "number", "minimum": 0 },
+        "onSiteSolarUseKWh": { "type": "number", "minimum": 0 },
+        "unmetDemandKWh": { "type": "number", "minimum": 0 },
+        "inverterClippingKWh": { "type": "number", "minimum": 0 },
+        "terminalDiscardedEnergyKWh": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

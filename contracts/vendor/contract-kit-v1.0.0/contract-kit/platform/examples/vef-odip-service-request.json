@@ -1,0 +1,6 @@
+{
+  "name": "odip-reader",
+  "providerProject": "odip",
+  "application": "odip",
+  "projectWideCredential": true
+}

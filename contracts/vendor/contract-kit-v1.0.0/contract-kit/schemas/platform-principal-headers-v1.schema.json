@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portfolio:platform:principal-headers:v1",
+  "title": "Normalized identity headers on the trusted boundary-to-backend path",
+  "description": "Header names are canonicalized before validation. This validates context shape, not origin or network isolation. No Authorization header or platform session cookie reaches the backend.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["X-Platform-Principal-Id", "X-Platform-Principal-Kind", "X-Platform-Principal-Issuer", "X-Platform-Principal-Subject", "X-Platform-Principal-Group-Ids"],
+  "properties": {
+    "X-Platform-Principal-Id": {"type": "string", "pattern": "^prn_[0-9a-f]{32}$"},
+    "X-Platform-Principal-Kind": {"enum": ["user", "service"]},
+    "X-Platform-Principal-Issuer": {"type": "string", "format": "uri", "pattern": "^https://[^ ]+$"},
+    "X-Platform-Principal-Subject": {"type": "string", "minLength": 1, "pattern": "^[!-~]+$"},
+    "X-Platform-Principal-Group-Ids": {"type": "string", "pattern": "^grp_[0-9a-f]{32}( grp_[0-9a-f]{32})*$"},
+    "X-Platform-Principal-Client-Id": {"type": "string", "minLength": 1, "pattern": "^[!-~]+$"},
+    "X-Platform-Principal-Name": {"type": "string"},
+    "X-Platform-Principal-Email": {"type": "string"}
+  },
+  "allOf": [{
+    "if": {"properties": {"X-Platform-Principal-Kind": {"const": "service"}}},
+    "then": {"required": ["X-Platform-Principal-Client-Id"]}
+  }]
+}

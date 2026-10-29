@@ -1,0 +1,76 @@
+{
+  "repository": "https://github.com/eseidinger/developer-platform",
+  "revision": "b360ddee34444748c95705c597aa7b17491cd05b",
+  "reviewedAt": "2026-10-11",
+  "sourceSha256": {
+    "docs/api/openapi.json": "02932ebfccb4fe90bd01000f410eee706f1ff60b15e1ec6280ea046620f319f5",
+    "platform/app/spec.py": "fb947a047b79308c5e967d0ff8083d8046ccacfbf9f2ccc665980abcb045acd9",
+    "platform/app/access_contract.py": "e9b954c171725b55d1fbeb1679dd1c3206fdfc7c39a9fc40edc0df0e3343c1f2",
+    "platform/app/access_api.py": "990537ae0072b1144f54f9d6478609ef59be0a2246cdb0b76960a58aa8e23e51",
+    "platform/app/access_gateway.py": "0be0f97571069f2b77d09ca152200562230a6ecfb5e7d132ac56eced99e920e2",
+    "platform/app/access_tokens.py": "4eb347196cef541268f9e87220c4b403a7fdfbd097eaa0da23ec313b4d1d4a7e",
+    "platform/app/access_provider.py": "899dce8f2578a3861fa263cf8b432685ad50c0d74c427487fb6ef76002cf9636",
+    "platform/app/access_worker.py": "06bcaec1065b617618082222fd67c36f40fab8e8f5a0b58713ce510d25895142",
+    "platform/app/manifests.py": "9a0db96ad8e92d6c8315ca547215b70a0289122ab12e4f6b91c6bfc01bd2a4f5",
+    "platform/app/egress.py": "577079afaeebba600addfae4b087563fec9881b92173e9c9c624b6218087c362",
+    "platform/app/project_policy.py": "5ef6fe425966f202c8e4cd8d2b96c4a062e00a2d655e84431dfbd018302a3036",
+    "platform/app/config.py": "ba5e351f4553176bda31bda31acbc03c2e1e7454f4b9ab7a09e9fafff93719a9",
+    "docs/architecture/decisions/ADR-020-generic-hosted-application-integration.md": "97bb649b1cae3b484a3313823b745fc7851cd8fb11d8b94d47c646b877c92607",
+    "docs/operators/validation/access-and-authorization.md": "e6293308d73b1d1a7d2c10c8886d78b6c5dcb254edd03bc3faf09b4367b5b735",
+    "platform/app/main.py": "9ba1a11bb21e1a6980e6ee5695c87554dd738c9467cf5f0aff418fbe549495a7",
+    "platform/app/monitoring.py": "961b32e97b83a226bbdc3757cebaf428bb41d88217240a7d88795e1afd66d080",
+    "platform/app/retained_logs.py": "b6221827bceaa7526dc88ebad8adca24ed592b2ac9ff708005386c24ca6cb91c",
+    "platform/app/operations.py": "93704431809dba7acc154be6215cba742c90eae845850e7de2289a893eecb59e",
+    "infrastructure/monitoring/config.alloy": "0d7123f11fceb9d77163a49c36679a320199d31f5f21524464f8847e2f9adef3",
+    "infrastructure/monitoring/blackbox.yaml": "4f26459fb2e03857a0f65094ffe9ac7f478acf83de7a95dffe7b361f1427bdc6",
+    "infrastructure/monitoring/alerts.yaml": "a4e469b7eaced340d753a05ece1cfb9dad57e5c50d2c7e5ea7e7604f826f0cdb",
+    "infrastructure/monitoring/compose.yaml": "af966ad0bafe1c0137099560b62cca72da4af430ec60b7603eee55ae2cdc20eb",
+    "infrastructure/kubernetes/log-reader.yaml": "4b2cf4e450943d365ab3ad48d130f5b00c8367d3217a466ce020e692ed9980ce",
+    "docs/architecture/observability.md": "87ad4dcdbe4e229f510c87deef6543684ef2384bb3c3d479640b73752406249d",
+    "infrastructure/monitoring/README.md": "eb6e33c4fcc9414806bf3c4ba5b20359fc287a2ca320d0b1d69c9f2b6240811b",
+    "docs/maintainers/delivery/plans/energy-system-integration.md": "1a1fb65c835a1afa706bd37aeb1f96c658614e737b171ba375a887f755950c86",
+    "platform/acceptance/harness.py": "baa046e028656dfe9dc45c578390bcd33923e2c25b20dbd84313b2cbc5ab845c",
+    "scripts/check-workload-logs.py": "44960364adadd4a0769590d2e2b9488cb50fb303a54282969aed13ed87c40611"
+  },
+  "applicationApiVersion": "platform.example/v1alpha2",
+  "acceptance": {
+    "result": "core-passed",
+    "namedChecksPassed": 39,
+    "gateClosed": false,
+    "runnerRevision": "e8f74fdd522ab18bd06ffed06073525494a90345",
+    "deployedControlPlaneRevision": null,
+    "deferredChecks": [
+      "real-backup-restore",
+      "browser-30-minute-idle-and-8-hour-absolute-expiry",
+      "24-hour-rotation-adoption-timeout",
+      "30/90-day-request-retention",
+      "component-monitoring-and-central-log-retention",
+      "control-plane-outage",
+      "dns-address-change-reapply",
+      "recovery-reconciliation-rehearsal",
+      "external-use-case-suite"
+    ]
+  },
+  "sourceHashNormalization": "UTF-8 text with LF line endings",
+  "previousRevision": "77820cae05c3be178b5c6eecc762a218b2448c8b",
+  "observability": {
+    "sourceImplemented": true,
+    "deployedAcceptanceRecorded": false,
+    "elapsedRetentionAcceptanceRecorded": false,
+    "hostedProbeSemantics": "access-boundary",
+    "hostedProbeSuccessStatuses": [
+      302,
+      401,
+      403
+    ],
+    "semanticReadiness": "kubernetes",
+    "retainedLogs": {
+      "endpoint": "/projects/{name}/retained-logs",
+      "requiresPermission": "view",
+      "format": "operational-envelope-v1",
+      "retentionSeconds": 604800,
+      "retentionEvidence": "configured",
+      "arbitraryText": false
+    }
+  }
+}

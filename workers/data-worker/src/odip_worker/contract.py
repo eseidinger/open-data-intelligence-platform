@@ -11,7 +11,7 @@ KIT = Path(
     os.environ.get(
         "ODIP_CONTRACT_KIT",
         Path(__file__).resolve().parents[4]
-        / "contracts/vendor/contract-kit-v0.5.0/contract-kit",
+        / "contracts/vendor/contract-kit-v1.0.0/contract-kit",
     )
 )
 sys.path.insert(0, str(KIT))

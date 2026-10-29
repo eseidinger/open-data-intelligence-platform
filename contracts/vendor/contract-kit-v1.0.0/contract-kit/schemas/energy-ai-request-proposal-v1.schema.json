@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portfolio:energy:ai-request-proposal:v1",
+  "title": "Energy AI request proposal v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "requiresConfirmation",
+    "request",
+    "clarificationQuestions",
+    "assumptionsToReview"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "energy-ai-request-proposal/v1"
+    },
+    "status": {
+      "enum": [
+        "READY_FOR_REVIEW",
+        "NEEDS_CLARIFICATION"
+      ]
+    },
+    "requiresConfirmation": {
+      "const": true
+    },
+    "request": {
+      "oneOf": [
+        {
+          "$ref": "urn:portfolio:energy:optimization-request:v1"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "clarificationQuestions": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      }
+    },
+    "assumptionsToReview": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "READY_FOR_REVIEW"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "request": {
+            "type": "object"
+          },
+          "clarificationQuestions": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "NEEDS_CLARIFICATION"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "request": {
+            "type": "null"
+          },
+          "clarificationQuestions": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

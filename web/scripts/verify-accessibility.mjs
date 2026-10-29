@@ -9,7 +9,7 @@ import { chromium } from 'playwright';
 const require = createRequire(import.meta.url);
 const web = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const output = resolve(web, 'dist/odip-web/browser');
-const manifest = JSON.parse(readFileSync(resolve(web, '../contracts/vendor/contract-kit-v0.5.0/contract-kit/fixtures/energy-reference-wasserburg-am-inn-2024/manifest.json')));
+const manifest = JSON.parse(readFileSync(resolve(web, '../contracts/vendor/contract-kit-v1.0.0/contract-kit/fixtures/energy-reference-wasserburg-am-inn-2024/manifest.json')));
 const dataset = { id: 'd4a050bb-15a4-4022-b9f9-5300e8bb46fc', name: 'Reference energy data', classification: 'PUBLIC', sources: [], owner: 'ODIP' };
 const draft = { id: '88fc1c6e-3c4f-460e-9cfa-144b4c719514', datasetId: dataset.id, status: 'PUBLISHED', manifestSha256: 'a'.repeat(64), manifest, report: null, failureCode: null };
 const sourceId = '6b9f9d08-af69-44fe-8578-259f0e686900';

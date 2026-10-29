@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "energy-optimization-result/v1",
+  "runId": "run-example-0001",
+  "status": "SUCCEEDED",
+  "dataset": {
+    "datasetId": "energy-reference-wasserburg-am-inn-2024",
+    "version": "1.0.0",
+    "schemaRef": "urn:portfolio:energy-configuration-input:v1",
+    "manifestSha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  },
+  "modelVersion": "energy-model/1.0.0",
+  "simulationVersion": "energy-simulation/1.0.0",
+  "optimizerVersion": "energy-optimizer/1.0.0",
+  "optimalityStatus": "PROVEN_OPTIMAL",
+  "evaluatedCandidateCount": 120,
+  "feasibleCandidateCount": 8,
+  "recommendedConfigurationId": "cfg-pv10-inv1-bat1",
+  "warnings": [],
+  "createdAt": "2026-10-10T10:00:00Z",
+  "completedAt": "2026-10-10T10:00:01Z"
+}

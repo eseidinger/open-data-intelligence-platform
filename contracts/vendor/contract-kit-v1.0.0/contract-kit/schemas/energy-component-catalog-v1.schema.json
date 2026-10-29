@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portfolio:energy:component-catalog:v1",
+  "title": "Energy component catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "catalogVersion", "currency", "components"],
+  "properties": {
+    "schemaVersion": { "const": "energy-component-catalog/v1" },
+    "catalogVersion": { "$ref": "urn:portfolio:common:v1#/$defs/semanticVersion" },
+    "currency": { "const": "EUR" },
+    "components": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 60,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/pvModule" },
+          { "$ref": "#/$defs/inverter" },
+          { "$ref": "#/$defs/battery" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "baseProperties": {
+      "type": "object",
+      "properties": {
+        "componentId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{2,99}$"
+        },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "unitPriceEUR": { "type": "number", "minimum": 0 },
+        "available": { "type": "boolean" },
+        "source": { "$ref": "urn:portfolio:common:v1#/$defs/source" }
+      }
+    },
+    "pvModule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "componentId",
+        "type",
+        "displayName",
+        "unitPriceEUR",
+        "available",
+        "source",
+        "ratedPowerKWp",
+        "areaM2"
+      ],
+      "properties": {
+        "componentId": { "$ref": "#/$defs/baseProperties/properties/componentId" },
+        "type": { "const": "PV_MODULE" },
+        "displayName": { "$ref": "#/$defs/baseProperties/properties/displayName" },
+        "unitPriceEUR": { "$ref": "#/$defs/baseProperties/properties/unitPriceEUR" },
+        "available": { "$ref": "#/$defs/baseProperties/properties/available" },
+        "source": { "$ref": "#/$defs/baseProperties/properties/source" },
+        "ratedPowerKWp": { "type": "number", "exclusiveMinimum": 0 },
+        "areaM2": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "inverter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "componentId",
+        "type",
+        "displayName",
+        "unitPriceEUR",
+        "available",
+        "source",
+        "acPowerKW",
+        "efficiencyFraction"
+      ],
+      "properties": {
+        "componentId": { "$ref": "#/$defs/baseProperties/properties/componentId" },
+        "type": { "const": "INVERTER" },
+        "displayName": { "$ref": "#/$defs/baseProperties/properties/displayName" },
+        "unitPriceEUR": { "$ref": "#/$defs/baseProperties/properties/unitPriceEUR" },
+        "available": { "$ref": "#/$defs/baseProperties/properties/available" },
+        "source": { "$ref": "#/$defs/baseProperties/properties/source" },
+        "acPowerKW": { "type": "number", "exclusiveMinimum": 0 },
+        "efficiencyFraction": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "battery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "componentId",
+        "type",
+        "displayName",
+        "unitPriceEUR",
+        "available",
+        "source",
+        "usableCapacityKWh",
+        "maxChargePowerKW",
+        "maxDischargePowerKW",
+        "roundTripEfficiencyFraction"
+      ],
+      "properties": {
+        "componentId": { "$ref": "#/$defs/baseProperties/properties/componentId" },
+        "type": { "const": "BATTERY" },
+        "displayName": { "$ref": "#/$defs/baseProperties/properties/displayName" },
+        "unitPriceEUR": { "$ref": "#/$defs/baseProperties/properties/unitPriceEUR" },
+        "available": { "$ref": "#/$defs/baseProperties/properties/available" },
+        "source": { "$ref": "#/$defs/baseProperties/properties/source" },
+        "usableCapacityKWh": { "type": "number", "exclusiveMinimum": 0 },
+        "maxChargePowerKW": { "type": "number", "exclusiveMinimum": 0 },
+        "maxDischargePowerKW": { "type": "number", "exclusiveMinimum": 0 },
+        "roundTripEfficiencyFraction": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

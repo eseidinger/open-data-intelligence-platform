@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "energy-ai-request-proposal/v1",
+  "status": "NEEDS_CLARIFICATION",
+  "requiresConfirmation": true,
+  "request": null,
+  "clarificationQuestions": [
+    "What are your annual electricity demand, usable roof area, budget, and minimum self-sufficiency?"
+  ],
+  "assumptionsToReview": []
+}

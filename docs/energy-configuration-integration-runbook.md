@@ -1,6 +1,6 @@
 # Energy Configuration Integration Runbook
 
-ODIP consumes contract kit 0.5.0, which preserves the accepted 0.4.0 publication contract and fixtures while adding VEF AI-assistance contracts. The reference fixture is Wasserburg am Inn, region `DE-BY-09187182`, with 8,784 hourly UTC intervals on the 2024 calendar. Its PV profile derives from pinned PVGIS 2023 data; the leap day, tariffs, load shape, and catalog follow the shared decisions. It is a regional demonstration rather than observed 2024 building production or a commercial offer.
+ODIP consumes contract kit 1.0.0, which retains the accepted 0.4.0 publication contract and fixtures and the 0.5.0 VEF AI-assistance contracts. The reference fixture is Wasserburg am Inn, region `DE-BY-09187182`, with 8,784 hourly UTC intervals on the 2024 calendar. Its PV profile derives from pinned PVGIS 2023 data; the leap day, tariffs, load shape, and catalog follow the shared decisions. It is a regional demonstration rather than observed 2024 building production or a commercial offer.
 
 For a new test or production installation, start with [Bootstrap environments](bootstrap.md). It covers the web-only first deployment, shared setup scripts and CI prerequisites in dependency order.
 
@@ -9,9 +9,9 @@ For a new test or production installation, start with [Bootstrap environments](b
 As of October 29, [DEC-12](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-12-proposed-ai10-equivalent-regression.md)
 classifies AI-10 as ACCEPTED_WITH_LIMITATIONS for this bounded release. The
 later [DEC-13](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-13-bounded-gate-6-acceptance.md)
-accepts Gate 6 for the test release with DEC-10/11/12 limits. The merged kit
-1.0.0 candidate remains unpublished; this project still pins released 0.5.0.
-No production deployment is authorized.
+accepts Gate 6 for the test release with DEC-10/11/12 limits. Kit 1.0.0 is
+published and this project pins its exact archive checksum. No production
+deployment is authorized.
 
 Use requests for new installations with `existingComponentIds: []`, following
 [DEC-07](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-07-new-equipment-release-scope.md). Existing-equipment planning is deferred. Include an explicit VEF HTTP 422 /
@@ -40,7 +40,7 @@ uv run python -m unittest discover -s tests
 Run the shared kit from its own project directory:
 
 ```bash
-cd contracts/vendor/contract-kit-v0.5.0/contract-kit
+cd contracts/vendor/contract-kit-v1.0.0/contract-kit
 uv run --frozen pytest
 ```
 
@@ -346,7 +346,7 @@ uv run --project workers/data-worker --locked python -m odip_worker.fixtures \
   --api-url "$ODIP_API_URL" --fixture all
 ```
 
-The publisher captures raw inputs through the operator API, derives the energy artifacts from the pinned source, attaches canonical bytes, and records publication lineage. It reuses existing identical drafts on retries. Consumer discovery and downloads use the pinned [read contract](../contracts/vendor/contract-kit-v0.5.0/contract-kit/openapi/odip-publication-v1.yaml); draft and validation operations use the [operator contract](../contracts/openapi/publication-operations.json).
+The publisher captures raw inputs through the operator API, derives the energy artifacts from the pinned source, attaches canonical bytes, and records publication lineage. It reuses existing identical drafts on retries. Consumer discovery and downloads use the pinned [read contract](../contracts/vendor/contract-kit-v1.0.0/contract-kit/openapi/odip-publication-v1.yaml); draft and validation operations use the [operator contract](../contracts/openapi/publication-operations.json).
 
 Use `--fixture energy` to publish only the energy reference dataset. The publisher
 uses bundled pinned source bytes and registers their GitHub provenance URL;
@@ -392,7 +392,7 @@ Record these values from the **deployed revision and published data**. The pinne
 
 | Field | Value or source |
 | --- | --- |
-| Contract kit | `0.5.0`; SHA-256 of `contracts/vendor/contract-kit-v0.5.0.tar.gz`: `ae4edaf6799d4b57510d14d2004c5b65ff6b05f3b225e96bbd5971b30ce8832b`, as pinned in `scripts/verify-contract-kit.py`. |
+| Contract kit | `1.0.0`; SHA-256 of `contracts/vendor/contract-kit-v1.0.0.tar.gz`: `ab101a9d5588283ce30c78149084ba145c4c0a6ce3e678c4defff58749951cb0`, as pinned in `contracts/contract-kit.lock.json` and verified by `scripts/verify-contract-kit.py`. |
 | ODIP application revision and images | Record the deployed 40-character Git revision and the **resolved OCI digests** for both `docker.io/eseidinger/odip-platform` and `docker.io/eseidinger/odip-data-worker` from the active deployment/registry; a mutable tag alone is insufficient. |
 | Consumer endpoint and identity | `https://web-odip.apps.eseidinger.de`; record VEF's approved service-access resource, stable principal ID, reader group ID, and non-secret binding prefix. Keep client ID/secret, token, and operator cookies out of the handoff. |
 | Energy publication | Public dataset ID `energy-reference-wasserburg-am-inn-2024`, version `1.0.0`, `schemaRef` `urn:portfolio:energy-configuration-input:v1`, manifest SHA-256 `252b90b18b594a764a2744ba133a8db56b233e9e375301befc7616e9c18c1715`. The five artifact IDs and digests are in its pinned manifest; record or link that manifest as the authoritative list. |
@@ -400,7 +400,7 @@ Record these values from the **deployed revision and published data**. The pinne
 | Domain-neutral control | Non-energy dataset `non-energy-mobility-counts-2024`, version `1.0.0`, manifest SHA-256 `f0d4f6b882c1a05154fb43283166953fda7a0dba7f2ed435dd7f46088663bbff`. VEF's reader identity must receive `403` for it. |
 | Acceptance evidence | Record UTC timestamps, the deployed revisions, and links/IDs for VEF's authenticated retrieval, integrity, dataset-scope, and write-denial tests and the separate gate evidence below. Leave unrun checks open; record failures without credential-bearing request/response bodies. |
 
-The two manifest digests and the raw-source digest are pinned in [the fixture index](../contracts/vendor/contract-kit-v0.5.0/contract-kit/fixtures/index.json). The manifest and its artifact digests are the data contract VEF consumes; the internal dataset UUID and raw-artifact UUID are lineage evidence, not substitutes for the public ID/version.
+The two manifest digests and the raw-source digest are pinned in [the fixture index](../contracts/vendor/contract-kit-v1.0.0/contract-kit/fixtures/index.json). The manifest and its artifact digests are the data contract VEF consumes; the internal dataset UUID and raw-artifact UUID are lineage evidence, not substitutes for the public ID/version.
 
 ### Deployed acceptance regression gates
 

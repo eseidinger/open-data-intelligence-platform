@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:portfolio:energy:import-tariff:v1",
+  "title": "Hourly import tariff v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "unit", "period", "values"],
+  "properties": {
+    "schemaVersion": { "const": "energy-import-tariff/v1" },
+    "unit": { "const": "EUR/kWh" },
+    "period": { "$ref": "urn:portfolio:common:v1#/$defs/period" },
+    "values": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8784,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["start", "value"],
+        "properties": {
+          "start": { "$ref": "urn:portfolio:common:v1#/$defs/utcInstant" },
+          "value": { "type": "number", "minimum": 0 }
+        }
+      }
+    }
+  }
+}

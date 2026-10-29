@@ -1,0 +1,70 @@
+[
+  {
+    "document": "dataset-publication.json",
+    "schema": "urn:portfolio:dataset-publication:v1"
+  },
+  {
+    "document": "pv-yield.json",
+    "schema": "urn:portfolio:energy:pv-yield:v1"
+  },
+  {
+    "document": "import-tariff.json",
+    "schema": "urn:portfolio:energy:import-tariff:v1"
+  },
+  {
+    "document": "export-tariff.json",
+    "schema": "urn:portfolio:energy:export-tariff:v1"
+  },
+  {
+    "document": "reference-load-shape.json",
+    "schema": "urn:portfolio:energy:reference-load-shape:v1"
+  },
+  {
+    "document": "component-catalog.json",
+    "schema": "urn:portfolio:energy:component-catalog:v1"
+  },
+  {
+    "document": "optimization-request.json",
+    "schema": "urn:portfolio:energy:optimization-request:v1"
+  },
+  {
+    "document": "candidate.json",
+    "schema": "urn:portfolio:energy:candidate:v1"
+  },
+  {
+    "document": "optimization-result.json",
+    "schema": "urn:portfolio:energy:optimization-result:v1"
+  },
+  {
+    "document": "error.json",
+    "schema": "urn:portfolio:error:v1"
+  },
+  {
+    "document": "platform-service-principal.json",
+    "schema": "urn:portfolio:platform:principal-headers:v1"
+  },
+  {
+    "document": "platform-user-principal.json",
+    "schema": "urn:portfolio:platform:principal-headers:v1"
+  },
+  {
+    "document": "platform-access-error.json",
+    "schema": "urn:portfolio:platform:access-error:v1"
+  },
+  {
+    "document": "platform-operational-envelope.json",
+    "schema": "urn:portfolio:platform:operational-envelope:v1"
+  },
+  {
+    "document": "ai-request-proposal.json",
+    "schema": "urn:portfolio:energy:ai-request-proposal:v1"
+  },
+  {
+    "document": "ai-request-clarification.json",
+    "schema": "urn:portfolio:energy:ai-request-proposal:v1"
+  },
+  {
+    "document": "ai-explanation.json",
+    "schema": "urn:portfolio:energy:ai-explanation:v1"
+  }
+]

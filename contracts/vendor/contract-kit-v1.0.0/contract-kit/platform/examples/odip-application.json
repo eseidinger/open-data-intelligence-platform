@@ -1,0 +1,84 @@
+{
+  "apiVersion": "platform.example/v1alpha2",
+  "kind": "Application",
+  "metadata": {
+    "name": "odip",
+    "project": "odip",
+    "environment": "default"
+  },
+  "spec": {
+    "components": [
+      {
+        "name": "api",
+        "type": "service",
+        "runtime": {
+          "type": "container",
+          "image": "ghcr.io/eseidinger/odip-api:contract-kit-0.4.0"
+        },
+        "resources": {
+          "requests": {
+            "cpu": "250m",
+            "memory": "256Mi"
+          },
+          "limits": {
+            "cpu": "500m",
+            "memory": "512Mi"
+          }
+        },
+        "outbound": [],
+        "ports": [
+          {
+            "name": "http",
+            "protocol": "http",
+            "port": 8080
+          }
+        ],
+        "replicas": 1,
+        "exposure": "public",
+        "health": {
+          "readiness": {
+            "path": "/health/ready",
+            "port": 8080
+          }
+        }
+      },
+      {
+        "name": "worker",
+        "type": "scheduled",
+        "runtime": {
+          "type": "container",
+          "image": "ghcr.io/eseidinger/odip-worker:contract-kit-0.4.0"
+        },
+        "resources": {
+          "requests": {
+            "cpu": "250m",
+            "memory": "256Mi"
+          },
+          "limits": {
+            "cpu": "500m",
+            "memory": "512Mi"
+          }
+        },
+        "outbound": [],
+        "schedule": "0 2 * * *",
+        "timeZone": "UTC",
+        "concurrencyPolicy": "Forbid",
+        "retryLimit": 3,
+        "maxRunSeconds": 3600
+      }
+    ],
+    "configuration": {
+      "values": {
+        "LOG_LEVEL": "info"
+      }
+    },
+    "resources": [
+      {
+        "name": "database",
+        "type": "postgres",
+        "profile": "shared-dev",
+        "deletionPolicy": "retain"
+      }
+    ]
+  }
+}
