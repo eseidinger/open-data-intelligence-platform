@@ -633,3 +633,18 @@ This test uses a new synthetic dataset. It neither changes the immutable
 reference versions nor makes the catalog source's GitHub release page suitable
 for scheduled raw download. That failed download remains separate. The
 unchanged complete cross-project Gate 5 suite required by AI-10 is still OPEN.
+
+### October 29 VEF consumer regression
+
+The ODIP test deployment remained on revision 10 while VEF ran new protected
+requests for both published energy reference versions on its AI-enabled image.
+Each VEF result and all 252 candidates matched the respective independent
+oracle; the corrected version changed annualized costs as reviewed. VEF also
+observed expected rejection of unknown and failed publication versions,
+preserved the successful result after negative tests and an AI explanation,
+and passed a private ten-check verifier/client probe. The private probe used
+in-memory ODIP transport, so it does not establish a live mutated ODIP read.
+The [sanitized cross-project record](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/evidence/2026-10-29-ai10-current-image-regression.json)
+pins the images, runs and checks. The isolated raw-input publication remains
+the separate ODIP lineage proof above. AI-10 and final Gate 6 stay OPEN for
+the complete unchanged deployed cross-project Gate 5 suite.
