@@ -2,7 +2,7 @@
 
 The consumer publication API, publication manifest, energy schemas, fixtures, and numerical oracles are supplied by the immutable [contract kit 1.0.0](vendor/contract-kit-v1.0.0/contract-kit/README.md). Its version and archive checksum are recorded in [contract-kit.lock.json](contract-kit.lock.json). Run `python scripts/verify-contract-kit.py` from the repository root to verify both the archive and every extracted file.
 
-Kit 1.0.0 retains the VEF AI proposal/explanation schemas and citation validation introduced in 0.5.0. ODIP's publication API, energy profile, fixture bytes and numerical oracles remain unchanged from the accepted 0.4.0 baseline. DEC-13 accepts bounded Gate 6 with DEC-10/11/12 limits; this pin does not authorize production deployment.
+Kit 1.0.0 retains the VEF AI proposal/explanation schemas and citation validation introduced in 0.5.0. ODIP's publication API, energy profile, fixture bytes and numerical oracles remain unchanged from the accepted 0.4.0 baseline. DEC-13 accepts bounded Gate 6 with DEC-10/11/12 limits; the maintainer separately authorized production deployment on October 29.
 
 Do not edit vendored files. Upgrade by accepting a new released archive and checksum, updating the lock, and rerunning the shared suite and consumer tests.
 
