@@ -38,6 +38,11 @@ The [documentation index](docs/README.md) is the authoritative entry point for t
 
 ODIP implements catalog and ingestion, energy curation, and generic immutable dataset publication with scoped access and an operator interface. Its [energy configuration integration](docs/energy-configuration-integration-plan.md#completion-criteria) handoff was accepted on October 19, 2026, using kit 0.5.0. Bounded Gate 6 acceptance followed under [DEC-13](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-13-bounded-gate-6-acceptance.md), with DEC-10/11/12 limits. This repository pins the published contract kit 1.0.0 and its exact checksum. The maintainer separately authorized production deployment on October 29; [ODIP v1.0.0](https://github.com/eseidinger/open-data-intelligence-platform/releases/tag/v1.0.0) passed tagged CI and is ready on `odip` revision 20. Phase 2 is in progress: S3 storage and controlled migration are implemented; broader quality workflows, Parquet and DuckDB remain planned. The [storage runbook](docs/artifact-storage.md) and [integration runbook](docs/energy-configuration-integration-runbook.md) describe the current storage, deployment and regression boundaries.
 
+The bounded energy [Gate 6 is closed with limitations](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-29-gate-6-closure.md).
+The production optimization reported by the maintainer consumed ODIP dataset
+`energy-reference-wasserburg-am-inn-2024` version `1.0.0` and matched the
+immutable reference oracle in all supplied fields.
+
 ## License
 
 ODIP is licensed under the [Apache License 2.0](LICENSE).

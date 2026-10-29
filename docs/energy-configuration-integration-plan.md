@@ -2,6 +2,11 @@
 
 Current acceptance scope (October 29): the maintainer accepts the other listed non-AI points without further testing under [DEC-11](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-11-current-release-non-ai-acceptance-exceptions.md). They are ACCEPTED_EXCEPTION, not demonstrated passes. Hosted AI-05/06 and AI-08/11 pass within recorded limits; [DEC-12](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-12-proposed-ai10-equivalent-regression.md) accepts AI-10 with limits. [DEC-13](https://github.com/eseidinger/energy-system-configuration/blob/main/decisions/DEC-13-bounded-gate-6-acceptance.md) accepts bounded Gate 6 with DEC-10/11/12 limits. Kit 1.0.0 is published and this repository pins its exact archive checksum. The maintainer separately authorized production deployment on October 29; [ODIP v1.0.0](https://github.com/eseidinger/open-data-intelligence-platform/releases/tag/v1.0.0) passed tagged CI and is ready on `odip` revision 20. This supersedes older chronological case counts below.
 
+Current gate disposition: [CLOSED_WITH_LIMITATIONS](https://github.com/eseidinger/energy-system-configuration/blob/main/reviews/2026-10-29-gate-6-closure.md)
+for the bounded 1.0.0 release. The production optimization reported by the
+maintainer used dataset version 1.0.0 and matched all supplied reference-oracle
+fields; the full live API export remains uncaptured.
+
 Subsequent protected VEF runs on AI-enabled revision 45 pass both full original
 and corrected 252-candidate oracles. ODIP's non-energy publication matches its
 pinned manifest hash. The energy source is linked to its dataset, but an energy
